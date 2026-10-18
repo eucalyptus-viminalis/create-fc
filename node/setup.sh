@@ -89,7 +89,7 @@ elif systemctl is-active --quiet fc-node-setup; then
   echo "setup is already running."
 else
   systemctl reset-failed fc-node-setup 2>/dev/null || true
-  systemd-run --unit fc-node-setup --setenv OPERATOR_FID="${OPERATOR_FID:-}" \
+  systemd-run --quiet --unit fc-node-setup --setenv OPERATOR_FID="${OPERATOR_FID:-}" \
     --property StandardOutput=append:/var/log/fc-node-setup.log \
     --property StandardError=append:/var/log/fc-node-setup.log \
     /usr/local/sbin/fc-node-setup >/dev/null

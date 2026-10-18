@@ -6,7 +6,9 @@ set -euo pipefail
 exec > >(tee -a /var/log/fc-node-setup.log) 2>&1
 
 DATA=/srv/snapchain
-for _ in $(seq 1 12); do
+# provision/hetzner.sh attaches the volume just after creating the server,
+# so wait for it (up to 5 minutes).
+for _ in $(seq 1 60); do
   vol=$(ls /dev/disk/by-id/scsi-0HC_Volume_* 2>/dev/null | head -n1 || true)
   [ -n "$vol" ] && break
   sleep 5

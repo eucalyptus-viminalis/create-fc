@@ -1,6 +1,6 @@
 # What a read node costs on Hetzner
 
-A Snapchain read node costs about **$105 a month** on the setup `provision/hetzner.sh` creates: a cx43 server plus a 1000 GB volume. If you sync it, try the client and delete everything within a day, you'll pay about **$4**.
+A Snapchain read node costs about **$105 a month** on the setup `provision/hetzner.sh` creates: a cx43 server plus a 1000 GB volume. If you sync it, try the client and delete everything within a day, you'll pay about **$4**. When cx43 is sold out, the script falls back to cpx41, which makes it about $127 a month, or $5 for the day (see [When cx43 is sold out](#when-cx43-is-sold-out)).
 
 There are no protocol fees. A read node needs no API key, stake or registration, and it earns nothing. You pay Hetzner for a server and a disk, and that's all.
 
@@ -85,8 +85,8 @@ Prices for 16 GB servers in `fsn1` (gross, per month):
 
 | Type | vCPU | RAM | Monthly | Notes |
 | --- | --- | --- | --- | --- |
-| **cx43** | 8 shared | 16 GB | **$20.34** | Default. EU locations only. |
-| cpx41 | 8 shared | 16 GB | $41.79 | Also available in US and Singapore, at higher prices there. |
+| **cx43** | 8 shared | 16 GB | **$20.34** | First choice. EU locations only. |
+| cpx41 | 8 shared | 16 GB | $41.79 | Fallback when cx43 is sold out. Also in US and Singapore, at higher prices there. |
 | ccx23 | 4 dedicated | 16 GB | $111.64 | Guaranteed cores, steady performance. |
 
 **Shared** vCPUs run on a host alongside other customers' servers, so speed can dip when the neighbours are busy. **Dedicated** vCPUs are reserved for you.
@@ -99,7 +99,31 @@ If you ever need more, change the type in place. The server powers off briefly, 
 hcloud server change-type fc-node ccx23
 ```
 
-Pick a different type up front with `TYPE=ccx23 ./provision/hetzner.sh`.
+Pick a type up front with `TYPE=ccx23`, for example `curl … | TYPE=ccx23 bash`. That also turns off the fallback below.
+
+### When cx43 is sold out
+
+Hetzner runs out of popular types in a location from time to time. When it does, creating the server fails with `error during placement (resource_unavailable)`, and nothing is created or billed. On 2026-10-18 we watched cx43 go unavailable in fsn1, nbg1 and hel1 within about a minute, and come back in nbg1 five minutes later.
+
+So `hetzner.sh` tries, in order, and tells you which it got:
+
+1. cx43 in fsn1, then nbg1, then hel1
+2. cpx41 in fsn1, then nbg1, then hel1
+
+It creates the server first and the volume second, in whatever location the server landed in. That order matters: a volume is tied to one location, and an earlier version that created the volume first left a billing volume behind on every failed attempt.
+
+| | cx43 | cpx41 |
+| --- | --- | --- |
+| vCPU / RAM | 8 shared / 16 GB | 8 shared / 16 GB |
+| Server, per hour | $0.033 | $0.067 |
+| Server, per month | $20.34 | $41.79 |
+| **All in, per hour** (with volume and IPv4) | **~$0.16** | **~$0.19–0.21** |
+| **All in, per month** | **$105.37** | **$126.82** |
+| 8-hour first sync | ~$1.30 | ~$1.60 |
+| One-day test | ~$4 | ~$5 |
+
+For a read node the two behave the same, since neither the CPU nor the RAM is the bottleneck. If you'd rather wait for cx43 than pay the difference, pin it with `TYPE=cx43` and re-run later.
+
 
 ## Extras you don't need
 

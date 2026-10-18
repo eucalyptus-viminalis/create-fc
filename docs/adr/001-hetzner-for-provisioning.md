@@ -31,8 +31,8 @@ Command 0 targets **Hetzner Cloud via the `hcloud` CLI**. The commands live in a
 
 The script creates:
 
-- **Server:** `cx43` (8 shared vCPU, 16 GB RAM, $20.34/mo gross; see `docs/Costs.md`) running Ubuntu 24.04, in `fsn1`. All three can be overridden with `TYPE`, `IMAGE` and `LOCATION`.
-- **Volume:** 1000 GB, which fits the new-account cap. The volume is created *before* the server, so it is already attached when first boot runs.
+- **Server:** `cx43` (8 shared vCPU, 16 GB RAM, $20.34/mo gross; see `docs/Costs.md`) running Ubuntu 24.04. It tries fsn1, nbg1 and hel1, then falls back to `cpx41` ($41.79/mo) in the same order when Hetzner answers `resource_unavailable`. `TYPE`, `LOCATION` and `IMAGE` pin a choice.
+- **Volume:** 1000 GB, which fits the new-account cap. It is created *after* the server, in the server's location, and attached straight away; first boot waits up to 5 minutes for it. (It was created first originally, but a failed placement then left a location-bound volume billing; see Provenance.)
 - **Firewall:** inbound TCP 22, 3381 and 3383, plus UDP 3382. Everything else, including Grafana's 3000, stays closed.
 - **SSH key:** from `~/.ssh/id_ed25519.pub`.
 
@@ -74,3 +74,4 @@ We are not building a local Mac target for now.
 | --- | --- | --- |
 | 2026-10-18 | none (repo not yet under git) | Created, status accepted |
 | 2026-10-18 | none (repo not yet under git) | 1000 GB volume + streaming loader after hitting the account cap; measured numbers; status implemented |
+| 2026-10-19 | (this commit) | cx43 sold out in all EU locations during the fresh-box test: server-first creation, cx43 → cpx41 fallback; `hetzner-delete.sh` added |

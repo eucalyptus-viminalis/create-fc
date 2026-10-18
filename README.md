@@ -6,7 +6,7 @@ Run your own Farcaster: a Snapchain read node you control, and a small client th
 
 You need: a [Hetzner Cloud](https://console.hetzner.com) project with an API token, the [`hcloud` CLI](https://github.com/hetznercloud/cli) logged in to it (`hcloud context create fc-node`), an SSH key, and Node.js 22.18+.
 
-**0. Create a server.** cx43 with a 1000 GB volume, about $0.16/hour. See [docs/Costs.md](docs/Costs.md).
+**0. Create a server.** A cx43 with a 1000 GB volume, about $0.16/hour. Hetzner sometimes sells out of cx43; the script then tries other locations, and then cpx41 (~$0.20/hour), and tells you which it got. See [docs/Costs.md](docs/Costs.md).
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash

@@ -98,7 +98,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
       <ol class="fc-steps">
         <li>
           <h3 class="tg-title">Create the server</h3>
-          <p class="tg-body">A cx43 (8 vCPU, 16 GB RAM) with a 1000 GB volume, in Falkenstein. It prints the next two commands with your server's IP filled in.</p>
+          <p class="tg-body">A cx43 (8 vCPU, 16 GB RAM) with a 1000 GB volume, about $0.16/hour. If cx43 is sold out it tries other locations, then cpx41 (~$0.20/hour), and says which it got. It prints the next two commands with your server's IP filled in.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
         <li>
@@ -147,6 +147,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
             <tr><td>1000 GB volume</td><td>$84.37</td><td>~$0.12–0.14</td></tr>
             <tr><td>IPv4 address</td><td>$0.66</td><td>$0.001</td></tr>
             <tr><td><b>Total</b></td><td><b>$105.37</b></td><td><b>~$0.16</b></td></tr>
+            <tr><td>Total with cpx41, if cx43 is sold out</td><td>$126.82</td><td>~$0.19–0.21</td></tr>
           </tbody>
         </table>
         <p>Powering a server off doesn't stop the bill. Only deleting it does. This lists what it found, asks you to type <code>fc-node</code>, and deletes the server, volume, firewall and SSH key (34 seconds for us):</p>
@@ -168,7 +169,8 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
             <tr><td>3000</td><td>TCP</td><td><b>Closed.</b> The node ships Grafana with the login admin / admin.</td></tr>
           </tbody>
         </table>
-        <p>If the volume step fails with <code>volumes size limit exceeded (resource_limit_exceeded)</code>, your account's volume cap is lower than <code>VOLUME_GB</code>. Check <b>Limits</b> in the console. Other sizes and locations can be set with environment variables: <code>TYPE=ccx23 LOCATION=nbg1 bash</code>.</p>
+        <p><b>Server types sell out.</b> When Hetzner has no cx43 free in a location, it answers <code>error during placement (resource_unavailable)</code> and creates nothing. We watched cx43 disappear from all three EU locations within a minute, then come back in Nuremberg five minutes later. The script handles it: cx43 in fsn1, nbg1 and hel1, then cpx41 (the same 8 vCPU and 16 GB at about twice the server price) in the same order. It creates the server first and the volume after, in the server's location, because a volume can't move between locations. Pin your choice with <code>TYPE=cx43</code> or <code>LOCATION=hel1</code>.</p>
+        <p>If the volume step fails with <code>volumes size limit exceeded (resource_limit_exceeded)</code>, your account's volume cap is lower than <code>VOLUME_GB</code>. Check <b>Limits</b> in the console. Other sizes and locations can be set with environment variables: <code>… | TYPE=ccx23 LOCATION=nbg1 bash</code>.</p>
       </section>
 
       <section class="tg-editorial__section" id="cmd1" aria-labelledby="cmd1-title">
@@ -296,6 +298,7 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       </div>
       <div class="fc-spec">
         <div class="tg-spec__row"><h3><code>volumes size limit exceeded</code></h3><p>Your account's total volume cap is below the requested size. New accounts get 1024 GB and can't ask for more yet. Keep <code>VOLUME_GB</code> at 1000 or less.</p></div>
+        <div class="tg-spec__row"><h3><code>error during placement (resource_unavailable)</code></h3><p>That server type is sold out in that location. Command 0 moves on by itself, ending with cpx41. If you pinned <code>TYPE</code> or <code>LOCATION</code>, try another, or wait a few minutes.</p></div>
         <div class="tg-spec__row"><h3><code>fc</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>fc</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
         <div class="tg-spec__row"><h3><code>fc login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
         <div class="tg-spec__row"><h3>"not visible on your node yet" after a write</h3><p>Read nodes relay and forget. If the gossip was lost, the message is gone: run the command again. We haven't lost one yet.</p></div>
