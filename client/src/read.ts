@@ -8,6 +8,11 @@ export type Profile = { fid: number; username?: string; display?: string; bio?: 
 export async function resolveFid(who: string): Promise<number> {
   const s = who.replace(/^@/, "");
   if (/^\d+$/.test(s)) return Number(s);
+  if (s === "me") {
+    // the account you logged in as (imported lazily: reads don't need keys)
+    const { loadKey } = await import("./keys.ts");
+    return (await loadKey()).fid;
+  }
   try {
     const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name: s });
     return proof.fid;

@@ -24,7 +24,7 @@ Usage:
   fc recast | unrecast <user/hash>
   fc user <name|fid>            Show a profile
   fc casts <name|fid> [-n 20]   A user's latest casts
-  fc feed <name|fid> [-n 30]    Latest casts from everyone they follow
+  fc feed <name|fid|me> [-n 30] Latest casts from everyone they follow
   fc apps <name|fid>            Which apps hold keys for this account
 
 Options:

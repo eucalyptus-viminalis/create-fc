@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4f4f4" />
+  <title>create-fc · Run your own Farcaster</title>
+  <meta name="description" content="Three commands to a self-hosted Snapchain read node and a Farcaster client that reads from it and posts through it. No API keys." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Caveat:wght@400..700&display=swap" />
+  <link rel="stylesheet" href="tangerine/css/tangerine.css" />
+  <link rel="stylesheet" href="fc-theme.css" />
+  <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+  <header class="tg-header">
+    <a class="tg-wordmark" href="#top" aria-label="create-fc home"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
+    <nav class="tg-header__nav" aria-label="Main navigation">
+      <a class="tg-quiet-link" href="#quickstart">Quickstart</a>
+      <a class="tg-quiet-link" href="#tutorial">Tutorial</a>
+      <a class="tg-quiet-link" href="#concepts">Concepts</a>
+      <a class="tg-quiet-link" href="#safety">Seed phrases</a>
+      <a class="tg-btn tg-btn--ink" href="https://github.com/eucalyptus-viminalis/create-fc"><span data-tg-icon="arrowUpRight" data-tg-size="18"></span>GitHub</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="tg-hero" aria-labelledby="hero-title">
+      <div class="tg-hero__copy">
+        <h1 id="hero-title">Your own Farcaster.<br />Three commands.</h1>
+        <p class="tg-hero__desc">Rent a server, sync a Snapchain read node on it, and install a client that reads from that node and posts through it. No API keys from anyone.</p>
+        <p class="tg-hero__note">Your reads come from your node. Your casts go out through it.</p>
+      </div>
+
+      <div class="fc-hero-term">
+        <div class="tg-tabs" role="tablist" aria-label="Command" data-tg-tabs>
+          <button class="tg-tabs__tab" role="tab" id="t0" aria-controls="p0" aria-selected="true">0 · Server</button>
+          <button class="tg-tabs__tab" role="tab" id="t1" aria-controls="p1" aria-selected="false">1 · Node</button>
+          <button class="tg-tabs__tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">2 · Client</button>
+        </div>
+        <div id="p0" role="tabpanel" aria-labelledby="t0" tabindex="0">
+          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+<pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash
+<span class="fc-o">Waiting for create_volume (volume: 107177392) ... done
+Waiting for create_server (server: 170981475, image: 161547269) ... done
+Server 170981475 created
+IPv4: 2.28.135.100</span></code></pre></div>
+          <p class="fc-caption">A cx43 server with a 1000 GB volume and a firewall. Took 35 seconds.</p>
+        </div>
+        <div id="p1" role="tabpanel" aria-labelledby="t1" tabindex="0" hidden>
+          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer → the server</span></div>
+<pre><code><span class="fc-p">$</span> ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'
+<span class="fc-o">shard 0 done in 10 min; disk used 37G
+shard 1 done in 63 min; disk used 297G
+shard 2 done in 63 min; disk used 556G
+snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
+          <p class="fc-caption">Snapshot loaded in 2 h 17 min, then about 5½ hours of catching up.</p>
+        </div>
+        <div id="p2" role="tabpanel" aria-labelledby="t2" tabindex="0" hidden>
+          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+<pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381
+<span class="fc-p">$</span> fc cast "hello from my own snapchain read node 👋"
+<span class="fc-o">posted 0x085bf8a4279a3a92fb443a9c7a66ddd6eca69e3e</span></code></pre></div>
+          <p class="fc-caption">Sent to our own read node and confirmed on it 1.8 seconds later.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Proof -->
+    <section class="tg-container tg-section" aria-label="In numbers">
+      <div class="tg-grid-3">
+        <div class="tg-stat"><strong class="tg-numeral">0</strong><h2 class="tg-stat__label">API keys</h2><p class="tg-stat__desc">Your node syncs from the network's own peers and snapshots. Your client only talks to your node.</p></div>
+        <div class="tg-stat"><strong class="tg-numeral">8</strong><h2 class="tg-stat__label">Hours to first sync</h2><p class="tg-stat__desc">2¼ to load the snapshot, then about 5½ to catch up. It runs on its own while you do something else.</p></div>
+        <div class="tg-stat"><strong class="tg-numeral">$4</strong><h2 class="tg-stat__label">For a one-day test</h2><p class="tg-stat__desc">Hetzner bills by the hour: about $0.16. Delete the server when you're done. <a class="tg-text-link" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/Costs.md">Full costs</a></p></div>
+      </div>
+    </section>
+
+    <!-- Quickstart -->
+    <section class="tg-container tg-section tg-section--ruled" id="quickstart" aria-labelledby="qs-title">
+      <div class="tg-section-head">
+        <p class="tg-eyebrow">Quickstart</p>
+        <h2 class="tg-display-2" id="qs-title">Copy, paste, wait.</h2>
+      </div>
+
+      <div class="fc-prereq">
+        <h3 class="tg-title">You need</h3>
+        <ul class="tg-checklist tg-checklist--sm">
+          <li>A Hetzner Cloud project and an API token with Read &amp; Write access, made at console.hetzner.com</li>
+          <li>The <code>hcloud</code> CLI, logged in: <code>brew install hcloud</code>, then <code>hcloud context create fc-node</code></li>
+          <li>An SSH key in <code>~/.ssh</code> (<code>ssh-keygen -t ed25519</code> if you don't have one)</li>
+          <li>Node.js 22.18 or newer, and git</li>
+          <li>To post: a Farcaster account that already has storage. Use a test account; see <a class="tg-text-link" href="#safety">seed phrases</a></li>
+        </ul>
+      </div>
+
+      <ol class="fc-steps">
+        <li>
+          <h3 class="tg-title">Create the server</h3>
+          <p class="tg-body">A cx43 (8 vCPU, 16 GB RAM) with a 1000 GB volume, in Falkenstein. It prints the next two commands with your server's IP filled in.</p>
+          <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+        <li>
+          <h3 class="tg-title">Set up the node</h3>
+          <p class="tg-body">Give the server a minute to boot. Setup runs in the background, so you can close the terminal. Check on it with <code>ssh root@&lt;ip&gt; fc-node status</code>.</p>
+          <div class="fc-term fc-term--copy"><pre><code>ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+        <li>
+          <h3 class="tg-title">Install the client</h3>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then try <code>fc feed dwr</code>.</p>
+          <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+      </ol>
+
+      <p class="tg-footnote fc-note">Already have a Linux box with 16 GB of RAM and ~700 GB free? Skip step 0 and run step 1's <code>curl … | bash</code> on it as root. There is no npm package: <code>npm create fc</code> runs an unrelated package someone else published in 2022.</p>
+    </section>
+
+    <!-- Tutorial -->
+    <div class="fc-doc" id="tutorial">
+      <div class="tg-editorial__intro">
+        <p class="tg-eyebrow">Tutorial</p>
+        <h2 class="tg-display-2">What each command does, and why.</h2>
+        <p class="tg-lead">The quickstart works without reading any of this. Read it when you want to know what's running on your server, what you just signed, or what to do when something breaks. Every output and timing here is from a real run on 18–19 October 2026.</p>
+      </div>
+
+      <section class="tg-editorial__section" id="before" aria-labelledby="before-title">
+        <h2 id="before-title">Before you start: Hetzner</h2>
+        <p>Command 0 uses <a class="tg-text-link" href="https://www.hetzner.com/cloud/">Hetzner Cloud</a> because it bills by the hour and has a clean CLI. Hetzner has no API for creating projects or tokens, so this part happens in the browser:</p>
+        <ol>
+          <li>Sign up at console.hetzner.com. New accounts may need ID or payment verification before they can create servers, which can take a while. Do this first.</li>
+          <li>Create a project, then <b>Security → API tokens → Generate API token</b> with Read &amp; Write access. Hetzner shows it once.</li>
+          <li>Run <code>hcloud context create fc-node</code> and paste the token. It's saved in plain text in <code>~/.config/hcloud/cli.toml</code>. A project used only for this keeps the token's reach small.</li>
+        </ol>
+        <p><b>New accounts can only have 1024 GB of volumes in total</b>, and Hetzner won't raise that until the account is older: the Limits page says "Your account is too new to request a limit increase." The official Snapchain installer needs about 2 TB, so we load the database differently (see command 1) and fit in 1000 GB.</p>
+        <table class="fc-table">
+          <caption>What it costs (USD, incl. 10% VAT, prices from the Hetzner API)</caption>
+          <thead><tr><th>Item</th><th>Per month</th><th>Per hour</th></tr></thead>
+          <tbody>
+            <tr><td>cx43 server, 8 shared vCPU, 16 GB RAM</td><td>$20.34</td><td>$0.033</td></tr>
+            <tr><td>1000 GB volume</td><td>$84.37</td><td>~$0.12–0.14</td></tr>
+            <tr><td>IPv4 address</td><td>$0.66</td><td>$0.001</td></tr>
+            <tr><td><b>Total</b></td><td><b>$105.37</b></td><td><b>~$0.16</b></td></tr>
+          </tbody>
+        </table>
+        <p>Powering a server off doesn't stop the bill. Only deleting it does:</p>
+        <div class="fc-term fc-term--copy"><pre><code>hcloud server delete fc-node && hcloud volume delete fc-node-data && hcloud firewall delete fc-node-fw</code></pre><button class="fc-copy" type="button">Copy</button></div>
+      </section>
+
+      <section class="tg-editorial__section" id="cmd0" aria-labelledby="cmd0-title">
+        <h2 id="cmd0-title">Command 0: the server</h2>
+        <p><code>provision/hetzner.sh</code> creates four things, each named so a re-run finds and reuses it: an SSH key, a firewall, a volume, and the server. The volume comes first, so it's attached when the server first boots and formats it at <code>/srv/snapchain</code>.</p>
+        <p>The firewall opens exactly what a read node needs:</p>
+        <table class="fc-table">
+          <thead><tr><th>Port</th><th>Protocol</th><th>For</th></tr></thead>
+          <tbody>
+            <tr><td>3381</td><td>TCP</td><td>HTTP API. Your client talks to this.</td></tr>
+            <tr><td>3382</td><td><b>UDP</b></td><td>Gossip with other nodes (libp2p over QUIC). A TCP-only rule leaves the node unable to peer.</td></tr>
+            <tr><td>3383</td><td>TCP</td><td>gRPC API, the same data as 3381 for other tools</td></tr>
+            <tr><td>22</td><td>TCP</td><td>SSH</td></tr>
+            <tr><td>3000</td><td>TCP</td><td><b>Closed.</b> The node ships Grafana with the login admin / admin.</td></tr>
+          </tbody>
+        </table>
+        <p>If the volume step fails with <code>volumes size limit exceeded (resource_limit_exceeded)</code>, your account's volume cap is lower than <code>VOLUME_GB</code>. Check <b>Limits</b> in the console. Other sizes and locations can be set with environment variables: <code>TYPE=ccx23 LOCATION=nbg1 bash</code>.</p>
+      </section>
+
+      <section class="tg-editorial__section" id="cmd1" aria-labelledby="cmd1-title">
+        <h2 id="cmd1-title">Command 1: the read node</h2>
+        <p>Snapchain is the network that stores Farcaster's messages: every cast, like, follow and profile change. Its official installer, <code>snapchain.sh</code>, runs the node in Docker. <code>node/setup.sh</code> wraps it, starts it as a systemd job so you can disconnect, and changes one thing: how the database gets loaded.</p>
+        <h3>Loading the snapshot</h3>
+        <p>A new node doesn't replay Farcaster from the beginning. It downloads a daily snapshot of each shard (about 397 GB compressed, in ~70 MB pieces) and then fetches the blocks made since. The node's own loader keeps every downloaded piece and an uncompressed copy of each shard until all three are unpacked. We estimate that peaks around 1.5 TB, which is why the docs ask for 2 TB.</p>
+        <p><code>fc-load-snapshot</code> streams instead: download a piece, unzip it straight into the database, delete it, repeat. The node only downloads a snapshot when its database folder is empty, so afterwards it boots straight into catching up.</p>
+        <table class="fc-table">
+          <caption>Measured on a cx43 with a 1000 GB volume</caption>
+          <thead><tr><th>Shard</th><th>Pieces</th><th>Time</th><th>Disk used after</th></tr></thead>
+          <tbody>
+            <tr><td>0 (the block shard)</td><td>370</td><td>10 min</td><td>37 GB</td></tr>
+            <tr><td>1</td><td>2,671</td><td>63 min</td><td>297 GB</td></tr>
+            <tr><td>2</td><td>2,648</td><td>63 min</td><td>556 GB</td></tr>
+          </tbody>
+        </table>
+        <p>Disk use peaked at 556 GB, the size of the finished database.</p>
+        <h3>Catching up</h3>
+        <p>Our snapshot was 22 hours old by the time it finished loading. The node fetched the missing blocks at about 5 per second per shard and closed the gap by about 4 seconds every second, so it was in sync roughly 5½ hours later. The CPU sat 94% idle: the limit is fetching blocks from peers one after another, not the server.</p>
+        <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>on the server</span></div>
+<pre><code><span class="fc-p">$</span> fc status
+<span class="fc-o">node http://2.28.135.100:3381 · snapchain 0.14.3
+  shard 0  height 48242370  47661s behind
+  shard 1  height 48938063  26552s behind
+  shard 2  height 48754698  45879s behind
+catching up: 13.2h behind. Reads work now, but recent casts may be missing.</span></code></pre></div>
+        <p>That's two hours into catching up. Five hours later every shard read 0–3 s behind. On the server, <code>fc-node status</code> reports the same numbers, and during setup it shows the snapshot's progress instead.</p>
+        <p>"Behind" is <code>blockDelay</code> from <code>/v1/info</code>: how many seconds each shard's newest block trails the clock. A synced node stays in single digits. In the same response, <code>mempoolSize: 4294967295</code> is normal on a read node. It means "not reported", not an overflow.</p>
+        <p>Two things look alarming and aren't. <code>Failed to dial peer … HandshakeTimedOut</code> for a couple of the bootstrap addresses, and a steady trickle of <code>InsufficientPeers ("read-node-peers")</code>. Our node logged both all day and synced fine.</p>
+        <p>Why not the official one-liner? <code>snapchain-bootstrap.sh</code> reads its prompts from <code>/dev/tty</code>, which doesn't exist over <code>ssh host 'curl … | bash'</code> or in a systemd job. <code>setup.sh</code> answers both prompts in <code>.env</code> ahead of time and runs <code>snapchain.sh upgrade</code> directly.</p>
+      </section>
+
+      <section class="tg-editorial__section" id="cmd2" aria-labelledby="cmd2-title">
+        <h2 id="cmd2-title">Command 2: the client</h2>
+        <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>fc</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
+        <h3>Reading</h3>
+        <p>Every read is a plain GET to your node, so you can repeat any of them with curl:</p>
+        <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+<pre><code><span class="fc-p">$</span> fc casts pinkmink -n 1
+<span class="fc-o">@pinkmink · 2m · via @pinkmink  0x085bf8a4
+hello from my own snapchain read node 👋</span>
+
+<span class="fc-p">$</span> curl "http://&lt;ip&gt;:3381/v1/castsByFid?fid=3355372&amp;reverse=true&amp;pageSize=1"</code></pre></div>
+        <p>Snapchain has no "home feed" endpoint. A feed is something a client builds. Ours is the simplest version: ask the node who you follow, fetch the latest casts from each, and merge them by time. That's one request per account you follow. For an account following 1,041 people, the feed took 13.5 seconds from Sydney to our node in Germany, while the same 1,041 requests made on the server itself took 1.7 seconds. Running the client close to the node pays off.</p>
+        <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>fc feed</code> skips anything more than 10 minutes ahead.</p>
+        <h3>Posting</h3>
+        <p><code>fc login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
+        <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+<pre><code><span class="fc-o">seed phrase (hidden): ************ words
+  m/44'/60'/0'/0/0  0x97547ffbA3F3e5a7553aA36948F618f39647F2Ea  fid 3355372
+storage: 1 unit(s)
+app key: 0xaa2778f5b991db794630e34a0e192ce1633c135786ecbadf253406938ebdcf8e
+KEY_ADD: 0x23c71047ebe9209753273ca2b33c931989ddad97, nonce 2, ttl 30 days
+submitted to your node, which relays it to the validators. Waiting for it to land...
+done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed phrase was not saved.</span></code></pre></div>
+        <p>Then the usual verbs. Each one is signed with the app key, sent to your node, and read back from it until it shows up:</p>
+        <table class="fc-table">
+          <caption>Our first writes through our own read node, time until each was readable again</caption>
+          <thead><tr><th>Command</th><th>Confirmed after</th></tr></thead>
+          <tbody>
+            <tr><td><code>fc cast "hello from my own snapchain read node 👋"</code></td><td>1.8 s</td></tr>
+            <tr><td><code>fc like pinkmink/0x085bf8a4</code> · <code>fc recast …</code></td><td>4.0 s each</td></tr>
+            <tr><td><code>fc unlike …</code> · <code>fc unrecast …</code></td><td>4.0–4.1 s</td></tr>
+            <tr><td><code>fc follow 13642</code> · <code>fc unfollow 13642</code></td><td>6.3 s · 1.8 s</td></tr>
+          </tbody>
+        </table>
+        <p><code>@names</code> in a cast become real mentions, <code>--reply user/hash</code> replies, <code>--embed url</code> attaches a link, and <code>--dry-run</code> checks the message with your node without sending it.</p>
+        <h3>A username</h3>
+        <p><code>fc username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
+        <h3>Filtering by the app that posted</h3>
+        <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>fc</code> labels each cast with its app, and filters on it:</p>
+        <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+<pre><code><span class="fc-p">$</span> fc apps dwr
+<span class="fc-o">   1 key   @warpcast (fid 9152)
+   1 key   @baseapp.base.eth (fid 309857)
+   1 key   @neynar (fid 6131)</span>
+
+<span class="fc-p">$</span> fc feed me --not-app warpcast
+<span class="fc-p">$</span> fc feed me --app fireflyapp --app 9152</code></pre></div>
+        <p>In one account's feed of 16,416 recent casts, 89% came through the Farcaster app (fid 9152, still called @warpcast). Excluding it is a quick way to see what everything else looks like.</p>
+      </section>
+    </div>
+
+    <!-- Concepts -->
+    <section class="tg-container tg-section tg-section--ruled" id="concepts" aria-labelledby="concepts-title">
+      <div class="tg-section-head">
+        <p class="tg-eyebrow">Concepts</p>
+        <h2 class="tg-display-2" id="concepts-title">The pieces you just used.</h2>
+      </div>
+      <dl class="fc-concepts">
+        <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. Our test account is 3355372.</dd></div>
+        <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>fc login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
+        <div><dt>App keys (signers)</dt><dd>Ed25519 keys that sign everyday messages for one app. The custody key authorizes each one, naming the app that asked (its <code>requestFid</code>). One account can have many: Farcaster's app, Firefly, this client.</dd></div>
+        <div><dt>Gasless app keys</dt><dd>App keys used to be registered with an Optimism transaction. Now a <code>KEY_ADD</code> message does it: no transaction, no gas, about a second. Each key lists the message types it may sign (its scopes) and expires after 30–90 days unused.</dd></div>
+        <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>fc</code>.</dd></div>
+        <div><dt>Shards</dt><dd>Snapchain splits users across shards 1 and 2 by a hash of the FID. Shard 0 orders the other two and holds things every shard needs, like app keys. Each shard is its own chain, so their heights differ.</dd></div>
+        <div><dt>Read nodes vs validators</dt><dd>Validators propose and vote on blocks; there's a fixed set of them. A read node, like yours, fetches the decided blocks, checks their signatures, and serves the API. Anyone can run one.</dd></div>
+        <div><dt>Mempool and submission</dt><dd>Your read node accepts writes: it checks the message, gossips it to the validators, and keeps nothing. "Accepted" means "valid and relayed", not "in a block". That's why <code>fc</code> reads every write back. If gossip drops it, send it again.</dd></div>
+        <div><dt>Storage rent</dt><dd>An account needs rented storage units to post, paid on Optimism. One unit comes with registration (about $0.20 when we checked). When a store fills up, the oldest messages are pruned. <code>fc login</code> checks there's at least one unit.</dd></div>
+        <div><dt>fnames</dt><dd>Usernames like @dwr come from the fname server, which signs a proof that the network stores. ENS names (<code>.eth</code>) work too.</dd></div>
+      </dl>
+    </section>
+
+    <!-- Safety -->
+    <section class="tg-container tg-section tg-section--ruled tg-split" id="safety" aria-labelledby="safety-title">
+      <div>
+        <p class="tg-eyebrow">Seed phrases</p>
+        <h2 class="tg-display-2" id="safety-title">Treat it like rm&nbsp;-rf.</h2>
+        <p class="tg-body fc-split-text">A seed phrase is the master key to an account. Whoever has it can post as you, move your FID to themselves, and take any funds at the custody address. Like <code>rm -rf</code>, it's a normal tool that's unforgiving when used carelessly.</p>
+      </div>
+      <div class="fc-points">
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">Use a test account</h3><p class="tg-point__text">Not your main one. <code>client/scripts/new-test-account.ts</code> makes a fresh account for about $0.20 of ETH on Optimism, and shows its phrase once.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="document"></span><h3 class="tg-point__title">Read before you paste</h3><p class="tg-point__text">Only give a seed phrase to software from developers you trust, after reading what it does with it. For this client that's <code>client/src/keys.ts</code>: in memory, one signature, never written or sent.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet approves the key, and the phrase never leaves the wallet. Paste a phrase only when no such flow exists, as here.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="terminal"></span><h3 class="tg-point__title">Not through an AI's shell</h3><p class="tg-point__text">We learned this one live: run through a coding assistant's shell, the account script's output, phrase included, landed in the chat transcript. Run phrase commands in your own terminal.</p></article>
+      </div>
+    </section>
+
+    <!-- Troubleshooting -->
+    <section class="tg-container tg-section tg-section--ruled" id="troubleshooting" aria-labelledby="ts-title">
+      <div class="tg-section-head">
+        <p class="tg-eyebrow">When it breaks</p>
+        <h2 class="tg-display-2" id="ts-title">Errors we actually hit.</h2>
+      </div>
+      <div class="fc-spec">
+        <div class="tg-spec__row"><h3><code>volumes size limit exceeded</code></h3><p>Your account's total volume cap is below the requested size. New accounts get 1024 GB and can't ask for more yet. Keep <code>VOLUME_GB</code> at 1000 or less.</p></div>
+        <div class="tg-spec__row"><h3><code>fc</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>fc</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
+        <div class="tg-spec__row"><h3><code>fc login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
+        <div class="tg-spec__row"><h3>"not visible on your node yet" after a write</h3><p>Read nodes relay and forget. If the gossip was lost, the message is gone: run the command again. We haven't lost one yet.</p></div>
+        <div class="tg-spec__row"><h3><code>fc-node status</code>: "isn't answering and setup isn't running"</h3><p>Setup stopped partway. Run command 1 again: finished shards are skipped and a partial one is redone.</p></div>
+      </div>
+    </section>
+
+    <!-- Offer -->
+    <section class="tg-container tg-split tg-split--offer fc-offer" id="get" aria-labelledby="get-title">
+      <div>
+        <p class="tg-eyebrow">create-fc</p>
+        <h2 class="tg-display-2" id="get-title">Your node.<br />Your client.</h2>
+      </div>
+      <div class="tg-offer">
+        <h3 class="tg-offer__title">What you get</h3>
+        <ul class="tg-checklist">
+          <li>A Snapchain read node that syncs unattended</li>
+          <li>Reads, casts, follows, likes and recasts through it</li>
+          <li>A gasless app key, scoped and self-expiring</li>
+          <li>Feeds filtered by the app that posted</li>
+        </ul>
+        <a class="tg-btn tg-btn--ink tg-offer__action" href="https://github.com/eucalyptus-viminalis/create-fc"><span data-tg-icon="arrowUpRight" data-tg-size="18"></span>View on GitHub</a>
+        <p class="tg-offer__fineprint">MIT licensed. Not affiliated with Farcaster or Merkle Manufactory.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="tg-footer tg-container">
+    <a class="tg-wordmark tg-wordmark--sm" href="#top"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
+    <div class="tg-footer__links">
+      <a class="tg-btn tg-btn--pill" href="https://github.com/eucalyptus-viminalis/create-fc">GitHub</a>
+      <a class="tg-btn tg-btn--pill" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/Costs.md">Costs</a>
+      <a class="tg-btn tg-btn--pill" href="https://snapchain.farcaster.xyz">Snapchain docs</a>
+    </div>
+  </footer>
+
+  <script src="tangerine/js/tangerine.js" defer></script>
+  <script>
+    // Copy buttons on command blocks.
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".fc-copy");
+      if (!btn) return;
+      const text = btn.parentElement.querySelector("code").innerText.trim();
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "Copied";
+      } catch {
+        btn.textContent = "Select and copy";
+      }
+      setTimeout(() => (btn.textContent = "Copy"), 1500);
+    });
+  </script>
+</body>
+</html>

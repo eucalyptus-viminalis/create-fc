@@ -1,0 +1,173 @@
+/* Page composition for create-fc. Components come from Tangerine; this adds
+   the two things a tutorial needs that a product page doesn't: terminal
+   blocks and long-form prose (tables, lists, inline code). Tokens only. */
+
+html { scroll-padding-top: 84px; }
+
+/* ---------- inline code ---------- */
+code {
+  font-family: var(--tg-font-mono);
+  font-size: 0.88em;
+  padding: 1px 5px;
+  border-radius: var(--tg-radius-xs);
+  background: var(--tg-orange-wash);
+  color: var(--tg-ink-2);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- terminal blocks: the one dark surface ---------- */
+.fc-term {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--tg-radius-lg);
+  background: var(--fc-term-bg);
+  color: var(--fc-term-text);
+  box-shadow: var(--tg-shadow-float);
+  overflow: hidden;
+}
+.fc-term__bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px 0;
+}
+.fc-term__bar i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fc-term-dim);
+  opacity: 0.45;
+}
+.fc-term__bar span { margin-left: 8px; color: var(--fc-term-dim); font-size: var(--tg-text-2xs); }
+.fc-term pre {
+  margin: 0;
+  padding: 14px 16px 16px;
+  overflow-x: auto;
+  font-family: var(--tg-font-mono);
+  font-size: var(--tg-text-xs);
+  line-height: 1.65;
+  white-space: pre;
+}
+.fc-term code { padding: 0; background: none; color: inherit; font-size: inherit; overflow-wrap: normal; }
+.fc-term .fc-p { color: var(--fc-term-prompt); user-select: none; }
+.fc-term .fc-o { color: var(--fc-term-dim); }
+
+/* one-line command with a copy button */
+.fc-term--copy { display: flex; align-items: center; }
+.fc-term--copy pre { flex: 1; padding: 14px 16px; }
+.fc-copy {
+  flex-shrink: 0;
+  margin-right: 10px;
+  padding: 6px 12px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: var(--tg-radius-pill);
+  background: transparent;
+  color: var(--fc-term-text);
+  font: inherit;
+  font-size: var(--tg-text-2xs);
+  cursor: pointer;
+  transition: background var(--tg-dur-base);
+}
+.fc-copy:hover { background: rgb(255 255 255 / 0.08); }
+
+/* ---------- hero terminal ---------- */
+.fc-hero-term {
+  width: min(760px, 100%);
+  min-width: 0;
+  margin: 40px auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  justify-items: center;
+}
+/* long command lines scroll inside the terminal, never the page */
+.fc-hero-term [role="tabpanel"] { width: 100%; min-width: 0; }
+.fc-hero-term .tg-tabs { max-width: 100%; }
+.fc-caption { margin-top: 12px; text-align: center; color: var(--tg-sage); font-size: var(--tg-text-sm); }
+
+/* ---------- quickstart ---------- */
+.fc-prereq {
+  padding: 26px 28px;
+  margin-bottom: 26px;
+  border: 1px solid var(--tg-border);
+  border-radius: var(--tg-radius-card);
+  background: var(--tg-surface);
+}
+.fc-prereq .tg-title { margin-bottom: 16px; }
+.fc-steps { list-style: none; counter-reset: step -1; display: grid; gap: 14px; padding: 0; }
+.fc-steps > li {
+  counter-increment: step;
+  display: grid;
+  gap: 10px;
+  padding: 26px 28px;
+  border: 1px solid var(--tg-border);
+  border-radius: var(--tg-radius-card);
+  background: var(--tg-surface);
+}
+.fc-steps > li .tg-title::before {
+  content: counter(step);
+  margin-right: 12px;
+  color: var(--tg-orange);
+  font-variant-numeric: tabular-nums;
+}
+.fc-steps .tg-body { color: var(--tg-text-2); }
+.fc-note { margin-top: 18px; }
+
+/* ---------- tutorial prose ---------- */
+.fc-doc {
+  width: min(var(--tg-narrow-width), calc(100% - 2 * var(--tg-gutter)));
+  margin: 40px auto 0;
+  border-top: 1px solid var(--tg-border-editorial);
+}
+.fc-doc .tg-editorial__intro { padding-top: 64px; }
+.fc-doc .tg-editorial__intro h2 { margin-top: 10px; }
+.fc-doc .tg-lead { margin-top: 18px; color: var(--tg-text-2); }
+.fc-doc section > h3 { margin: 30px 0 10px; font-size: var(--tg-text-title); font-weight: var(--tg-weight-title); }
+.fc-doc section > p,
+.fc-doc section > ol,
+.fc-doc section > ul { color: var(--tg-ink-3); font-size: 15px; line-height: 1.75; }
+.fc-doc section > p + p { margin-top: 14px; }
+.fc-doc section > ol { padding-left: 20px; margin: 12px 0 16px; display: grid; gap: 8px; }
+.fc-doc section > .fc-term,
+.fc-doc section > .fc-table { margin: 20px 0; }
+.fc-doc b { font-weight: var(--tg-weight-title); color: var(--tg-ink); }
+
+.fc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tg-text-sm);
+  display: block;
+  overflow-x: auto;
+}
+.fc-table caption { padding-bottom: 10px; text-align: left; color: var(--tg-text-2); font-size: var(--tg-text-xs); }
+.fc-table th, .fc-table td { padding: 10px 14px 10px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--tg-border-editorial); }
+.fc-table th { color: var(--tg-text-2); font-weight: var(--tg-weight-title); }
+.fc-table td:not(:first-child) { white-space: nowrap; }
+
+/* ---------- concepts ---------- */
+.fc-concepts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.fc-concepts > div { padding: 22px 24px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); }
+.fc-concepts dt { font-size: var(--tg-text-title); font-weight: var(--tg-weight-title); }
+.fc-concepts dd { margin: 8px 0 0; color: var(--tg-text-2); font-size: var(--tg-text-body); line-height: 1.7; }
+
+/* ---------- safety ---------- */
+.fc-split-text { max-width: 420px; margin-top: 18px; color: var(--tg-text-2); line-height: 1.75; }
+.fc-points { display: grid; gap: 26px; }
+
+/* ---------- troubleshooting: question / answer rows ---------- */
+.fc-spec .tg-spec__row { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; }
+.fc-spec h3 { font-size: var(--tg-text-body); font-weight: var(--tg-weight-title); line-height: 1.5; }
+.fc-spec p { color: var(--tg-text-2); font-size: var(--tg-text-body); line-height: 1.7; }
+
+.fc-offer { padding-block: 28px 104px; }
+
+@media (max-width: 700px) {
+  .fc-hero-term { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
+  .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
+  .fc-concepts { grid-template-columns: 1fr; }
+  .fc-steps > li, .fc-prereq { padding: 22px 20px; }
+  .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
+  .fc-term--copy { flex-direction: column; align-items: stretch; }
+  .fc-copy { margin: 0 12px 12px auto; }
+  .tg-header__nav .tg-quiet-link { display: none; }
+}

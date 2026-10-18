@@ -1,0 +1,27 @@
+/* create-fc theme on top of Tangerine.
+   Tangerine's one loud colour is orange; here it is Farcaster purple, taken
+   from farcaster.xyz (action #7959ff, logo #8a63d2, wash #f8f6ff). The deep
+   and link shades are darker steps of the same hue so text passes AA on white
+   (6.5:1 and 6.0:1). Token names stay --tg-orange-* so every component picks
+   the purple up unchanged. */
+:root {
+  --tg-orange: #7959ff;
+  --tg-orange-vivid: #8a63d2;
+  --tg-orange-deep: #5d43d6;
+  --tg-orange-link: #6247de;
+  --tg-orange-pressed: #6a4ee6;
+  --tg-orange-wash: #f8f6ff;
+  --tg-orange-edge: #d6ccff;
+  --tg-orange-line: #e2dbf7;
+
+  /* terminal blocks: the tutorial's one dark surface */
+  --fc-term-bg: var(--tg-ink);
+  --fc-term-text: #e9ece9;
+  --fc-term-dim: #9aa29b;
+  --fc-term-prompt: #b3a3ff;
+}
+
+/* Brand mark: three wedges, for three commands (and Snapchain's three shards). */
+.tg-mark {
+  background: repeating-conic-gradient(from -54deg, var(--tg-orange-vivid) 0 108deg, transparent 108deg 120deg);
+}
