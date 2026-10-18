@@ -1,0 +1,28 @@
+#!/bin/bash
+# fc-node: check on a read node set up by node/setup.sh.
+#   fc-node status   setup progress, then how far behind the network it is
+#   fc-node logs     follow the setup log (Ctrl-C to stop; the node keeps going)
+set -uo pipefail
+LOG=/var/log/fc-node-setup.log
+
+case "${1:-status}" in
+  logs) exec tail -n 30 -F "$LOG" ;;
+  status)
+    info=$(curl -s -m 5 localhost:3381/v1/info || true)
+    if [ -n "$info" ] && echo "$info" | jq -e .shardInfos >/dev/null 2>&1; then
+      echo "$info" | jq -r '.shardInfos | sort_by(.shardId)[] | "  shard \(.shardId): \(.blockDelay)s behind"'
+      worst=$(echo "$info" | jq '[.shardInfos[].blockDelay] | max')
+      if [ "$worst" -lt 10 ]; then echo "in sync. Run command 2 on your own computer."
+      else awk -v w="$worst" 'BEGIN { printf "catching up: %.1f h behind, gaining about 4 s per second (~%.1f h to go).\n", w/3600, w/4/3600 }'; fi
+    elif systemctl is-active --quiet fc-node-setup; then
+      echo "setup running. Latest:"
+      grep -E "shard [0-9]|setup|loaded" "$LOG" | tail -n 2 | sed 's/^/  /'
+    else
+      echo "the node isn't answering and setup isn't running. Last lines of $LOG:"
+      tail -n 15 "$LOG" 2>/dev/null | sed 's/^/  /'
+      echo "re-run command 1 to resume."
+      exit 1
+    fi
+    ;;
+  *) echo "usage: fc-node status | logs"; exit 1 ;;
+esac

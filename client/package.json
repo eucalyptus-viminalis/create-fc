@@ -1,0 +1,28 @@
+{
+  "name": "fc-client",
+  "version": "0.1.0",
+  "description": "A minimal Farcaster client that reads from and writes to your own Snapchain node",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "fc": "./src/cli.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "fc": "node src/cli.ts",
+    "check": "tsc --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "new-test-account": "node scripts/new-test-account.ts"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@farcaster/core": "0.20.0",
+    "@scure/bip39": "1.6.0",
+    "viem": "2.57.1"
+  }
+}

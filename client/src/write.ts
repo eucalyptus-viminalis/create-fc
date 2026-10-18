@@ -1,0 +1,153 @@
+// Writes: cast, delete, follow, unfollow, like, recast. Each is a protobuf
+// message signed by your app key and POSTed to your own node, which checks it
+// and relays it to the validators. A read node keeps no mempool, so "accepted"
+// only means "valid and relayed". We confirm every write by reading it back.
+
+import {
+  CastType,
+  FarcasterNetwork,
+  Message as MessageProto,
+  ReactionType,
+  makeCastAdd,
+  makeCastRemove,
+  makeLinkAdd,
+  makeLinkRemove,
+  makeReactionAdd,
+  makeReactionRemove,
+  type HubAsyncResult,
+  type Message as ProtoMessage,
+} from "@farcaster/core";
+import { bytesToHex, hexToBytes, type Hex } from "viem";
+import { appSigner, loadKey, type AppKey } from "./keys.ts";
+import { NodeError, get, post, type Message, type Page } from "./node.ts";
+import { resolveFid } from "./read.ts";
+
+const MAX_CAST_BYTES = 320; // 1,024 for Pro accounts
+
+export type CastRef = { fid: number; hash: Hex };
+
+// "dwr/0x35c7b588" -> the full cast id. The short hash is what `fc casts` and
+// `fc feed` print; we find the full one among that user's recent casts.
+export async function resolveCast(ref: string): Promise<CastRef> {
+  const m = ref.match(/^@?([^/]+)\/(0x[0-9a-fA-F]+)$/);
+  if (!m) throw new NodeError(`"${ref}" isn't a cast reference. Use user/hash, e.g. dwr/0x35c7b588`);
+  const fid = await resolveFid(m[1]!);
+  const prefix = m[2]!.toLowerCase();
+  if (prefix.length === 42) return { fid, hash: prefix as Hex };
+  const page = await get<Page>("/v1/castsByFid", { fid, pageSize: 1000, reverse: true });
+  const hits = page.messages.filter((c) => c.hash.startsWith(prefix));
+  if (hits.length === 0) throw new NodeError(`no cast starting ${prefix} among @${m[1]}'s last 1,000 casts`);
+  if (hits.length > 1) throw new NodeError(`${prefix} matches ${hits.length} casts; use more of the hash`);
+  return { fid, hash: hits[0]!.hash as Hex };
+}
+
+// Turn "@dwr" in the text into a real mention. Farcaster stores mentions out
+// of band: the name is cut from the text, and its FID and byte offset go in
+// `mentions` and `mentionsPositions`. Clients put the name back when they
+// render, which is why renaming yourself doesn't break old mentions.
+async function extractMentions(text: string) {
+  const enc = new TextEncoder();
+  const mentions: number[] = [];
+  const mentionsPositions: number[] = [];
+  let out = "";
+  let last = 0;
+  for (const m of text.matchAll(/(^|\s)@([a-z0-9][a-z0-9-]{0,15}(?:\.eth)?)\b/g)) {
+    const start = m.index! + m[1]!.length;
+    let fid: number;
+    try {
+      fid = await resolveFid(m[2]!);
+    } catch {
+      continue; // not a user: leave "@word" as plain text
+    }
+    out += text.slice(last, start);
+    mentionsPositions.push(enc.encode(out).length);
+    mentions.push(fid);
+    last = start + 1 + m[2]!.length;
+  }
+  out += text.slice(last);
+  return { text: out, mentions, mentionsPositions };
+}
+
+async function send(key: AppKey, built: HubAsyncResult<ProtoMessage>, dryRun = false): Promise<Hex> {
+  const r = await built;
+  if (r.isErr()) throw new NodeError(`couldn't build the message: ${r.error.message}`);
+  const bytes = MessageProto.encode(r.value).finish();
+  if (dryRun) {
+    const { valid } = await post<{ valid: boolean }>("/v1/validateMessage", bytes);
+    if (!valid) throw new NodeError("your node's stateless checks reject this message");
+  } else {
+    await post("/v1/submitMessage", bytes);
+  }
+  return bytesToHex(r.value.hash);
+}
+
+// Poll a read until it succeeds (or, for removals, until it stops succeeding).
+async function confirm(read: () => Promise<unknown>, wantPresent = true, timeoutMs = 60_000): Promise<boolean> {
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    const present = await read().then(() => true, () => false);
+    if (present === wantPresent) return true;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return false;
+}
+
+const opts = (key: AppKey) => ({ fid: key.fid, network: FarcasterNetwork.MAINNET });
+
+export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string[]; dryRun?: boolean } = {}) {
+  const key = await loadKey();
+  const body = await extractMentions(text);
+  const bytes = new TextEncoder().encode(body.text).length;
+  if (bytes > MAX_CAST_BYTES) throw new NodeError(`that's ${bytes} bytes; casts max out at ${MAX_CAST_BYTES}`);
+  const hash = await send(
+    key,
+    makeCastAdd(
+      {
+        ...body,
+        type: CastType.CAST,
+        embeds: (o.embeds ?? []).map((url) => ({ url })),
+        embedsDeprecated: [],
+        parentCastId: o.replyTo ? { fid: o.replyTo.fid, hash: hexToBytes(o.replyTo.hash) } : undefined,
+      },
+      opts(key),
+      appSigner(key),
+    ),
+    o.dryRun,
+  );
+  if (o.dryRun) return { hash, landed: false, text: body.text, mentions: body.mentions };
+  const landed = await confirm(() => get<Message>("/v1/castById", { fid: key.fid, hash }));
+  return { hash, landed, text: body.text, mentions: body.mentions };
+}
+
+export async function deleteCast(hash: Hex) {
+  const key = await loadKey();
+  await send(key, makeCastRemove({ targetHash: hexToBytes(hash) }, opts(key), appSigner(key)));
+  const landed = await confirm(() => get<Message>("/v1/castById", { fid: key.fid, hash }), false);
+  return { landed };
+}
+
+export async function follow(targetFid: number, on = true) {
+  const key = await loadKey();
+  const body = { type: "follow", targetFid };
+  await send(key, on ? makeLinkAdd(body, opts(key), appSigner(key)) : makeLinkRemove(body, opts(key), appSigner(key)));
+  const landed = await confirm(() => get<Message>("/v1/linkById", { fid: key.fid, target_fid: targetFid, link_type: "follow" }), on);
+  return { landed };
+}
+
+export async function react(kind: "like" | "recast", target: CastRef, on = true) {
+  const key = await loadKey();
+  const type = kind === "like" ? ReactionType.LIKE : ReactionType.RECAST;
+  const body = { type, targetCastId: { fid: target.fid, hash: hexToBytes(target.hash) } };
+  await send(key, on ? makeReactionAdd(body, opts(key), appSigner(key)) : makeReactionRemove(body, opts(key), appSigner(key)));
+  const landed = await confirm(
+    () =>
+      get<Message>("/v1/reactionById", {
+        fid: key.fid,
+        reaction_type: kind === "like" ? "Like" : "Recast",
+        target_fid: target.fid,
+        target_hash: target.hash,
+      }),
+    on,
+  );
+  return { landed };
+}

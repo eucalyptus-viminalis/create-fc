@@ -1,0 +1,8 @@
+developer/
+HANDOFF.md
+node_modules/
+.env
+*.key
+*appkey*.json
+.fc-client/
+.DS_Store
