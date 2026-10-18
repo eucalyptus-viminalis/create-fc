@@ -111,6 +111,15 @@ code {
   font-variant-numeric: tabular-nums;
 }
 .fc-steps .tg-body { color: var(--tg-text-2); }
+.fc-done {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 22px 28px;
+  border: 1px dashed var(--tg-border-hover);
+  border-radius: var(--tg-radius-card);
+}
+.fc-done .tg-body { color: var(--tg-text-2); }
 .fc-note { margin-top: 18px; }
 
 /* ---------- tutorial prose ---------- */
@@ -165,7 +174,7 @@ code {
   .fc-hero-term { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts { grid-template-columns: 1fr; }
-  .fc-steps > li, .fc-prereq { padding: 22px 20px; }
+  .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }
   .fc-copy { margin: 0 12px 12px auto; }

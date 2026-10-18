@@ -73,6 +73,6 @@ Then, once  ssh root@$ip fc-node status  says "in sync", command 2 on this compu
 
   curl -fsSL $RAW/client/install.sh | bash -s -- http://$ip:3381
 
-To delete everything and stop billing:
-  hcloud server delete $NAME && hcloud volume delete $vol && hcloud firewall delete $fw
+To delete everything and stop billing (it asks before deleting):
+  curl -fsSL $RAW/provision/hetzner-delete.sh | bash
 EOF

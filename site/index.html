@@ -113,6 +113,12 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         </li>
       </ol>
 
+      <div class="fc-done">
+        <h3 class="tg-title">Done for now?</h3>
+        <p class="tg-body">Delete the server so it stops billing. It asks before deleting anything.</p>
+        <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
+      </div>
+
       <p class="tg-footnote fc-note">Already have a Linux box with 16 GB of RAM and ~700 GB free? Skip step 0 and run step 1's <code>curl … | bash</code> on it as root. There is no npm package: <code>npm create fc</code> runs an unrelated package someone else published in 2022.</p>
     </section>
 
@@ -143,8 +149,9 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
             <tr><td><b>Total</b></td><td><b>$105.37</b></td><td><b>~$0.16</b></td></tr>
           </tbody>
         </table>
-        <p>Powering a server off doesn't stop the bill. Only deleting it does:</p>
-        <div class="fc-term fc-term--copy"><pre><code>hcloud server delete fc-node && hcloud volume delete fc-node-data && hcloud firewall delete fc-node-fw</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <p>Powering a server off doesn't stop the bill. Only deleting it does. This lists what it found, asks you to type <code>fc-node</code>, and deletes the server, volume, firewall and SSH key (34 seconds for us):</p>
+        <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <p>The volume holds the database, so the next node re-syncs from scratch. Your app key in <code>~/.fc-client</code> survives; point the client at the new node by running command 2 again with the new IP.</p>
       </section>
 
       <section class="tg-editorial__section" id="cmd0" aria-labelledby="cmd0-title">

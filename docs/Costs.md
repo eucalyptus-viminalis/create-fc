@@ -55,15 +55,13 @@ These costs use the hourly total above:
 | 1 week | ~$25–28 |
 | 1 month | $105.37 (capped) |
 
-When you're done, delete everything so billing stops:
+When you're done, delete everything so billing stops. The script lists the server, volume, firewall and SSH key it found, asks you to type the server's name, then deletes them in the right order. It took 34 seconds for us, and running it again is harmless:
 
 ```bash
-hcloud server delete fc-node
-hcloud volume delete fc-node-data
-hcloud firewall delete fc-node-fw
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
 ```
 
-The firewall and SSH key are free, but deleting them keeps the project tidy. The volume can only be deleted after the server is gone, or after `hcloud volume detach fc-node-data`.
+The volume holds the node's database, so a new node re-syncs from scratch (about 8 hours). To do it by hand instead: `hcloud server delete fc-node`, then `hcloud volume delete fc-node-data`, `hcloud firewall delete fc-node-fw` and `hcloud ssh-key delete fc-node-key`. The volume can only be deleted once the server is gone.
 
 ## Why 1000 GB is enough
 

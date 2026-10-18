@@ -28,6 +28,14 @@ Then `fc feed dwr`, `fc casts <you>`, and, after reading what it prints, `fc log
 
 Already have a Linux box with 16 GB RAM and ~700 GB free? Skip command 0 and run command 1 on it.
 
+**Done for now?** Delete the server, volume and firewall so nothing keeps billing. It lists what it will delete and asks you to type the server's name:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
+```
+
+Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, then re-run command 2 with the new IP.
+
 > **There is no npm package.** `npm create fc` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
 
 ## Seed phrases
@@ -43,7 +51,7 @@ Already have a Linux box with 16 GB RAM and ~700 GB free? Skip command 0 and run
 
 | Path | What |
 | --- | --- |
-| `provision/` | Command 0: Hetzner server, volume and firewall |
+| `provision/` | Command 0: Hetzner server, volume and firewall, and `hetzner-delete.sh` to remove them |
 | `node/` | Command 1: Docker, a streamed snapshot load that peaks at 556 GB instead of ~1.5 TB, the official `snapchain.sh`, and `fc-node status` |
 | `client/` | Command 2: `fc`, a TypeScript CLI with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
 | `docs/` | Costs and design decisions |
