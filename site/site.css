@@ -92,6 +92,29 @@ code {
 .fc-hero-term .tg-tabs { max-width: 100%; }
 .fc-caption { margin-top: 12px; text-align: center; color: var(--tg-sage); font-size: var(--tg-text-sm); }
 
+/* ---------- hero: explained terms ---------- */
+.term { position: relative; border-bottom: 1.5px dotted var(--tg-orange-edge); cursor: help; outline: none; }
+.term:hover, .term:focus-visible { color: var(--tg-orange-deep); border-bottom-color: currentColor; }
+.tip {
+  position: absolute; left: 50%; bottom: calc(100% + 10px); z-index: 5;
+  width: 260px; padding: 12px 14px;
+  border: 1px solid var(--tg-border); border-radius: var(--tg-radius-md);
+  background: var(--tg-surface); box-shadow: var(--tg-shadow-popover);
+  color: var(--tg-ink-2); font-size: 12.5px; line-height: 1.55; text-align: left;
+  opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(4px);
+  transition: opacity var(--tg-dur-fast), transform var(--tg-dur-fast);
+}
+.tip a { color: var(--tg-orange-link); }
+.tip::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--tg-surface); }
+.term:hover .tip, .term:focus-within .tip { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+
+/* ---------- hero: what each command does, and how long ---------- */
+.lead-in { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 2px 12px; text-align: left; }
+.lead-in__what { color: var(--tg-ink); font-size: 18px; font-weight: 550; letter-spacing: -0.01em; }
+.lead-in__what .aside { color: var(--tg-text-2); font-size: 14px; font-weight: 400; letter-spacing: 0; }
+.lead-in__what a { color: var(--tg-orange-link); }
+.lead-in__time { color: var(--tg-text-2); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* ---------- quickstart ---------- */
 .fc-prereq {
   padding: 26px 28px;
@@ -193,6 +216,9 @@ code {
 .fc-vouch { margin-top: 22px; }
 
 @media (max-width: 700px) {
+  .tip { position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto; transform: translateY(8px); }
+  .term:hover .tip, .term:focus-within .tip { transform: none; }
+  .tip::after { display: none; }
   .fc-hero-term { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
