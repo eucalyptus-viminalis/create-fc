@@ -34,10 +34,11 @@ function ago(iso) {
   return `${Math.floor(s / 86400)}d`;
 }
 
-const pic = (url, cls = "") =>
+// A profile picture, or the name's first letter when there isn't one.
+const pic = (url, cls = "", name = "") =>
   url && /^https:\/\//.test(url)
     ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
-    : `<span class="${cls} ph" aria-hidden="true"></span>`;
+    : `<span class="${cls} ph" aria-hidden="true">${esc(String(name).replace(/^[@!]/, "").charAt(0).toUpperCase())}</span>`;
 
 function toast(msg) {
   const t = $("#toast");
@@ -212,7 +213,7 @@ function castHtml(c, i) {
       </div>`
     : "";
   return `<article class="cast card">
-    ${pic(c.author.pfp, "avatar")}
+    ${pic(c.author.pfp, "avatar", name)}
     <div class="cast__body">
       <div class="cast__head">
         <span class="cast__name">${esc(c.author.display || name)}</span>
@@ -255,7 +256,7 @@ async function renderWho() {
   const el = $("#who");
   const mine = state.me && state.me.fid === v.fid;
   el.hidden = false;
-  el.innerHTML = `${pic(v.pfp, "avatar")}<div class="who__text"><b>${mine ? "Your feed" : `@${esc(v.username ?? v.fid)}'s feed`}</b><br />The latest casts from the ${v.following?.toLocaleString() ?? "?"} accounts ${mine ? "you follow" : "they follow"}</div>`;
+  el.innerHTML = `${pic(v.pfp, "avatar", v.username ?? String(v.fid))}<div class="who__text"><b>${mine ? "Your feed" : `@${esc(v.username ?? v.fid)}'s feed`}</b><br />The latest casts from the ${v.following?.toLocaleString() ?? "?"} accounts ${mine ? "you follow" : "they follow"}</div>`;
   if (!state.me || mine) return;
   const { data } = await api(`/api/relationship?user=${v.fid}`).catch(() => ({ data: {} }));
   if (data.following === null || data.following === undefined) return;
@@ -324,10 +325,11 @@ async function loadKeys() {
         const oldest = Math.min(...ks.map((k) => k.addedAt ?? Infinity));
         const expires = ks.filter((k) => k.expiresAt).map((k) => k.expiresAt);
         const scopes = [...new Set(ks.flatMap((k) => k.scopes))];
-        return `<article class="keyapp card">
-          ${pic(app?.pfp, "avatar")}
+        const mine = state.me && ks.some((k) => k.key.toLowerCase() === state.me.publicKey?.toLowerCase());
+        return `<article class="keyapp card${mine ? " keyapp--mine" : ""}">
+          ${pic(app?.pfp, "avatar", app?.name ?? "?")}
           <div>
-            <div class="keyapp__name">${app ? `@${esc(app.name ?? app.fid)}` : "Unknown app"} <span class="cast__meta">${app ? `fid ${app.fid}` : ""}</span></div>
+            <div class="keyapp__name">${app ? `@${esc(app.name ?? app.fid)}` : "Unknown app"} <span class="cast__meta">${app ? `fid ${app.fid}` : ""}</span>${mine ? `<span class="mine-tag">includes this computer's key</span>` : ""}</div>
             <div class="keyapp__meta">${ks.length} key${ks.length === 1 ? "" : "s"}${Number.isFinite(oldest) ? ` · since ${day(oldest)}` : ""}${
               expires.length ? ` · gasless, expires ${day(Math.max(...expires))} unless used` : ""
             }${scopes.length ? `<br />can: ${esc(scopes.join(", ").toLowerCase().replaceAll("_", " "))}` : ""}</div>
@@ -383,6 +385,7 @@ document.addEventListener("click", async (e) => {
     setTimeout(() => (cb.textContent = "Copy curl"), 1400);
     return;
   }
+  if (e.target.closest("#me-chip") && state.me) return setViewAs(state.me.username ?? state.me.fid);
   const va = e.target.closest("[data-view-as]");
   if (va) return setViewAs(va.dataset.viewAs);
   const chip = e.target.closest(".appchip");
@@ -487,11 +490,19 @@ $("#composer").addEventListener("submit", async (e) => {
   try {
     state.me = (await api("/api/me")).data;
   } catch {}
+  const chip = $("#me-chip");
+  chip.hidden = false;
   if (state.me) {
     $("#composer").hidden = false;
-    $("#composer-avatar").outerHTML = pic(state.me.pfp, "avatar");
+    const name = state.me.username ?? `!${state.me.fid}`;
+    $("#composer-avatar").outerHTML = pic(state.me.pfp, "avatar", name);
+    chip.innerHTML = `${pic(state.me.pfp, "avatar", name)}<span><small>Signed in as</small><b>@${esc(name)}</b></span>`;
+    chip.title = `This computer holds an app key for @${name}, so you can cast, like and follow. Click to see your own feed.`;
   } else {
     $("#readonly-note").hidden = false;
+    chip.classList.add("me-chip--readonly");
+    chip.textContent = "Read-only";
+    chip.title = "No app key on this computer. Run clearcast login in a terminal to post, like and follow.";
   }
   let saved = null;
   try { saved = localStorage.getItem("clearcast.viewAs"); } catch {}

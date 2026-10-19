@@ -5,6 +5,14 @@ code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; bo
 
 /* ---------- header ---------- */
 .app-header { gap: 16px; }
+.me-chip { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; padding: 4px 12px 4px 4px; border: 1px solid var(--tg-orange-edge); border-radius: var(--tg-radius-pill); background: var(--tg-orange-wash); color: var(--tg-ink); font: inherit; font-size: var(--tg-text-xs); cursor: pointer; white-space: nowrap; }
+.me-chip .avatar, .me-chip .ph { width: 24px; height: 24px; }
+.me-chip small { display: block; color: var(--tg-text-3); font-size: var(--tg-text-3xs); line-height: 1.2; }
+.me-chip b { font-weight: var(--tg-weight-title); }
+.me-chip--readonly { padding: 7px 12px; border-color: var(--tg-border-strong); background: var(--tg-surface); color: var(--tg-text-2); cursor: help; }
+.me-chip:not([hidden]) + .viewas { margin-left: 0; }
+.keyapp--mine { border-color: var(--tg-orange-edge); }
+.mine-tag { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: var(--tg-radius-pill); background: var(--tg-orange); color: #fff; font-size: var(--tg-text-3xs); vertical-align: 1px; }
 .viewas { display: flex; align-items: center; gap: 8px; margin-left: auto; padding: 4px 4px 4px 14px; border: 1px solid var(--tg-border-strong); border-radius: var(--tg-radius-pill); background: var(--tg-surface); }
 .viewas__label { color: var(--tg-text-quiet); font-size: var(--tg-text-xs); }
 .viewas input { width: 150px; border: 0; outline: 0; padding: 6px 10px; border-radius: var(--tg-radius-pill); background: var(--tg-orange-wash); color: var(--tg-ink); font: inherit; font-size: var(--tg-text-sm); }
@@ -127,10 +135,13 @@ code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; bo
 .empty { padding: 40px 18px; text-align: center; color: var(--tg-text-2); font-size: var(--tg-text-sm); }
 .empty .tg-spinner { margin-bottom: 10px; }
 .ph { display: inline-grid; place-items: center; color: var(--tg-text-3); font-size: 10px; }
+.avatar.ph { background: var(--tg-orange-wash); color: var(--tg-orange-deep); font-size: 15px; font-weight: var(--tg-weight-title); }
+.me-chip .avatar.ph { font-size: 12px; }
 
 @media (max-width: 700px) {
   .app-header { flex-wrap: wrap; }
   .viewas { order: 3; width: 100%; margin-left: 0; }
+  .me-chip small { display: none; }
   .viewas input { flex: 1; width: auto; }
   .bar { grid-template-columns: 110px 1fr 46px; }
   .keys-summary { gap: 24px; }
