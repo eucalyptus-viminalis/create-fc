@@ -9,6 +9,32 @@ html { scroll-padding-top: 84px; }
    (clip, not hidden, keeps the sticky header working). */
 html, body { overflow-x: clip; }
 
+/* ---------- nav: Tutorial dropdown ---------- */
+.nav-dd { position: relative; }
+.nav-dd__btn { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--tg-text-quiet); font: inherit; cursor: pointer; }
+.nav-dd__btn:hover, .nav-dd.open .nav-dd__btn { color: var(--tg-ink); }
+.nav-dd__btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--tg-dur-fast); }
+.nav-dd.open .nav-dd__btn svg { transform: rotate(180deg); }
+.dd-panel { position: absolute; top: calc(100% + 16px); left: 50%; z-index: 30; width: 340px; padding: 8px; transform: translateX(-50%); border: 1px solid var(--tg-border); border-radius: var(--tg-radius-panel); background: var(--tg-surface); box-shadow: var(--tg-shadow-popover); text-align: left; }
+.dd-item { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; padding: 10px; border-radius: var(--tg-radius-md); }
+.dd-item:hover, .dd-item:focus-within { background: var(--tg-orange-wash); }
+.dd-num { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--tg-radius-key); background: var(--tg-orange-wash); color: var(--tg-orange-deep); font-size: 14px; font-weight: var(--tg-weight-brand); }
+.dd-item:hover .dd-num { background: var(--tg-surface); }
+.dd-main { display: block; color: var(--tg-ink); font-size: 14px; font-weight: var(--tg-weight-title); }
+.dd-main::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.dd-desc { display: block; margin-top: 2px; color: var(--tg-text-2); font-size: 12px; line-height: 1.5; }
+.dd-sub { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; }
+.dd-sub a { color: var(--tg-orange-link); font-size: 12px; }
+.dd-sub a:hover { text-decoration: underline; }
+.nav-help { color: var(--tg-orange-deep) !important; }
+
+/* ---------- nav: phone menu ---------- */
+.menu-btn { display: none; padding: 7px 14px; border: 1px solid var(--tg-border-strong); border-radius: var(--tg-radius-pill); background: var(--tg-surface); color: var(--tg-ink); font: inherit; font-size: 13px; cursor: pointer; }
+.menu-sheet { position: absolute; left: calc(-1 * var(--tg-gutter-mobile)); right: calc(-1 * var(--tg-gutter-mobile)); top: 100%; z-index: 30; padding: 6px var(--tg-gutter-mobile) 18px; border-bottom: 1px solid var(--tg-border); background: var(--tg-page); box-shadow: var(--tg-shadow-popover); }
+.menu-sheet a { display: block; padding: 11px 0; border-bottom: 1px solid var(--tg-border); color: var(--tg-ink); font-size: 16px; }
+.menu-kids a { padding: 8px 0 8px 16px; border-bottom: 0; color: var(--tg-text-2); font-size: 14px; }
+.menu-kids { padding: 4px 0; border-bottom: 1px solid var(--tg-border); }
+
 /* ---------- inline code ---------- */
 code {
   font-family: var(--tg-font-mono);
@@ -227,6 +253,18 @@ code {
 .fc-table th { color: var(--tg-text-2); font-weight: var(--tg-weight-title); }
 .fc-table td:not(:first-child) { white-space: nowrap; }
 
+/* ---------- tutorial contents ---------- */
+.toc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 26px; }
+.toc-card { display: block; padding: 16px 18px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); transition: border-color var(--tg-dur-fast); }
+.toc-card:hover, .toc-card:focus-visible { border-color: var(--tg-orange-edge); }
+.toc-card .k { display: block; color: var(--tg-orange-deep); font-size: var(--tg-text-xs); }
+.toc-card b { display: block; margin-top: 4px; color: var(--tg-ink); font-size: 16px; font-weight: var(--tg-weight-title); }
+.toc-card > span:last-child { display: block; margin-top: 4px; color: var(--tg-text-2); font-size: var(--tg-text-sm); line-height: 1.55; }
+.in-section { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -10px 0 18px; }
+.in-section > span { margin-right: 4px; color: var(--tg-text-3); font-size: var(--tg-text-xs); }
+.in-section a { padding: 4px 10px; border: 1px solid var(--tg-border-strong); border-radius: var(--tg-radius-pill); background: var(--tg-surface); color: var(--tg-text-2); font-size: 12.5px; }
+.in-section a:hover { border-color: var(--tg-orange-edge); color: var(--tg-orange-deep); }
+
 /* ---------- concepts ---------- */
 .fc-concepts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .fc-concepts > div { padding: 22px 24px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); }
@@ -263,6 +301,10 @@ code {
 @media (max-width: 900px) {
   .hero-paths { grid-template-columns: 1fr; gap: 40px; }
 }
+@media (max-width: 900px) {
+  .tg-header__nav .tg-quiet-link, .nav-dd { display: none; }
+  .menu-btn { display: inline-flex; }
+}
 @media (max-width: 700px) {
   .hero-paths { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .tip { position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto; transform: translateY(8px); }
@@ -270,7 +312,7 @@ code {
   .tip::after { display: none; }
   .fc-hero-term { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
-  .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
+  .fc-concepts, .fc-features, .fc-shots, .toc-grid { grid-template-columns: 1fr; }
   .fc-try { padding: 22px 20px; }
   .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }

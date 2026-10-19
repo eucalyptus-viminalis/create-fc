@@ -28,12 +28,31 @@
     <a class="tg-wordmark" href="#top" aria-label="create-fc home"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
     <nav class="tg-header__nav" aria-label="Main navigation">
       <a class="tg-quiet-link" href="#quickstart">Quickstart</a>
-      <a class="tg-quiet-link" href="#tutorial">Tutorial</a>
       <a class="tg-quiet-link" href="#client">Client</a>
+      <div class="nav-dd">
+        <button class="nav-dd__btn" type="button" aria-expanded="false" aria-controls="nav-tutorial">Tutorial<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="dd-panel" id="nav-tutorial">
+            <div class="dd-item"><span class="dd-num" aria-hidden="true">↳</span><div><a class="dd-main" href="#before">Before you start</a><span class="dd-desc">Hetzner account, API token, what it costs</span></div></div>
+            <div class="dd-item"><span class="dd-num" aria-hidden="true">0</span><div><a class="dd-main" href="#cmd0">The server</a><span class="dd-desc">What command 0 creates, the firewall, sold-out types</span></div></div>
+            <div class="dd-item"><span class="dd-num" aria-hidden="true">1</span><div><a class="dd-main" href="#cmd1">The read node</a><span class="dd-desc">Streaming the snapshot, catching up, fc-node status</span></div></div>
+            <div class="dd-item"><span class="dd-num" aria-hidden="true">2</span><div><a class="dd-main" href="#cmd2">The client</a><span class="dd-desc">clearcast in your browser and terminal</span><div class="dd-sub"><a href="#gui">Browser client</a><a href="#reading">Reading</a><a href="#posting">Posting</a><a href="#username">Username</a><a href="#filtering">Filtering</a></div></div></div>
+        </div>
+      </div>
       <a class="tg-quiet-link" href="#concepts">Concepts</a>
       <a class="tg-quiet-link" href="#safety">Seed phrases</a>
+      <a class="tg-quiet-link nav-help" href="#help">Help test</a>
       <a class="tg-btn tg-btn--ink" href="https://github.com/eucalyptus-viminalis/create-fc"><span data-tg-icon="arrowUpRight" data-tg-size="18"></span>GitHub</a>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu-sheet">Menu</button>
     </nav>
+    <div class="menu-sheet" id="menu-sheet" hidden>
+      <a href="#quickstart">Quickstart</a>
+      <a href="#client">Client</a>
+      <a href="#tutorial">Tutorial</a>
+      <div class="menu-kids"><a href="#before">Before you start</a><a href="#cmd0">0 · The server</a><a href="#cmd1">1 · The read node</a><a href="#cmd2">2 · The client</a></div>
+      <a href="#concepts">Concepts</a>
+      <a href="#safety">Seed phrases</a>
+      <a href="#help" class="nav-help">Help test</a>
+    </div>
   </header>
 
   <main id="top">
@@ -107,35 +126,6 @@ setup started as a background job.</span>
     </section>
 
 
-    <!-- The client -->
-    <section class="tg-container tg-section tg-section--ruled" id="client" aria-labelledby="client-title">
-      <div class="tg-section-head">
-        <p class="tg-eyebrow">The client</p>
-        <h2 class="tg-display-2" id="client-title">See what other clients won't show you.</h2>
-      </div>
-      <div class="fc-features">
-        <article class="fc-feature"><h3 class="tg-title">Who can post as you</h3><p class="tg-body">Every app you've ever signed in to holds a key that can post as you. See them all, which can sign anything, and when the gasless ones expire.</p></article>
-        <article class="fc-feature"><h3 class="tg-title">Your feed, without the big app</h3><p class="tg-body">Each cast shows the app it came from. Hide the Farcaster app in one click and see what everyone else is building.</p></article>
-        <article class="fc-feature"><h3 class="tg-title">Which apps your people use</h3><p class="tg-body">A breakdown of every client in your feed. In ours, 89% of casts came through one app. Click any other to see only its casts.</p></article>
-        <article class="fc-feature"><h3 class="tg-title">Nothing hidden</h3><p class="tg-body">Every view lists the exact calls it made to your node, ready to paste into a terminal. No API keys, no one else's servers.</p></article>
-      </div>
-
-      <div class="fc-shots">
-        <figure><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="clearcast in the browser: Who can post as @dwr. 3 keys, held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption>@dwr has 3 app keys. All 3 can sign anything.</figcaption></figure>
-        <figure><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="clearcast in the browser: Apps in @dwr's feed. 91% of the latest 400 casts came through @warpcast; 9 apps in total." /><figcaption>91% of @dwr's feed comes through one app.</figcaption></figure>
-      </div>
-
-      <div class="fc-try" id="try">
-        <div>
-          <h3 class="tg-title">Try it in 60 seconds</h3>
-          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Reading needs nothing else. To post, run <code>clearcast login</code> with a test account.</p>
-        </div>
-        <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
-        <div class="fc-term fc-term--copy"><pre><code>clearcast ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
-        <p class="tg-footnote">Needs Node.js 22.18+ and git. <code>clearcast ui</code> opens the client in your browser; it only listens on your own computer. When you run your own node, re-run the first command with its address.</p>
-      </div>
-    </section>
-
     <!-- Quickstart -->
     <section class="tg-container tg-section tg-section--ruled" id="quickstart" aria-labelledby="qs-title">
       <div class="tg-section-head">
@@ -181,12 +171,47 @@ setup started as a background job.</span>
       <p class="tg-footnote fc-note">There is no npm package: <code>npm create fc</code> runs an unrelated package someone else published in 2022.</p>
     </section>
 
+    <!-- The client -->
+    <section class="tg-container tg-section tg-section--ruled" id="client" aria-labelledby="client-title">
+      <div class="tg-section-head">
+        <p class="tg-eyebrow">The client</p>
+        <h2 class="tg-display-2" id="client-title">See what other clients won't show you.</h2>
+      </div>
+      <div class="fc-features">
+        <article class="fc-feature"><h3 class="tg-title">Who can post as you</h3><p class="tg-body">Every app you've ever signed in to holds a key that can post as you. See them all, which can sign anything, and when the gasless ones expire.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Your feed, without the big app</h3><p class="tg-body">Each cast shows the app it came from. Hide the Farcaster app in one click and see what everyone else is building.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Which apps your people use</h3><p class="tg-body">A breakdown of every client in your feed. In ours, 89% of casts came through one app. Click any other to see only its casts.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Nothing hidden</h3><p class="tg-body">Every view lists the exact calls it made to your node, ready to paste into a terminal. No API keys, no one else's servers.</p></article>
+      </div>
+
+      <div class="fc-shots">
+        <figure><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="clearcast in the browser: Who can post as @dwr. 3 keys, held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption>@dwr has 3 app keys. All 3 can sign anything.</figcaption></figure>
+        <figure><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="clearcast in the browser: Apps in @dwr's feed. 91% of the latest 400 casts came through @warpcast; 9 apps in total." /><figcaption>91% of @dwr's feed comes through one app.</figcaption></figure>
+      </div>
+
+      <div class="fc-try" id="try">
+        <div>
+          <h3 class="tg-title">Try it in 60 seconds</h3>
+          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Reading needs nothing else. To post, run <code>clearcast login</code> with a test account.</p>
+        </div>
+        <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <div class="fc-term fc-term--copy"><pre><code>clearcast ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <p class="tg-footnote">Needs Node.js 22.18+ and git. <code>clearcast ui</code> opens the client in your browser; it only listens on your own computer. When you run your own node, re-run the first command with its address.</p>
+      </div>
+    </section>
+
     <!-- Tutorial -->
     <div class="fc-doc" id="tutorial">
       <div class="tg-editorial__intro">
         <p class="tg-eyebrow">Tutorial</p>
         <h2 class="tg-display-2">What each command does, and why.</h2>
         <p class="tg-lead">The quickstart works without reading any of this. Read it when you want to know what's running on your server, what you just signed, or what to do when something breaks. Every output and timing here is from a real run on 18–19 October 2026.</p>
+        <nav class="toc-grid" aria-label="Tutorial contents">
+          <a class="toc-card" href="#before"><span class="k">Before you start</span><b>Hetzner</b><span>Make a project and an API token; what it costs by the hour.</span></a>
+          <a class="toc-card" href="#cmd0"><span class="k">Command 0</span><b>The server</b><span>Server, volume and firewall, and what happens when a type is sold out.</span></a>
+          <a class="toc-card" href="#cmd1"><span class="k">Command 1</span><b>The read node</b><span>Why we stream the snapshot, how long catching up takes, what the warnings mean.</span></a>
+          <a class="toc-card" href="#cmd2"><span class="k">Command 2</span><b>The client</b><span>clearcast in your browser and terminal: reading, posting, a username, filtering by app.</span></a>
+        </nav>
       </div>
 
       <section class="tg-editorial__section" id="before" aria-labelledby="before-title">
@@ -267,6 +292,7 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
 
       <section class="tg-editorial__section" id="cmd2" aria-labelledby="cmd2-title">
         <h2 id="cmd2-title">Command 2: the client</h2>
+        <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a></nav>
         <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>clearcast</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3 id="gui">The browser client</h3>
         <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. The header shows two different things: <b>Signed in as</b> is the account this computer holds an app key for, and <b>Viewing</b> is whose data you're looking at, which can be anyone.</p>
@@ -274,7 +300,7 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
         <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as them.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. Look up your own account here.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in this feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-node.png" width="1100" height="640" loading="lazy" alt="Your node view: address, Snapchain 0.14.3, in sync, three shards 0–4 s behind, and a table of every request the page made, with times and a Copy curl button." /><figcaption><b>Your node.</b> Sync status, and every request the page made to your node, each with a Copy curl button so you can run it yourself.</figcaption></figure>
-        <h3>Reading from the terminal</h3>
+        <h3 id="reading">Reading from the terminal</h3>
         <p>Every view above is a handful of plain GETs to your node, so you can repeat any of them with curl:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
 <pre><code><span class="fc-p">$</span> clearcast casts pinkmink -n 3
@@ -290,7 +316,7 @@ hello from my own snapchain read node 👋</span>
 <span class="fc-p">$</span> curl "http://&lt;ip&gt;:3381/v1/castsByFid?fid=3355372&amp;reverse=true&amp;pageSize=3"</code></pre></div>
         <p>Snapchain has no "home feed" endpoint. A feed is something a client builds. Ours is the simplest version: ask the node who you follow, fetch the latest casts from each, and merge them by time. That's one request per account you follow. For an account following 1,041 people, the feed took 13.5 seconds from Sydney to our node in Germany, while the same 1,041 requests made on the server itself took 1.7 seconds. Running the client close to the node pays off.</p>
         <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>clearcast feed</code> skips anything more than 10 minutes ahead.</p>
-        <h3>Posting</h3>
+        <h3 id="posting">Posting</h3>
         <p><code>clearcast login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
 <pre><code><span class="fc-o">seed phrase (hidden): ************ words
@@ -312,9 +338,9 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
           </tbody>
         </table>
         <p><code>@names</code> in a cast become real mentions, <code>--reply user/hash</code> replies, <code>--embed url</code> attaches a link, and <code>--dry-run</code> checks the message with your node without sending it.</p>
-        <h3>A username</h3>
+        <h3 id="username">A username</h3>
         <p><code>clearcast username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
-        <h3>Filtering by the app that posted</h3>
+        <h3 id="filtering">Filtering by the app that posted</h3>
         <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>clearcast</code> labels each cast with its app, and filters on it:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
 <pre><code><span class="fc-p">$</span> clearcast apps dwr
@@ -426,6 +452,38 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
 
   <script src="tangerine/js/tangerine.js" defer></script>
   <script>
+    // Tutorial dropdown and the phone menu: toggle on click, close on
+    // Escape, on a click elsewhere, and after following a link.
+    const toggles = [...document.querySelectorAll(".nav-dd__btn, .menu-btn")];
+    const panelOf = (b) => document.getElementById(b.getAttribute("aria-controls"));
+    const setOpen = (b, open) => {
+      b.setAttribute("aria-expanded", String(open));
+      panelOf(b).hidden = !open;
+      b.closest(".nav-dd")?.classList.toggle("open", open);
+      if (b.classList.contains("menu-btn")) b.textContent = open ? "Close" : "Menu";
+    };
+    toggles.forEach((b) => {
+      panelOf(b).hidden = true;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = b.getAttribute("aria-expanded") !== "true";
+        toggles.forEach((o) => o !== b && setOpen(o, false));
+        setOpen(b, open);
+      });
+    });
+    document.addEventListener("click", (e) => {
+      for (const b of toggles) {
+        const panel = panelOf(b);
+        if (e.target.closest("a") && panel.contains(e.target)) setOpen(b, false);
+        else if (!panel.contains(e.target)) setOpen(b, false);
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      const open = toggles.find((b) => b.getAttribute("aria-expanded") === "true");
+      if (open) { setOpen(open, false); open.focus(); }
+    });
+
     // Copy buttons on command blocks.
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".fc-copy, .js-copy");
