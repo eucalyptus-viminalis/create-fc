@@ -92,7 +92,20 @@ async function refreshStatus() {
     const pill = $("#node-pill");
     pill.classList.toggle("is-synced", lag < 10);
     pill.classList.toggle("is-behind", lag >= 10);
-    $("#node-pill-text").textContent = lag < 10 ? `in sync · ${new URL(data.node).hostname}` : `${(lag / 3600).toFixed(1)} h behind`;
+    // How fast is it catching up? Compare with the previous reading.
+    const now = Date.now();
+    const prev = state.lastLag;
+    state.lastLag = { lag, at: now };
+    let eta = "";
+    if (prev && lag >= 10 && now - prev.at > 5000) {
+      const gain = (prev.lag - lag) / ((now - prev.at) / 1000); // seconds of lag closed per second
+      if (gain > 0.2) {
+        const h = lag / gain / 3600;
+        eta = h >= 1 ? ` · ~${h.toFixed(1)} h to go` : ` · ~${Math.max(1, Math.round(h * 60))} min to go`;
+      }
+    }
+    $("#node-pill-text").textContent = lag < 10 ? `in sync · ${new URL(data.node).hostname}` : `catching up · ${(lag / 3600).toFixed(1)} h behind${eta}`;
+    pill.title = lag < 10 ? "Your node is in sync." : "Your node is still fetching blocks made since its snapshot. Reads work; the newest casts may be missing.";
     $("#node-card").innerHTML = `
       <dl><dt>Address</dt><dd>${esc(data.node)}</dd><dt>Snapchain</dt><dd>${esc(data.version)}</dd>
       <dt>Status</dt><dd>${lag < 10 ? "in sync" : `catching up, ${(lag / 3600).toFixed(1)} h behind. Recent casts may be missing.`}</dd></dl>
@@ -187,7 +200,10 @@ function renderFeed() {
     .join("");
   $("#feed-list").innerHTML = shown.length
     ? shown.slice(0, 120).map((c) => castHtml(c, all.indexOf(c))).join("")
-    : empty(all.length ? "Every app in this feed is hidden. Click a chip above to show it again." : "No casts yet.");
+    : all.length
+      ? empty("Every app in this feed is hidden. Click a chip above to show it again.")
+      : `<div class="empty"><p>${state.feed?.following ? "No recent casts from the accounts this feed follows." : "This account doesn't follow anyone yet, so its feed is empty."}</p>
+         <p>Try someone else's: <button type="button" class="link-btn" data-view-as="dwr">@dwr</button> · <button type="button" class="link-btn" data-view-as="vitalik.eth">@vitalik.eth</button> · <button type="button" class="link-btn" data-view-as="balajis.eth">@balajis.eth</button></p></div>`;
 }
 
 // App avatars come from the profiles the server already looked up.
@@ -317,6 +333,8 @@ $("#viewas").addEventListener("submit", (e) => {
 });
 
 document.addEventListener("click", async (e) => {
+  const va = e.target.closest("[data-view-as]");
+  if (va) return setViewAs(va.dataset.viewAs);
   const chip = e.target.closest(".appchip");
   if (chip) {
     const k = chip.dataset.app === "?" ? "?" : Number(chip.dataset.app);
