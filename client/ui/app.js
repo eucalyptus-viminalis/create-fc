@@ -1,7 +1,7 @@
-// fcli in the browser. Talks only to the local fcli server (which talks only
+// clearcast in the browser. Talks only to the local clearcast server (which talks only
 // to your node). Everything from the network is escaped before it's shown.
 
-const TOKEN = document.querySelector('meta[name="fcli-token"]').content;
+const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
 const FARCASTER_APP = 9152; // the Farcaster app's FID (still named @warpcast)
 const $ = (sel) => document.querySelector(sel);
 
@@ -56,7 +56,7 @@ const empty = (msg) => `<div class="empty"><p>${esc(msg)}</p></div>`;
 async function api(path, body) {
   const res = await fetch(path, {
     method: body ? "POST" : "GET",
-    headers: { "x-fcli-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
+    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
@@ -69,7 +69,7 @@ async function api(path, body) {
 
 // Turn a recorded node call into something you can paste into a terminal.
 const asCurl = (call) =>
-  call.startsWith("#") ? call : call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}  (signed by your app key, sent by fcli)`;
+  call.startsWith("#") ? call : call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}  (signed by your app key, sent by clearcast)`;
 
 function showCalls(id, calls) {
   const el = $(id);
@@ -296,7 +296,7 @@ async function setViewAs(who) {
     const { data } = await api(`/api/profile?user=${encodeURIComponent(q)}`);
     state.viewAs = { fid: data.fid, username: data.username, pfp: data.pfp, following: data.following };
     $("#viewas-input").value = data.username ?? String(data.fid);
-    try { localStorage.setItem("fcli.viewAs", $("#viewas-input").value); } catch {}
+    try { localStorage.setItem("clearcast.viewAs", $("#viewas-input").value); } catch {}
     state.feed = null;
     state.keysFor = null;
     state.hidden.clear();
@@ -426,7 +426,7 @@ $("#composer").addEventListener("submit", async (e) => {
     $("#readonly-note").hidden = false;
   }
   let saved = null;
-  try { saved = localStorage.getItem("fcli.viewAs"); } catch {}
+  try { saved = localStorage.getItem("clearcast.viewAs"); } catch {}
   const start = new URLSearchParams(location.search).get("user") ?? saved ?? state.me?.username ?? state.me?.fid ?? "dwr";
   const tab = location.hash.slice(1);
   if (["keys", "apps", "node"].includes(tab)) document.querySelector(`[data-view="${tab}"]`)?.click();

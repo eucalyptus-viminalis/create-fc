@@ -191,7 +191,7 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel === "index.html") data = data.toString().replace("__FCLI_TOKEN__", token);
+    if (token && rel === "index.html") data = data.toString().replace("__CLEARCAST_TOKEN__", token);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -206,10 +206,10 @@ export async function startUi(port: number, explicit = false): Promise<string> {
       return await listenOn(p);
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
-      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: fcli ui --port ${p + 1}`);
+      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: clearcast ui --port ${p + 1}`);
     }
   }
-  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: fcli ui --port <n>`);
+  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: clearcast ui --port <n>`);
 }
 
 async function listenOn(port: number): Promise<string> {
@@ -223,7 +223,7 @@ async function listenOn(port: number): Promise<string> {
       if (path.startsWith("/api/")) {
         // Only this page may call the API: same origin, and the page's token.
         const from = req.headers.origin;
-        if ((from && from !== origin) || req.headers["x-fcli-token"] !== token) return send(res, 403, { error: "forbidden" });
+        if ((from && from !== origin) || req.headers["x-clearcast-token"] !== token) return send(res, 403, { error: "forbidden" });
         const handler = routes[`${req.method} ${path}`];
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};

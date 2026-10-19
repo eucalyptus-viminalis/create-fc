@@ -1,4 +1,4 @@
-/* fcli GUI on Tangerine. Tokens only; the purple comes from fc-theme.css. */
+/* clearcast GUI on Tangerine. Tokens only; the purple comes from fc-theme.css. */
 
 body { background: var(--tg-page); }
 code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; border-radius: var(--tg-radius-xs); background: var(--tg-orange-wash); }

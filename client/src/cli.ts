@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// fcli: a minimal Farcaster client for your own Snapchain node.
+// clearcast: a minimal Farcaster client for your own Snapchain node.
 import { parseArgs } from "node:util";
 import { NODE, NodeError, get, toDate, type Message } from "./node.ts";
 import { castsByFid, feed, profile, resolveFid, usernames } from "./read.ts";
@@ -9,25 +9,25 @@ import { startUi } from "./ui-server.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
 import { checkPhrase, findCustody, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
 
-const HELP = `fcli: a Farcaster client that talks only to your own node (${NODE})
+const HELP = `clearcast: a Farcaster client that talks only to your own node (${NODE})
 
 Usage:
-  fcli ui [--port 4747]           Open the client in your browser
-  fcli status                     Is the node in sync?
-  fcli login [--dry-run]          Import a seed phrase once, register an app key
-  fcli whoami                     Show the saved app key and its status
-  fcli username <name> [--dry-run]  Claim an fname and set it as your username
-                                  (asks for the seed phrase, like login)
-  fcli cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
-                                  Post a cast. @names become mentions.
-  fcli delete <hash>              Delete one of your casts
-  fcli follow | unfollow <name>   Follow or unfollow someone
-  fcli like | unlike <user/hash>  Like a cast, e.g. fcli like dwr/0x35c7b588
-  fcli recast | unrecast <user/hash>
-  fcli user <name|fid>            Show a profile
-  fcli casts <name|fid> [-n 20]   A user's latest casts
-  fcli feed <name|fid|me> [-n 30] Latest casts from everyone they follow
-  fcli apps <name|fid>            Which apps hold keys for this account
+  clearcast ui [--port 4747]           Open the client in your browser
+  clearcast status                     Is the node in sync?
+  clearcast login [--dry-run]          Import a seed phrase once, register an app key
+  clearcast whoami                     Show the saved app key and its status
+  clearcast username <name> [--dry-run]  Claim an fname and set it as your username
+                                       (asks for the seed phrase, like login)
+  clearcast cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
+                                       Post a cast. @names become mentions.
+  clearcast delete <hash>              Delete one of your casts
+  clearcast follow | unfollow <name>   Follow or unfollow someone
+  clearcast like | unlike <user/hash>  Like a cast, e.g. clearcast like dwr/0x35c7b588
+  clearcast recast | unrecast <user/hash>
+  clearcast user <name|fid>            Show a profile
+  clearcast casts <name|fid> [-n 20]   A user's latest casts
+  clearcast feed <name|fid|me> [-n 30] Latest casts from everyone they follow
+  clearcast apps <name|fid>            Which apps hold keys for this account
 
 Options:
   -n, --limit <n>    How many casts to show
@@ -86,7 +86,7 @@ async function main() {
   const [cmd, arg] = positionals;
   const limit = values.limit ? Number(values.limit) : undefined;
   const need = () => {
-    if (!arg) throw new NodeError(`fcli ${cmd} needs a username or fid`);
+    if (!arg) throw new NodeError(`clearcast ${cmd} needs a username or fid`);
     return resolveFid(arg);
   };
 
@@ -102,7 +102,7 @@ async function main() {
     }
     case "ui": {
       const url = await startUi(Number(values.port ?? 4747), values.port !== undefined);
-      console.log(`fcli is running at ${url}  (your node: ${NODE})`);
+      console.log(`clearcast is running at ${url}  (your node: ${NODE})`);
       console.log("It only listens on this computer. Ctrl-C to stop.");
       const { spawn } = await import("node:child_process");
       const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
@@ -112,7 +112,7 @@ async function main() {
     case "login":
       return login(Boolean(values["dry-run"]));
     case "username": {
-      if (!arg) throw new NodeError("fcli username needs a name: fcli username alice");
+      if (!arg) throw new NodeError("clearcast username needs a name: clearcast username alice");
       console.error(WARNING);
       const phrase = normalizePhrase(await promptPhrase("seed phrase (hidden): "));
       checkPhrase(phrase);
@@ -133,13 +133,13 @@ async function main() {
         // A node that's still catching up hasn't seen recent keys yet.
         const info = await get<Info>("/v1/info").catch(() => undefined);
         const lag = info ? Math.max(...info.shardInfos.map((s) => s.blockDelay)) : 0;
-        if (lag > 60) console.log(`status    not on your node yet: it's ${(lag / 3600).toFixed(1)} h behind, and this key may be newer than that. Check again once fcli status says "in sync".`);
-        else console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fcli login");
+        if (lag > 60) console.log(`status    not on your node yet: it's ${(lag / 3600).toFixed(1)} h behind, and this key may be newer than that. Check again once clearcast status says "in sync".`);
+        else console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: clearcast login");
       }
       break;
     }
     case "cast": {
-      if (!arg) throw new NodeError('fcli cast needs some text: fcli cast "hello"');
+      if (!arg) throw new NodeError('clearcast cast needs some text: clearcast cast "hello"');
       const replyTo = values.reply ? await resolveCast(values.reply) : undefined;
       const r = await cast(arg, { replyTo, embeds: values.embed, dryRun: values["dry-run"] });
       if (values["dry-run"]) {
@@ -150,7 +150,7 @@ async function main() {
       break;
     }
     case "delete": {
-      if (!arg?.startsWith("0x")) throw new NodeError("fcli delete needs the cast's hash (0x...)");
+      if (!arg?.startsWith("0x")) throw new NodeError("clearcast delete needs the cast's hash (0x...)");
       const hash = arg.length === 42 ? (arg as `0x${string}`) : (await resolveCast(`${(await loadKey()).fid}/${arg}`)).hash;
       const r = await deleteCast(hash);
       console.log(r.landed ? `deleted ${hash}` : `sent the delete for ${hash}; the cast is still on your node after 60 s`);
@@ -167,7 +167,7 @@ async function main() {
     case "unlike":
     case "recast":
     case "unrecast": {
-      if (!arg) throw new NodeError(`fcli ${cmd} needs a cast: user/hash`);
+      if (!arg) throw new NodeError(`clearcast ${cmd} needs a cast: user/hash`);
       const target = await resolveCast(arg);
       const r = await react(cmd.endsWith("like") ? "like" : "recast", target, !cmd.startsWith("un"));
       const done = { like: "liked", unlike: "unliked", recast: "recasted", unrecast: "unrecasted" }[cmd];
@@ -223,7 +223,7 @@ async function main() {
         // Show pasted invisible characters (non-breaking or zero-width
         // spaces), e.g. "username\u200b", which otherwise look identical.
         const shown = cmd.replace(/[^\x21-\x7e]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
-        console.error(`fcli: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
+        console.error(`clearcast: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
         process.exitCode = 1;
       }
   }
@@ -244,7 +244,7 @@ tutorial: powerful, legitimate, and unforgiving.
     (delegated signer authorization), so the phrase never leaves the wallet.
 
 This client uses the phrase only in memory, to sign what this command needs
-(a KEY_ADD, and for fcli username, the name claim). It never stores, prints or
+(a KEY_ADD, and for clearcast username, the name claim). It never stores, prints or
 sends the phrase. Afterwards it posts with its own app key, which can't
 transfer the account or add other keys.
 `;
@@ -263,6 +263,6 @@ async function login(dryRun: boolean) {
 }
 
 main().catch((e) => {
-  console.error(e instanceof NodeError ? `fcli: ${e.message}` : e);
+  console.error(e instanceof NodeError ? `clearcast: ${e.message}` : e);
   process.exitCode = 1;
 });

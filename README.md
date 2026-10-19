@@ -24,9 +24,9 @@ ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-Then `fcli ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. Prefer a terminal? `fcli feed dwr`, `fcli casts <you>`, and, after reading what it prints, `fcli login` to post.
+Then `clearcast ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. Prefer a terminal? `clearcast feed dwr`, `clearcast casts <you>`, and, after reading what it prints, `clearcast login` to post.
 
-**Just want to try the client?** Point it at our demo node, up until 24 October, then run `fcli ui`:
+**Just want to try the client?** Point it at our demo node, up until 24 October, then run `clearcast ui`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381
@@ -42,11 +42,11 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 
 Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, then re-run command 2 with the new IP.
 
-> **There is no npm package.** `npm create fcli` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
+> **There is no npm package.** `npm create clearcast` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
 
 ## Seed phrases
 
-`fcli login` asks for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
+`clearcast login` asks for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
 
 - Use a **test account**. `node client/scripts/new-test-account.ts` makes one for about $0.20 of ETH on Optimism.
 - Only paste a seed phrase into software from developers you trust, after reading the code ([client/src/keys.ts](client/src/keys.ts)).
@@ -59,7 +59,7 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 | --- | --- |
 | `provision/` | Command 0: Hetzner server, volume and firewall, and `hetzner-delete.sh` to remove them |
 | `node/` | Command 1: Docker, a streamed snapshot load that peaks at 556 GB instead of ~1.5 TB, the official `snapchain.sh`, and `fc-node status` |
-| `client/` | Command 2: `fcli`, a browser client (`fcli ui`) and CLI in TypeScript with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
+| `client/` | Command 2: `clearcast`, a browser client (`clearcast ui`) and CLI in TypeScript with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
 | `docs/` | Costs and design decisions |
 
 ## Help test it
