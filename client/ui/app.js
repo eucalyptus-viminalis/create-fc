@@ -67,47 +67,58 @@ async function api(path, body) {
   return json;
 }
 
-// Turn recorded node calls ({ call, at, ms }) into lines you can paste into a
-// terminal. The time and duration ride along as a shell comment, which the
-// shell ignores. Identical calls in a row (the 15-second status check, say)
-// collapse into one line with a count.
+// Recorded node calls ({ call, at, ms }) as a table: when, what, how long,
+// and a button that copies the request as a curl command. Identical calls in
+// a row (the 15-second status check, say) collapse into one row with a count.
 const clock = (t) => new Date(t).toLocaleTimeString([], { hour12: false });
-const command = (call) =>
-  call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}, signed by your app key and sent by clearcast`;
+const curlFor = (call) => `curl "${state.node}${call.slice(4)}"`;
 
-function lines(calls) {
+function runs(calls) {
   const out = [];
   for (let i = 0; i < calls.length; ) {
-    const c = calls[i];
-    if (c.note) {
-      out.push(c.note);
+    if (calls[i].note) {
+      out.push({ note: calls[i].note });
       i++;
       continue;
     }
     let j = i + 1;
-    while (j < calls.length && calls[j].call === c.call) j++;
-    const run = calls.slice(i, j);
-    const times = run.map((r) => r.at).sort((a, b) => a - b);
-    const why = c.call.startsWith("GET /v1/info") ? ", the status check every 15 s" : "";
-    const when = run.length === 1 ? `${clock(c.at)} · ${c.ms} ms` : `×${run.length}, ${clock(times[0])}–${clock(times.at(-1))}${why}`;
-    out.push(`${command(c.call)}  # ${when}`);
+    while (j < calls.length && calls[j].call === calls[i].call) j++;
+    out.push({ ...calls[i], count: j - i, first: Math.min(...calls.slice(i, j).map((c) => c.at)) });
     i = j;
   }
   return out;
 }
 
+function callTable(calls, limit) {
+  const rows = runs(calls);
+  const max = Math.max(1, ...rows.filter((r) => !r.note).map((r) => r.ms));
+  const body = rows
+    .slice(0, limit)
+    .map((r) => {
+      if (r.note) return `<tr class="note"><td colspan="4">${esc(r.note.replace(/^#\s*/, ""))}</td></tr>`;
+      const [method, path] = [r.call.slice(0, r.call.indexOf(" ")), r.call.slice(r.call.indexOf(" ") + 1)];
+      const isGet = method === "GET";
+      const why = r.count > 1 && path.startsWith("/v1/info") ? `<span class="calls-why">status check, every 15 s</span>` : "";
+      return `<tr>
+        <td class="ct-time" title="${r.count > 1 ? `${r.count} times, ${clock(r.first)} to ${clock(r.at)}` : ""}">${clock(r.at)}${r.count > 1 ? ` <span class="ct-count">×${r.count}</span>` : ""}</td>
+        <td class="ct-req"><span class="ct-method">${esc(method)}</span> <span class="ct-path">${esc(path).replace(/([?&])/g, "<wbr>$1")}</span>${why}</td>
+        <td class="ct-took"><span class="ct-took-in"><i style="width:${Math.max(2, Math.round((r.ms / max) * 56))}px"></i>${r.ms} ms</span></td>
+        <td class="ct-copy">${isGet ? `<button type="button" class="ct-btn" data-curl="${esc(curlFor(r.call))}">Copy curl</button>` : ""}</td>
+      </tr>`;
+    })
+    .join("");
+  const more = rows.length > limit ? `<tr class="note"><td colspan="4">…and ${rows.length - limit} more rows</td></tr>` : "";
+  return `<table class="calltable"><thead><tr><th>Time</th><th>Request to your node</th><th class="ct-took">Took</th><th></th></tr></thead><tbody>${body}${more}</tbody></table>`;
+}
+
 function showCalls(id, calls) {
-  const el = $(id);
   const real = calls.filter((c) => !c.note);
-  const shown = lines(calls);
-  el.innerHTML = `<summary>Show the ${real.length} API call${real.length === 1 ? "" : "s"} to your node behind this view</summary><pre><code>${esc(
-    "# Paste any line into a terminal to get the same data straight from your node.\n" +
-    shown.slice(0, 40).join("\n") + (shown.length > 40 ? `\n# …and ${shown.length - 40} more lines` : ""),
-  )}</code></pre>`;
+  $(id).innerHTML = `<summary>Show the ${real.length} API call${real.length === 1 ? "" : "s"} to your node behind this view</summary>
+    <div class="calltable-card">${callTable(calls, 40)}</div>`;
 }
 
 function renderLog() {
-  $("#call-log").textContent = state.log.length ? lines(state.log).join("\n") : "# nothing yet";
+  $("#call-log").innerHTML = state.log.length ? callTable(state.log, 150) : `<p class="empty">Nothing yet.</p>`;
 }
 
 // ----------------------------------------------------------------- status
@@ -361,6 +372,17 @@ $("#viewas").addEventListener("submit", (e) => {
 });
 
 document.addEventListener("click", async (e) => {
+  const cb = e.target.closest(".ct-btn");
+  if (cb) {
+    try {
+      await navigator.clipboard.writeText(cb.dataset.curl);
+      cb.textContent = "Copied";
+    } catch {
+      cb.textContent = "Couldn't copy";
+    }
+    setTimeout(() => (cb.textContent = "Copy curl"), 1400);
+    return;
+  }
   const va = e.target.closest("[data-view-as]");
   if (va) return setViewAs(va.dataset.viewAs);
   const chip = e.target.closest(".appchip");

@@ -99,15 +99,29 @@ code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; bo
 .shard__lag { text-align: right; color: var(--tg-text-2); }
 .log-title { margin: 30px 0 4px; }
 .log-hint { margin-bottom: 12px; color: var(--tg-text-2); }
-.fc-term { border-radius: var(--tg-radius-lg); background: var(--fc-term-bg); color: var(--fc-term-text); overflow: hidden; }
-.fc-term pre { margin: 0; padding: 14px 16px; overflow: auto; max-height: 360px; font-family: var(--tg-font-mono); font-size: var(--tg-text-xs); line-height: 1.7; }
-.fc-term code { padding: 0; background: none; color: inherit; }
 
-/* ---------- "behind this view" ---------- */
+/* ---------- API calls: a light table ---------- */
 .calls { margin-top: 16px; color: var(--tg-text-2); font-size: var(--tg-text-xs); }
-.calls summary { cursor: pointer; width: max-content; }
-.calls pre code { padding: 0; background: none; color: inherit; font-size: inherit; }
-.calls pre { margin-top: 8px; padding: 12px 14px; border-radius: var(--tg-radius-md); background: var(--fc-term-bg); color: var(--fc-term-text); overflow-x: auto; font-family: var(--tg-font-mono); font-size: var(--tg-text-2xs); line-height: 1.7; }
+.calls summary { cursor: pointer; width: max-content; max-width: 100%; }
+.calls .calltable-card { margin-top: 10px; }
+.calltable-card { max-height: 520px; overflow: auto; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); }
+.calltable { width: 100%; border-collapse: collapse; font-size: var(--tg-text-sm); }
+.calltable th { position: sticky; top: 0; z-index: 1; padding: 10px 14px; text-align: left; background: var(--tg-surface); color: var(--tg-text-2); font-size: var(--tg-text-xs); font-weight: var(--tg-weight-title); border-bottom: 1px solid var(--tg-border); }
+.calltable td { padding: 8px 14px; border-bottom: 1px solid var(--tg-border); vertical-align: middle; }
+.calltable tr:last-child td { border-bottom: 0; }
+.calltable tr.note td { color: var(--tg-text-3); font-size: var(--tg-text-xs); }
+.ct-time { color: var(--tg-text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ct-count { color: var(--tg-text-2); }
+.ct-req { min-width: 0; }
+.ct-method { font-family: var(--tg-font-mono); font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--tg-orange-wash); color: var(--tg-orange-deep); }
+.ct-path { font-family: var(--tg-font-mono); font-size: var(--tg-text-xs); color: var(--tg-ink-2); }
+.calls-why { display: block; margin-top: 2px; color: var(--tg-text-3); font-size: var(--tg-text-2xs); }
+.ct-took { text-align: right; white-space: nowrap; color: var(--tg-text-2); font-variant-numeric: tabular-nums; }
+.ct-took-in { display: inline-flex; align-items: center; gap: 8px; }
+.ct-took i { display: block; height: 6px; border-radius: 3px; background: var(--tg-orange); opacity: 0.7; }
+.ct-copy { width: 1%; white-space: nowrap; }
+.ct-btn { padding: 3px 9px; border: 1px solid var(--tg-border-strong); border-radius: var(--tg-radius-pill); background: var(--tg-surface); color: var(--tg-text-2); font: inherit; font-size: var(--tg-text-2xs); cursor: pointer; }
+.ct-btn:hover { border-color: var(--tg-orange-edge); color: var(--tg-orange-deep); }
 
 /* ---------- states ---------- */
 .empty { padding: 40px 18px; text-align: center; color: var(--tg-text-2); font-size: var(--tg-text-sm); }
@@ -121,4 +135,6 @@ code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; bo
   .bar { grid-template-columns: 110px 1fr 46px; }
   .keys-summary { gap: 24px; }
   .app-tabs { overflow-x: auto; }
+  .calltable th:nth-child(1), .calltable td.ct-time { display: none; }
+  .ct-took i { display: none; }
 }

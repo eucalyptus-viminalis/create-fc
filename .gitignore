@@ -6,3 +6,4 @@ node_modules/
 *appkey*.json
 .fc-client/
 .DS_Store
+client/ui/mockups/
