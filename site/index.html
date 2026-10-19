@@ -39,9 +39,20 @@
   <main id="top">
     <!-- Hero -->
     <section class="tg-hero" aria-labelledby="hero-title">
+      <div class="hero-split">
       <div class="tg-hero__copy">
         <h1 id="hero-title">Your own Farcaster.<br />Three commands.</h1>
         <p class="tg-hero__desc">Rent a <span class="term" tabindex="0">server<span class="tip" role="tooltip">A Hetzner Cloud machine with 8 vCPUs, 16 GB of RAM and a 1000 GB disk, billed by the hour. Delete it when you're done. <a href="#cmd0">Read more</a></span></span>, sync a Snapchain <span class="term" tabindex="0">read node<span class="tip" role="tooltip">A full copy of Farcaster's data that follows the network block by block. It serves reads and relays your posts to the validators. <a href="#cmd1">Read more</a></span></span>, and install a <span class="term" tabindex="0">client<span class="tip" role="tooltip">clearcast: a feed, posting, and a view of every app that can post as you. Runs on your computer and talks only to your node. <a href="#cmd2">Read more</a></span></span>. <span class="term" tabindex="0">No API keys<span class="tip" role="tooltip">Except your own Hetzner API token, which command 0 uses to create the server. Nothing you read or post goes through anyone else's API. <a href="#before">How to make one</a></span></span> needed! Read + write from your own node.</p>
+      </div>
+      <aside class="qs-card" aria-labelledby="qs-card-title">
+        <div class="qs-card__head"><h2 id="qs-card-title">Quickstart</h2><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/AGENTS.md">Agent setup ↗</a></div>
+        <div class="qs-card__body">
+          <p class="qs-card__prompt">Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</p>
+          <button class="tg-btn tg-btn--ink tg-btn--sm js-copy qs-card__copy" type="button" data-copy="Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy agent prompt</span></button>
+        </div>
+        <p class="qs-card__note">Paste it into Claude Code, Codex or any agent that can run commands. You still create the Hetzner token yourself.</p>
+        <div class="qs-card__foot"><a href="#quickstart">or by hand ↓</a><span>~$0.16/hour · ~6 hours to sync</span></div>
+      </aside>
       </div>
 
       <div class="fc-hero-term">
@@ -162,14 +173,6 @@ setup started as a background job.</span>
         <h3 class="tg-title">Done for now?</h3>
         <p class="tg-body">Delete the server so it stops billing. It asks before deleting anything.</p>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
-      </div>
-
-      <div class="fc-agent" id="agent">
-        <div>
-          <h3 class="tg-title">Or let your AI agent do it</h3>
-          <p class="tg-body">Paste this into an agent that can run commands on your computer, like Claude Code or Codex. It reads <a class="tg-text-link" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/AGENTS.md">AGENTS.md</a> and runs all three commands, checking on the node while it syncs. You still do two things yourself: create the Hetzner API token, and run <code>clearcast login</code> if you want to post. Neither secret should ever go into a chat.</p>
-        </div>
-        <div class="fc-term fc-term--copy fc-term--prompt"><pre><code>Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</code></pre><button class="fc-copy" type="button">Copy prompt</button></div>
       </div>
 
       <p class="tg-footnote fc-note">There is no npm package: <code>npm create fc</code> runs an unrelated package someone else published in 2022.</p>
@@ -408,17 +411,19 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
   <script>
     // Copy buttons on command blocks.
     document.addEventListener("click", async (e) => {
-      const btn = e.target.closest(".fc-copy");
+      const btn = e.target.closest(".fc-copy, .js-copy");
       if (!btn) return;
       // Hero terminals copy just their command (data-copy), not the output.
       const text = btn.dataset.copy ?? btn.parentElement.querySelector("code").innerText.trim();
+      const label = btn.querySelector("span") ?? btn;
+      const before = label.textContent;
       try {
         await navigator.clipboard.writeText(text);
-        btn.textContent = "Copied";
+        label.textContent = "Copied";
       } catch {
-        btn.textContent = "Select and copy";
+        label.textContent = "Select and copy";
       }
-      setTimeout(() => (btn.textContent = "Copy"), 1500);
+      setTimeout(() => (label.textContent = before), 1500);
     });
   </script>
 </body>

@@ -108,6 +108,23 @@ code {
 .tip::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--tg-surface); }
 .term:hover .tip, .term:focus-within .tip { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
 
+/* ---------- hero: headline beside the agent quickstart ---------- */
+.hero-split { width: min(1120px, calc(100% - 2 * var(--tg-gutter))); margin: 36px auto 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: center; text-align: left; }
+.hero-split .tg-hero__copy { max-width: none; margin: 0; text-align: left; }
+.hero-split h1 { font-size: clamp(44px, 5vw, 66px); }
+.hero-split .tg-hero__desc { margin-left: 0; max-width: 520px; }
+.qs-card { border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); box-shadow: var(--tg-shadow-float); overflow: hidden; }
+.qs-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 18px 20px 12px; }
+.qs-card__head h2 { font-size: 22px; }
+.qs-card__head a { color: var(--tg-orange-link); font-size: var(--tg-text-sm); }
+.qs-card__body { position: relative; margin: 0 20px; padding: 14px 16px 54px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-md); }
+.qs-card__prompt { font-family: var(--tg-font-mono); font-size: var(--tg-text-xs); line-height: 1.7; color: var(--tg-ink-2); overflow-wrap: anywhere; }
+.qs-card__copy { position: absolute; right: -1px; bottom: -1px; display: inline-flex; align-items: center; gap: 8px; border-radius: var(--tg-radius-md) 0 var(--tg-radius-md) 0; }
+.qs-card__copy svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.qs-card__note { margin: 12px 20px 0; color: var(--tg-text-2); font-size: var(--tg-text-xs); line-height: 1.6; }
+.qs-card__foot { display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px 16px; font-size: var(--tg-text-xs); color: var(--tg-text-3); }
+.qs-card__foot a { color: var(--tg-orange-link); }
+
 /* ---------- hero: what each command does, and how long ---------- */
 .lead-in { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 2px 12px; text-align: left; }
 .lead-in__what { color: var(--tg-ink); font-size: 18px; font-weight: 550; letter-spacing: -0.01em; }
@@ -151,8 +168,6 @@ code {
 }
 .fc-done .tg-body { color: var(--tg-text-2); }
 .fc-note { margin-top: 18px; }
-.fc-agent { display: grid; gap: 12px; margin-top: 14px; padding: 24px 28px; border: 1px solid var(--tg-orange-line); border-radius: var(--tg-radius-card); background: var(--tg-orange-wash); }
-.fc-agent .tg-body { margin-top: 6px; color: var(--tg-text-2); }
 .fc-term--prompt pre, .fc-term--prompt code { font-family: var(--tg-font-sans); font-size: var(--tg-text-sm); line-height: 1.6; }
 
 /* ---------- tutorial prose ---------- */
@@ -215,7 +230,11 @@ code {
 .fc-try .tg-body { margin-top: 6px; color: var(--tg-text-2); }
 .fc-vouch { margin-top: 22px; }
 
+@media (max-width: 860px) {
+  .hero-split { grid-template-columns: 1fr; gap: 28px; }
+}
 @media (max-width: 700px) {
+  .hero-split { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .tip { position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto; transform: translateY(8px); }
   .term:hover .tip, .term:focus-within .tip { transform: none; }
   .tip::after { display: none; }
@@ -223,7 +242,7 @@ code {
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
   .fc-try { padding: 22px 20px; }
-  .fc-steps > li, .fc-prereq, .fc-done, .fc-agent { padding: 22px 20px; }
+  .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }
   .fc-copy { margin: 0 12px 12px auto; }
