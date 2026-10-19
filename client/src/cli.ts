@@ -101,7 +101,7 @@ async function main() {
       break;
     }
     case "ui": {
-      const url = await startUi(Number(values.port ?? 4747));
+      const url = await startUi(Number(values.port ?? 4747), values.port !== undefined);
       console.log(`fcli is running at ${url}  (your node: ${NODE})`);
       console.log("It only listens on this computer. Ctrl-C to stop.");
       const { spawn } = await import("node:child_process");

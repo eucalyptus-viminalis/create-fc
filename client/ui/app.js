@@ -69,7 +69,7 @@ async function api(path, body) {
 
 // Turn a recorded node call into something you can paste into a terminal.
 const asCurl = (call) =>
-  call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}  (signed by your app key, sent by fcli)`;
+  call.startsWith("#") ? call : call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}  (signed by your app key, sent by fcli)`;
 
 function showCalls(id, calls) {
   const el = $(id);
@@ -127,7 +127,15 @@ async function loadFeed() {
   $("#feed-list").innerHTML = loading(`Building @${state.viewAs.username ?? state.viewAs.fid}'s feed from your node…`);
   $("#filterbar").hidden = true;
   try {
-    const { data, calls } = await api(`/api/feed?user=${state.viewAs.fid}`);
+    const { data } = await api(`/api/feed?user=${state.viewAs.fid}`);
+    const calls = data.calls;
+    const age = Math.round((Date.now() - data.builtAt) / 1000);
+    if (age > 2) calls.unshift(`# built ${age}s ago and kept for 2 minutes; these are the calls that built it`);
+    if (age <= 2) {
+      for (const c of calls) state.log.unshift(c);
+      state.log.length = Math.min(state.log.length, 300);
+      renderLog();
+    }
     state.feed = data;
     state.feedFor = state.viewAs.fid;
     for (const c of data.casts) if (c.app?.pfp) appPfps.set(c.app.fid, c.app.pfp);
@@ -174,7 +182,7 @@ function renderFeed() {
   $("#appchips").innerHTML = counts
     .map(
       (a) =>
-        `<button type="button" class="appchip" data-app="${a.fid}" aria-pressed="${!state.hidden.has(a.fid)}">${a.fid === "?" ? "" : pic(feedAppPfp(a.fid))}@${esc(a.name)} <span class="n">${a.n}</span></button>`,
+        `<button type="button" class="appchip" data-app="${a.fid}" aria-pressed="${!state.hidden.has(a.fid)}">${a.fid === "?" ? "" : pic(feedAppPfp(a.fid))}${a.fid === "?" ? "" : "@"}${esc(a.name)} <span class="n">${a.n}</span></button>`,
     )
     .join("");
   $("#feed-list").innerHTML = shown.length
@@ -215,7 +223,7 @@ function renderApps() {
   $("#apps-bars").innerHTML = counts
     .map(
       (a) => `<button type="button" class="bar" data-only="${a.fid}" title="Show only @${esc(a.name)} in the feed">
-        <span class="bar__name">${a.fid === "?" ? "" : pic(feedAppPfp(a.fid))}@${esc(a.name)}</span>
+        <span class="bar__name">${a.fid === "?" ? "" : pic(feedAppPfp(a.fid))}${a.fid === "?" ? "" : "@"}${esc(a.name)}</span>
         <span class="bar__track"><span class="bar__fill" style="width:${Math.max(1, pct(a.n))}%"></span></span>
         <span class="bar__pct">${pct(a.n) || "<1"}%</span>
       </button>`,
@@ -228,7 +236,11 @@ function renderApps() {
 async function loadKeys() {
   if (!state.viewAs) return;
   const who = `@${state.viewAs.username ?? state.viewAs.fid}`;
-  $("#keys-title").textContent = state.me && state.me.fid === state.viewAs.fid ? "Who can post as you" : `Who can post as ${who}`;
+  const mine = state.me && state.me.fid === state.viewAs.fid;
+  $("#keys-title").textContent = mine ? "Who can post as you" : `Who can post as ${who}`;
+  $("#keys-intro").textContent = mine
+    ? "Every app you've signed in to holds a key that can post as you. Here's the full list, straight from your node."
+    : `Every app ${who} has signed in to holds a key that can post as them. Here's the full list, straight from your node.`;
   if (state.keysFor === state.viewAs.fid) return;
   $("#keys-list").innerHTML = loading(`Asking your node for ${who}'s keys…`);
   $("#keys-summary").innerHTML = "";

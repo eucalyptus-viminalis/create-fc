@@ -12,7 +12,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NODE, NodeError, get, recordCalls, type Message } from "./node.ts";
+import { NODE, NodeError, get, pool, recordCalls, type Message, type Page } from "./node.ts";
 import { castsByFid, following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
 import { loadKey } from "./keys.ts";
@@ -79,13 +79,32 @@ async function shape(casts: Message[]): Promise<CastView[]> {
 }
 
 // A feed with each cast's app already attached, so the page can filter by app
-// instantly, without asking again.
-async function feedFor(fid: number) {
+// instantly, without asking again. One small request per followed account,
+// up to 96 in flight: 1,043 accounts took ~5 s over the internet (65 s when
+// sent in fixed batches with bigger pages). Kept for 2 minutes per account.
+// The calls that built a feed are kept with it, so a cached answer can still
+// show what it took.
+type Feed = { following: number; casts: CastView[]; calls: string[]; builtAt: number };
+const feedCache = new Map<number, Promise<Feed>>();
+function feedFor(fid: number): Promise<Feed> {
+  const hit = feedCache.get(fid);
+  if (hit) return hit;
+  const value = recordCalls(() => buildFeed(fid)).then(({ result, calls }) => ({ ...result, calls, builtAt: Date.now() }));
+  feedCache.set(fid, value);
+  value.then(
+    () => setTimeout(() => feedCache.delete(fid), 120_000).unref(),
+    () => feedCache.delete(fid),
+  );
+  return value;
+}
+
+async function buildFeed(fid: number) {
   const fids = await following(fid);
-  const lists: Message[][] = [];
-  for (let i = 0; i < fids.length; i += 48) {
-    lists.push(...(await Promise.all(fids.slice(i, i + 48).map((f) => castsByFid(f, 8).catch(() => [] as Message[])))));
-  }
+  const lists = await pool(fids, 96, (f) =>
+    get<Page>("/v1/castsByFid", { fid: f, pageSize: 6, reverse: true })
+      .then((p) => p.messages.filter((m) => m.data.castAddBody))
+      .catch(() => [] as Message[]),
+  );
   const horizon = Date.now() / 1000 - FARCASTER_EPOCH + 600; // skip casts dated in the future
   const casts = lists
     .flat()
@@ -179,7 +198,21 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
   }
 }
 
-export async function startUi(port: number): Promise<string> {
+// Start on `port`; if something else already uses it, try the next few
+// unless the port was asked for explicitly.
+export async function startUi(port: number, explicit = false): Promise<string> {
+  for (let p = port; p < port + (explicit ? 1 : 20); p++) {
+    try {
+      return await listenOn(p);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
+      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: fcli ui --port ${p + 1}`);
+    }
+  }
+  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: fcli ui --port <n>`);
+}
+
+async function listenOn(port: number): Promise<string> {
   const token = randomBytes(24).toString("hex");
   const origin = `http://127.0.0.1:${port}`;
 

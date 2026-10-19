@@ -73,7 +73,7 @@ async function signersOf(fid: number) {
 // its metadata is missing.
 export async function appsFor(messages: Message[]): Promise<Map<string, number | undefined>> {
   const authors = [...new Set(messages.map((m) => m.data.fid))];
-  await pool(authors, 32, (f) => signersOf(f).catch(() => new Map()));
+  await pool(authors, 96, (f) => signersOf(f).catch(() => new Map()));
   const out = new Map<string, number | undefined>();
   for (const m of messages) out.set(m.hash, (await signersOf(m.data.fid).catch(() => new Map())).get(m.signer.toLowerCase()));
   return out;
