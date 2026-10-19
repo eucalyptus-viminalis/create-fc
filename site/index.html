@@ -29,6 +29,7 @@
     <nav class="tg-header__nav" aria-label="Main navigation">
       <a class="tg-quiet-link" href="#quickstart">Quickstart</a>
       <a class="tg-quiet-link" href="#tutorial">Tutorial</a>
+      <a class="tg-quiet-link" href="#client">Client</a>
       <a class="tg-quiet-link" href="#concepts">Concepts</a>
       <a class="tg-quiet-link" href="#safety">Seed phrases</a>
       <a class="tg-btn tg-btn--ink" href="https://github.com/eucalyptus-viminalis/create-fc"><span data-tg-icon="arrowUpRight" data-tg-size="18"></span>GitHub</a>
@@ -89,6 +90,31 @@ setup started as a background job.</span>
       </div>
     </section>
 
+
+    <!-- The client -->
+    <section class="tg-container tg-section tg-section--ruled" id="client" aria-labelledby="client-title">
+      <div class="tg-section-head">
+        <p class="tg-eyebrow">The client</p>
+        <h2 class="tg-display-2" id="client-title">See what other clients won't show you.</h2>
+      </div>
+      <div class="fc-features">
+        <article class="fc-feature"><h3 class="tg-title">Who can post as you</h3><p class="tg-body">Every app you've ever signed in to holds a key that can post as you. See them all, which can sign anything, and when the gasless ones expire.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Your feed, without the big app</h3><p class="tg-body">Each cast shows the app it came from. Hide the Farcaster app in one click and see what everyone else is building.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Which apps your people use</h3><p class="tg-body">A breakdown of every client in your feed. In ours, 89% of casts came through one app. Click any other to see only its casts.</p></article>
+        <article class="fc-feature"><h3 class="tg-title">Nothing hidden</h3><p class="tg-body">Every view lists the exact calls it made to your node, ready to paste into a terminal. No API keys, no one else's servers.</p></article>
+      </div>
+
+      <div class="fc-try" id="try">
+        <div>
+          <h3 class="tg-title">Try it in 60 seconds</h3>
+          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Reading needs nothing else. To post, run <code>fcli login</code> with a test account.</p>
+        </div>
+        <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <div class="fc-term fc-term--copy"><pre><code>fcli ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <p class="tg-footnote">Needs Node.js 22.18+ and git. <code>fcli ui</code> opens the client in your browser; it only listens on your own computer. When you run your own node, re-run the first command with its address.</p>
+      </div>
+    </section>
+
     <!-- Quickstart -->
     <section class="tg-container tg-section tg-section--ruled" id="quickstart" aria-labelledby="qs-title">
       <div class="tg-section-head">
@@ -120,7 +146,7 @@ setup started as a background job.</span>
         </li>
         <li>
           <h3 class="tg-title">Install the client</h3>
-          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then try <code>fcli feed dwr</code>.</p>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>fcli ui</code> opens the client in your browser, or try <code>fcli feed dwr</code> in the terminal.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
       </ol>
@@ -318,6 +344,22 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       </div>
     </section>
 
+
+    <!-- Help test it -->
+    <section class="tg-container tg-section tg-section--ruled tg-split" id="help" aria-labelledby="help-title">
+      <div>
+        <p class="tg-eyebrow">Help me test it</p>
+        <h2 class="tg-display-2" id="help-title">Run it, then tell me what broke.</h2>
+        <p class="tg-body fc-split-text">I'm entering this into Balaji's Farcaster client prize, and it only counts if other people run it. If you do, I'd love to hear how it went, good or bad.</p>
+        <a class="tg-btn tg-btn--ink fc-vouch" href="https://farcaster.xyz/~/compose?text=I%20ran%20my%20own%20Farcaster%20read%20node%20and%20client%20with%20create-fc.%20Here%27s%20how%20it%20went%3A%20&embeds[]=https%3A%2F%2Feucalyptus-viminalis.github.io%2Fcreate-fc%2F" target="_blank" rel="noopener">Post how it went</a>
+      </div>
+      <div class="fc-points">
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true">$</span><h3 class="tg-point__title">Your server's on me</h3><p class="tg-point__text">The first 5 people who run the three commands get $5 USDC to cover the server, whatever you think of it. Send your node's IP to @3070.eth.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="terminal"></span><h3 class="tg-point__title">Do it together</h3><p class="tg-point__text">Stuck, or just want company? Message @3070.eth for a 30-minute session and we'll run it on your machine together.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Run by</h3><p class="tg-point__text" id="run-by">Nobody but me yet. Be the first, and your name goes here.</p></article>
+      </div>
+    </section>
+
     <!-- Offer -->
     <section class="tg-container tg-split tg-split--offer fc-offer" id="get" aria-labelledby="get-title">
       <div>
@@ -330,7 +372,7 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
           <li>A Snapchain read node that syncs unattended</li>
           <li>Reads, casts, follows, likes and recasts through it</li>
           <li>A gasless app key, scoped and self-expiring</li>
-          <li>Feeds filtered by the app that posted</li>
+          <li>A browser client that shows who can post as you, and which apps your feed comes from</li>
         </ul>
         <a class="tg-btn tg-btn--ink tg-offer__action" href="https://github.com/eucalyptus-viminalis/create-fc"><span data-tg-icon="arrowUpRight" data-tg-size="18"></span>View on GitHub</a>
         <p class="tg-offer__fineprint">MIT licensed. Not affiliated with Farcaster or Merkle Manufactory.</p>

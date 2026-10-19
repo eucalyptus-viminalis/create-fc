@@ -5,12 +5,14 @@ import { NODE, NodeError, get, toDate, type Message } from "./node.ts";
 import { castsByFid, feed, profile, resolveFid, usernames } from "./read.ts";
 import { cast, deleteCast, follow, react, resolveCast } from "./write.ts";
 import { setUsername } from "./username.ts";
+import { startUi } from "./ui-server.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
 import { checkPhrase, findCustody, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
 
 const HELP = `fcli: a Farcaster client that talks only to your own node (${NODE})
 
 Usage:
+  fcli ui [--port 4747]           Open the client in your browser
   fcli status                     Is the node in sync?
   fcli login [--dry-run]          Import a seed phrase once, register an app key
   fcli whoami                     Show the saved app key and its status
@@ -78,6 +80,7 @@ async function main() {
       app: { type: "string", multiple: true },
       "not-app": { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
+      port: { type: "string" },
     },
   });
   const [cmd, arg] = positionals;
@@ -96,6 +99,15 @@ async function main() {
         console.log(`  shard ${s.shardId}  height ${s.maxHeight}  ${s.blockDelay}s behind`);
       console.log(worst < 10 ? "in sync" : `catching up: ${(worst / 3600).toFixed(1)}h behind. Reads work now, but recent casts may be missing.`);
       break;
+    }
+    case "ui": {
+      const url = await startUi(Number(values.port ?? 4747));
+      console.log(`fcli is running at ${url}  (your node: ${NODE})`);
+      console.log("It only listens on this computer. Ctrl-C to stop.");
+      const { spawn } = await import("node:child_process");
+      const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
+      spawn(opener, [url], { stdio: "ignore", detached: true }).on("error", () => {}).unref();
+      return new Promise<void>(() => {}); // run until Ctrl-C
     }
     case "login":
       return login(Boolean(values["dry-run"]));

@@ -170,10 +170,19 @@ code {
 
 .fc-offer { padding-block: 28px 104px; }
 
+/* ---------- the client ---------- */
+.fc-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.fc-feature { padding: 24px 26px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); }
+.fc-feature .tg-body { margin-top: 8px; color: var(--tg-text-2); }
+.fc-try { display: grid; gap: 12px; margin-top: 14px; padding: 26px 28px; border: 1px solid var(--tg-orange-line); border-radius: var(--tg-radius-card); background: var(--tg-orange-wash); }
+.fc-try .tg-body { margin-top: 6px; color: var(--tg-text-2); }
+.fc-vouch { margin-top: 22px; }
+
 @media (max-width: 700px) {
   .fc-hero-term { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
-  .fc-concepts { grid-template-columns: 1fr; }
+  .fc-concepts, .fc-features { grid-template-columns: 1fr; }
+  .fc-try { padding: 22px 20px; }
   .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }

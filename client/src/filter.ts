@@ -112,3 +112,35 @@ export async function appsOfUser(fid: number) {
   for (const app of map.values()) counts.set(app, (counts.get(app) ?? 0) + 1);
   return counts;
 }
+
+export type KeyInfo = {
+  key: Hex;
+  source: "onchain" | "gasless";
+  appFid?: number;
+  addedAt?: number; // unix seconds
+  expiresAt?: number; // unix seconds; gasless keys only
+  scopes: string[]; // empty: an onchain key, allowed to sign anything
+};
+
+// Every key that can sign for `fid`, with the app that asked for it.
+export async function keysOfUser(fid: number): Promise<KeyInfo[]> {
+  const out: KeyInfo[] = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await get<{ signers: (Signer & { addedAt?: number; expiresAt?: number; scopes?: string[] })[]; nextPageToken?: string }>(
+      "/v1/signersByFid",
+      { fid, pageSize: 1000, pageToken },
+    );
+    for (const s of page.signers)
+      out.push({
+        key: s.key,
+        source: s.source === "SIGNER_SOURCE_OFFCHAIN" ? "gasless" : "onchain",
+        appFid: appFidOf(s),
+        addedAt: s.addedAt,
+        expiresAt: s.expiresAt,
+        scopes: (s.scopes ?? []).map((x) => x.replace(/^MESSAGE_TYPE_/, "")),
+      });
+    pageToken = page.nextPageToken || undefined;
+  } while (pageToken);
+  return out;
+}

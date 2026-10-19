@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="fcli-token" content="__FCLI_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>fcli</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&display=swap" />
+  <link rel="stylesheet" href="/tangerine/css/tangerine.css" />
+  <link rel="stylesheet" href="/fc-theme.css" />
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="tg-header app-header">
+    <a class="tg-wordmark" href="#feed"><span class="tg-mark" aria-hidden="true"></span>fcli</a>
+    <form class="viewas" id="viewas" role="search">
+      <label for="viewas-input" class="viewas__label">Viewing</label>
+      <input id="viewas-input" name="user" autocomplete="off" spellcheck="false" placeholder="username or fid" />
+    </form>
+    <a class="node-pill" id="node-pill" href="#node"><span class="dot"></span><span id="node-pill-text">connecting…</span></a>
+  </header>
+
+  <main class="app">
+    <div class="tg-tabs app-tabs" role="tablist" aria-label="Views" data-tg-tabs>
+      <button class="tg-tabs__tab" role="tab" id="tab-feed" aria-controls="view-feed" aria-selected="true" data-view="feed">Feed</button>
+      <button class="tg-tabs__tab" role="tab" id="tab-keys" aria-controls="view-keys" aria-selected="false" data-view="keys">Who can post as them</button>
+      <button class="tg-tabs__tab" role="tab" id="tab-apps" aria-controls="view-apps" aria-selected="false" data-view="apps">Apps in this feed</button>
+      <button class="tg-tabs__tab" role="tab" id="tab-node" aria-controls="view-node" aria-selected="false" data-view="node">Your node</button>
+    </div>
+
+    <!-- Feed -->
+    <section id="view-feed" role="tabpanel" aria-labelledby="tab-feed" tabindex="0">
+      <form class="composer card" id="composer" hidden>
+        <img class="avatar" id="composer-avatar" alt="" />
+        <div class="composer__body">
+          <textarea id="composer-text" rows="2" maxlength="320" placeholder="Cast through your own node…"></textarea>
+          <div class="composer__row">
+            <span class="composer__count" id="composer-count">0 / 320</span>
+            <button class="tg-btn tg-btn--ink tg-btn--sm" type="submit">Cast</button>
+          </div>
+        </div>
+      </form>
+      <div class="who card" id="who" hidden></div>
+      <p class="readonly-note" id="readonly-note" hidden>Read-only: this computer has no app key. Run <code>fcli login</code> in a terminal to post, like and follow.</p>
+
+      <div class="filterbar card" id="filterbar" hidden>
+        <div class="filterbar__head">
+          <span class="filterbar__title">Show casts from</span>
+          <button type="button" class="link-btn" id="hide-farcaster">Hide the Farcaster app</button>
+          <button type="button" class="link-btn" id="show-all">Show all</button>
+        </div>
+        <div class="appchips" id="appchips"></div>
+      </div>
+
+      <div id="feed-list" class="list" aria-live="polite"></div>
+      <details class="calls" id="calls-feed"></details>
+    </section>
+
+    <!-- Who can post -->
+    <section id="view-keys" role="tabpanel" aria-labelledby="tab-keys" tabindex="0" hidden>
+      <div class="panel-intro">
+        <h1 class="tg-display-2" id="keys-title">Who can post as them</h1>
+        <p class="tg-body">Every app you've signed in to holds a key that can post as you. Here's the full list, straight from your node.</p>
+      </div>
+      <div class="keys-summary" id="keys-summary"></div>
+      <div id="keys-list" class="list"></div>
+      <details class="calls" id="calls-keys"></details>
+    </section>
+
+    <!-- Apps in this feed -->
+    <section id="view-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0" hidden>
+      <div class="panel-intro">
+        <h1 class="tg-display-2">Apps in this feed</h1>
+        <p class="tg-body">Every cast is signed by the app it was posted from. This is which apps the people in this feed actually use. Click one to see only its casts.</p>
+      </div>
+      <div class="apps-top" id="apps-top"></div>
+      <div id="apps-bars" class="bars"></div>
+      <details class="calls" id="calls-apps"></details>
+    </section>
+
+    <!-- Your node -->
+    <section id="view-node" role="tabpanel" aria-labelledby="tab-node" tabindex="0" hidden>
+      <div class="panel-intro">
+        <h1 class="tg-display-2">Your node</h1>
+        <p class="tg-body">Everything on this page came from here. No API keys, no one else's servers.</p>
+      </div>
+      <div class="card node-card" id="node-card"></div>
+      <h2 class="tg-title log-title">Every call this page made</h2>
+      <p class="tg-small log-hint">Copy any line and run it yourself. The same data comes back.</p>
+      <div class="fc-term"><pre><code id="call-log"></code></pre></div>
+    </section>
+  </main>
+
+  <div class="tg-toast" id="toast" role="status" hidden></div>
+  <script src="/tangerine/js/tangerine.js" defer></script>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

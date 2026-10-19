@@ -2,6 +2,7 @@
 // Every read in this client is one of these GETs, so you can repeat any of
 // them with curl: curl "$FC_NODE/v1/castsByFid?fid=3&reverse=true"
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -53,6 +54,15 @@ export type Page = { messages: Message[]; nextPageToken?: string };
 
 export class NodeError extends Error {}
 
+// The GUI shows the node calls behind every panel. Code running inside
+// recordCalls() gets each URL it fetches collected, in order.
+const callLog = new AsyncLocalStorage<string[]>();
+export async function recordCalls<T>(fn: () => Promise<T>): Promise<{ result: T; calls: string[] }> {
+  const calls: string[] = [];
+  const result = await callLog.run(calls, fn);
+  return { result, calls };
+}
+
 export async function get<T>(
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
@@ -62,6 +72,7 @@ export async function get<T>(
   for (const [k, v] of Object.entries(params)) if (v !== undefined) url.searchParams.set(k, String(v));
   let res: Response;
   try {
+    callLog.getStore()?.push(`GET ${url.pathname}${url.search}`);
     res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   } catch (e) {
     throw new NodeError(`can't reach your node at ${NODE} (${(e as Error).message}). Is FC_NODE right, and is port 3381 open?`);
@@ -77,6 +88,7 @@ export async function get<T>(
 export async function post<T>(path: "/v1/submitMessage" | "/v1/validateMessage", bytes: Uint8Array): Promise<T> {
   let res: Response;
   try {
+    callLog.getStore()?.push(`POST ${path} (${bytes.length} bytes of protobuf)`);
     res = await fetch(NODE + path, {
       method: "POST",
       headers: { "content-type": "application/octet-stream" },
