@@ -118,7 +118,11 @@ async function main() {
         const { signer } = await get<{ signer: { expiresAt?: number } }>("/v1/signer", { fid: key.fid, signer: key.publicKey });
         console.log(`status    active${signer.expiresAt ? `, expires ${new Date(signer.expiresAt * 1000).toISOString().slice(0, 10)} unless used` : ""}`);
       } catch {
-        console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fcli login");
+        // A node that's still catching up hasn't seen recent keys yet.
+        const info = await get<Info>("/v1/info").catch(() => undefined);
+        const lag = info ? Math.max(...info.shardInfos.map((s) => s.blockDelay)) : 0;
+        if (lag > 60) console.log(`status    not on your node yet: it's ${(lag / 3600).toFixed(1)} h behind, and this key may be newer than that. Check again once fcli status says "in sync".`);
+        else console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fcli login");
       }
       break;
     }
