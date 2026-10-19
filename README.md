@@ -32,8 +32,6 @@ Then `clearcast ui` opens the client in your browser. It shows who can post as y
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381
 ```
 
-Already have a Linux box with 16 GB RAM and ~700 GB free? Skip command 0 and run command 1 on it.
-
 **Or let your AI agent do it.** Paste this into an agent that can run commands on your computer (Claude Code, Codex and the like). It follows [AGENTS.md](AGENTS.md):
 
 ```text

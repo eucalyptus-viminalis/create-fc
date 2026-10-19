@@ -135,7 +135,6 @@ For a read node the two behave the same, since neither the CPU nor the RAM is th
 
 - **Delete the node when you're not using it.** A fresh sync takes 6–8 hours.
 - **Start soon after the daily snapshot** to cut catch-up time.
-- **Run it on hardware you already own.** The node needs 16 GB of RAM, 4+ cores and about 600 GB free if you use `node/load-snapshot.sh`. It works on a spare Linux box. A Mac also works if it has enough RAM and a fast external drive.
 - **For a node you'll run long-term, look at Hetzner's dedicated servers** with local NVMe. They are billed monthly, sometimes with a setup fee, and are often cheaper per TB than a cloud volume. `hcloud` doesn't manage them, so they're outside this tutorial's scripts.
 
 ## What doesn't cost anything

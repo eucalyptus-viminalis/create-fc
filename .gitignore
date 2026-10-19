@@ -7,3 +7,4 @@ node_modules/
 .fc-client/
 .DS_Store
 client/ui/mockups/
+site/mockups/

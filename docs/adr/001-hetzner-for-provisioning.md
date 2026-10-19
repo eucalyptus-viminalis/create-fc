@@ -49,13 +49,7 @@ How re-runs work:
 - The script is idempotent: each resource is looked up by name and reused if it exists.
 - The one manual prerequisite is creating a Hetzner project and API token in the console, then running `hcloud context create`, or exporting `HCLOUD_TOKEN`. The tutorial documents this as step zero of command 0.
 
-`cloud-init.sh` also works as the bring-your-own-Linux-box path:
-
-```bash
-sudo OPERATOR_FID=<fid> bash cloud-init.sh
-```
-
-We are not building a local Mac target for now.
+There is no bring-your-own-hardware path; see [ADR 002](002-rented-server-only.md).
 
 ## Consequences
 

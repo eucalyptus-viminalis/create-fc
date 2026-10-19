@@ -1,10 +1,10 @@
 #!/bin/bash
-# Command 1: turn a Linux box into a Snapchain read node.
+# Command 1: turn the server from command 0 into a Snapchain read node.
 #
 #   curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | sudo bash
 #
-# Works on the server provision/hetzner.sh made, or any Ubuntu/Debian box
-# with 16 GB RAM, 4+ cores and ~700 GB free. Safe to run again: it picks up
+# Run it on the Hetzner server provision/hetzner.sh made; other machines are
+# not supported (see docs/adr/002-rented-server-only.md). Safe to run again: it picks up
 # where it stopped. The slow part (2-3 h of snapshot, then catching up) runs
 # as a systemd job, so you can disconnect. Check on it with: fc-node status
 set -euo pipefail
