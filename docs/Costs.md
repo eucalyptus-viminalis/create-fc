@@ -40,9 +40,9 @@ You don't need to keep a node for a month to follow the tutorial. Most of the ti
 | --- | --- | --- |
 | `hetzner.sh` creates the server, volume and firewall | 35 s | Measured |
 | First boot installs Docker and starts the snapshot loader | ~1 min | Measured |
-| Snapshot download and unpack (all three shards) | 2 h 17 min | Measured |
-| Catching up on blocks since the snapshot | ~5½ h | Projected from a 10-minute sample of the node's catch-up rate |
-| **In sync and ready for the client** | **~8 h** | |
+| Snapshot download and unpack (all three shards) | 2 h 17 min, then 1 h 53 min | Measured, two runs |
+| Catching up on blocks since the snapshot | ~5½ h, then 4 h 25 min | First projected, second measured |
+| **In sync and ready for the client** | **~8 h, then 6 h 20 min** | Second run: command 0 at 22:27:56Z, in sync at 04:48:02Z |
 
 Catch-up time depends on how old the snapshot is when you start. Ours was about 22 hours old. Snapshots are refreshed daily.
 
@@ -61,7 +61,7 @@ When you're done, delete everything so billing stops. The script lists the serve
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
 ```
 
-The volume holds the node's database, so a new node re-syncs from scratch (about 8 hours). To do it by hand instead: `hcloud server delete fc-node`, then `hcloud volume delete fc-node-data`, `hcloud firewall delete fc-node-fw` and `hcloud ssh-key delete fc-node-key`. The volume can only be deleted once the server is gone.
+The volume holds the node's database, so a new node re-syncs from scratch (6–8 hours). To do it by hand instead: `hcloud server delete fc-node`, then `hcloud volume delete fc-node-data`, `hcloud firewall delete fc-node-fw` and `hcloud ssh-key delete fc-node-key`. The volume can only be deleted once the server is gone.
 
 ## Why 1000 GB is enough
 
@@ -133,7 +133,7 @@ For a read node the two behave the same, since neither the CPU nor the RAM is th
 
 ## Ways to pay less
 
-- **Delete the node when you're not using it.** A fresh sync takes about 8 hours.
+- **Delete the node when you're not using it.** A fresh sync takes 6–8 hours.
 - **Start soon after the daily snapshot** to cut catch-up time.
 - **Run it on hardware you already own.** The node needs 16 GB of RAM, 4+ cores and about 600 GB free if you use `node/load-snapshot.sh`. It works on a spare Linux box. A Mac also works if it has enough RAM and a fast external drive.
 - **For a node you'll run long-term, look at Hetzner's dedicated servers** with local NVMe. They are billed monthly, sometimes with a setup fee, and are often cheaper per TB than a cloud volume. `hcloud` doesn't manage them, so they're outside this tutorial's scripts.

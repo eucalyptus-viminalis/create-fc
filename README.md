@@ -12,7 +12,7 @@ You need: a [Hetzner Cloud](https://console.hetzner.com) project with an API tok
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash
 ```
 
-**1. Set up the read node** on it. Use the IP that command 0 printed. Loading takes about 2¼ hours, and catching up a few more. It runs in the background, and `ssh root@<ip> fc-node status` tells you where it's at.
+**1. Set up the read node** on it. Use the IP that command 0 printed. Loading the snapshot takes about 2 hours, and catching up about 4½ more (6 h 20 min in total on our last run). It runs in the background, and `ssh root@<ip> fc-node status` tells you where it's at.
 
 ```bash
 ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'

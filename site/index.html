@@ -53,27 +53,29 @@
         <div id="p0" role="tabpanel" aria-labelledby="t0" tabindex="0">
           <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash
-<span class="fc-o">Waiting for create_volume (volume: 107177392) ... done
-Waiting for create_server (server: 170981475, image: 161547269) ... done
-Server 170981475 created
-IPv4: 2.28.135.100</span></code></pre></div>
-          <p class="fc-caption">A cx43 server with a 1000 GB volume and a firewall. Took 35 seconds.</p>
+<span class="fc-o">cx43 is sold out in fsn1 right now; trying the next option
+
+Server fc-node is up at 91.99.76.223 (cx43, 1000 GB volume, nbg1).
+It bills by the hour until you delete it; see the end of this message.</span></code></pre></div>
+          <p class="fc-caption">Server, volume and firewall in about half a minute. When a type is sold out, it tries the next location.</p>
         </div>
         <div id="p1" role="tabpanel" aria-labelledby="t1" tabindex="0" hidden>
           <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer → the server</span></div>
 <pre><code><span class="fc-p">$</span> ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'
-<span class="fc-o">shard 0 done in 10 min; disk used 37G
-shard 1 done in 63 min; disk used 297G
-shard 2 done in 63 min; disk used 556G
-snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
-          <p class="fc-caption">Snapshot loaded in 2 h 17 min, then about 5½ hours of catching up.</p>
+<span class="fc-o">fc-node setup: 15 GB RAM, 984 GB free in /root/snapchain
+setup started as a background job.</span>
+
+<span class="fc-p">$</span> ssh root@&lt;ip&gt; fc-node status
+<span class="fc-o">catching up: 18.9 h behind, gaining about 4 s per second (~4.7 h to go).</span></code></pre></div>
+          <p class="fc-caption">Returns in 5 seconds. The snapshot loads in about 2 hours, then the node catches up on its own.</p>
         </div>
         <div id="p2" role="tabpanel" aria-labelledby="t2" tabindex="0" hidden>
           <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381
-<span class="fc-p">$</span> fcli cast "hello from my own snapchain read node 👋"
-<span class="fc-o">posted 0x085bf8a4279a3a92fb443a9c7a66ddd6eca69e3e</span></code></pre></div>
-          <p class="fc-caption">Sent to our own read node and confirmed on it 1.8 seconds later.</p>
+<span class="fc-o">installed fcli into ~/.fc-client/app, using the node at http://91.99.76.223:3381</span>
+<span class="fc-p">$</span> fcli cast "posting through a fresh create-fc node, three commands later"
+<span class="fc-o">posted 0x39d6294b0a9e270aaa40bc404a0a08b3c5e3e6a8</span></code></pre></div>
+          <p class="fc-caption">Installed in 6 seconds. The cast went out through the new node and was back on it 4.3 seconds later.</p>
         </div>
       </div>
     </section>
@@ -82,7 +84,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
     <section class="tg-container tg-section" aria-label="In numbers">
       <div class="tg-grid-3">
         <div class="tg-stat"><strong class="tg-numeral">0</strong><h2 class="tg-stat__label">API keys</h2><p class="tg-stat__desc">Your node syncs from the network's own peers and snapshots. Your client only talks to your node.</p></div>
-        <div class="tg-stat"><strong class="tg-numeral">8</strong><h2 class="tg-stat__label">Hours to first sync</h2><p class="tg-stat__desc">2¼ to load the snapshot, then about 5½ to catch up. It runs on its own while you do something else.</p></div>
+        <div class="tg-stat"><strong class="tg-numeral">6</strong><h2 class="tg-stat__label">Hours to first sync</h2><p class="tg-stat__desc">6 h 20 min on our last run: under 2 to load the snapshot, then about 4½ to catch up. It runs on its own.</p></div>
         <div class="tg-stat"><strong class="tg-numeral">$4</strong><h2 class="tg-stat__label">For a one-day test</h2><p class="tg-stat__desc">Hetzner bills by the hour: about $0.16. Delete the server when you're done. <a class="tg-text-link" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/Costs.md">Full costs</a></p></div>
       </div>
     </section>
@@ -200,7 +202,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         </table>
         <p>Disk use peaked at 556 GB, the size of the finished database.</p>
         <h3>Catching up</h3>
-        <p>Our snapshot was 22 hours old by the time it finished loading. The node fetched the missing blocks at about 5 per second per shard and closed the gap by about 4 seconds every second, so it was in sync roughly 5½ hours later. The CPU sat 94% idle: the limit is fetching blocks from peers one after another, not the server.</p>
+        <p>Our snapshot was 22 hours old by the time it finished loading. The node fetched the missing blocks at about 5 per second per shard and closed the gap by about 4 seconds every second, so it was in sync roughly 5½ hours later. On a second, timed run the snapshot was 19 hours old and the node caught up in 4 hours 25 minutes: 6 h 20 min from command 0 to in sync. The CPU sat 94% idle: the limit is fetching blocks from peers one after another, not the server.</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>on the server</span></div>
 <pre><code><span class="fc-p">$</span> fcli status
 <span class="fc-o">node http://2.28.135.100:3381 · snapchain 0.14.3
