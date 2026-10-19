@@ -3,6 +3,7 @@
    blocks and long-form prose (tables, lists, inline code). Tokens only. */
 
 html { scroll-padding-top: 84px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 /* Tangerine's header background spans 100vw, which includes the scrollbar
    where one is visible and pushes the page 8px wide. Clip sideways overflow
    (clip, not hidden, keeps the sticky header working). */
@@ -117,6 +118,7 @@ code {
 .path-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 14px; }
 .path-head h2 { font-size: 22px; }
 .path-head span { color: var(--tg-text-3); font-size: var(--tg-text-sm); }
+.path-jump { flex-shrink: 0; }
 .hero-path .fc-hero-term { flex: 1; display: flex; flex-direction: column; align-items: stretch; width: 100%; margin: 0; }
 .hero-path .fc-hero-term .tg-tabs { align-self: center; }
 .hero-path [role="tabpanel"]:not([hidden]) { flex: 1; display: flex; flex-direction: column; }
@@ -152,6 +154,23 @@ code {
   background: var(--tg-surface);
 }
 .fc-prereq .tg-title { margin-bottom: 16px; }
+.fc-steps { list-style: none; counter-reset: step -1; display: grid; gap: 14px; padding: 0; }
+.fc-steps > li {
+  counter-increment: step;
+  display: grid;
+  gap: 10px;
+  padding: 26px 28px;
+  border: 1px solid var(--tg-border);
+  border-radius: var(--tg-radius-card);
+  background: var(--tg-surface);
+}
+.fc-steps > li .tg-title::before {
+  content: counter(step);
+  margin-right: 12px;
+  color: var(--tg-orange);
+  font-variant-numeric: tabular-nums;
+}
+.fc-steps .tg-body { color: var(--tg-text-2); }
   counter-increment: step;
   display: grid;
   gap: 10px;
@@ -175,7 +194,6 @@ code {
 }
 .fc-done .tg-body { color: var(--tg-text-2); }
 .fc-note { margin-top: 18px; }
-.fc-between__list { display: grid; gap: 8px; padding-left: 20px; color: var(--tg-text-2); font-size: var(--tg-text-body); line-height: 1.7; }
 .fc-term--prompt pre, .fc-term--prompt code { font-family: var(--tg-font-sans); font-size: var(--tg-text-sm); line-height: 1.6; }
 
 /* ---------- tutorial prose ---------- */
@@ -254,7 +272,7 @@ code {
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
   .fc-try { padding: 22px 20px; }
-  .fc-prereq, .fc-done { padding: 22px 20px; }
+  .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }
   .fc-copy { margin: 0 12px 12px auto; }

@@ -47,7 +47,7 @@
 
       <div class="hero-paths">
         <div class="hero-path">
-          <div class="path-head"><h2 id="path-hand">Do it yourself</h2><span>3 commands</span></div>
+          <div class="path-head"><h2 id="path-hand">Do it yourself</h2><a class="tg-btn tg-btn--pill tg-btn--sm path-jump" href="#quickstart">Step by step ↓</a></div>
       <div class="fc-hero-term">
         <div class="tg-tabs" role="tablist" aria-label="Command" data-tg-tabs>
           <button class="tg-tabs__tab" role="tab" id="t0" aria-controls="p0" aria-selected="true">0 · Server</button>
@@ -140,7 +140,7 @@ setup started as a background job.</span>
     <section class="tg-container tg-section tg-section--ruled" id="quickstart" aria-labelledby="qs-title">
       <div class="tg-section-head">
         <p class="tg-eyebrow">Quickstart</p>
-        <h2 class="tg-display-2" id="qs-title">What you need, and what to expect.</h2>
+        <h2 class="tg-display-2" id="qs-title">Copy, paste, wait.</h2>
       </div>
 
       <div class="fc-prereq">
@@ -154,14 +154,23 @@ setup started as a background job.</span>
         </ul>
       </div>
 
-      <div class="fc-prereq fc-between">
-        <h3 class="tg-title">Between the commands</h3>
-        <ol class="fc-between__list">
-          <li>After command 0, give the server a minute to boot before running command 1.</li>
-          <li>Command 1 returns in seconds and keeps working in the background, so you can close the terminal. Check on it any time with <code>ssh root@&lt;ip&gt; fc-node status</code>.</li>
-          <li>Command 2 works as soon as the node is catching up; reads just miss the newest casts until it's in sync. Then <code>clearcast ui</code> opens the client.</li>
-        </ol>
-      </div>
+      <ol class="fc-steps">
+        <li>
+          <h3 class="tg-title">Create the server</h3>
+          <p class="tg-body">A cx43 (8 vCPU, 16 GB RAM) with a 1000 GB volume, about $0.16/hour. If cx43 is sold out it tries other locations, then cpx41 (~$0.20/hour), and says which it got. It prints the next two commands with your server's IP filled in.</p>
+          <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+        <li>
+          <h3 class="tg-title">Set up the node</h3>
+          <p class="tg-body">Give the server a minute to boot. Setup runs in the background, so you can close the terminal. Check on it with <code>ssh root@&lt;ip&gt; fc-node status</code>.</p>
+          <div class="fc-term fc-term--copy"><pre><code>ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+        <li>
+          <h3 class="tg-title">Install the client</h3>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser, or try <code>clearcast feed dwr</code> in the terminal.</p>
+          <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        </li>
+      </ol>
 
       <div class="fc-done">
         <h3 class="tg-title">Done for now?</h3>
