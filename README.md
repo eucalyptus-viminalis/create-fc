@@ -34,6 +34,14 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 
 Already have a Linux box with 16 GB RAM and ~700 GB free? Skip command 0 and run command 1 on it.
 
+**Or let your AI agent do it.** Paste this into an agent that can run commands on your computer (Claude Code, Codex and the like). It follows [AGENTS.md](AGENTS.md):
+
+```text
+Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.
+```
+
+Two steps stay with you: creating the Hetzner API token, and `clearcast login` if you want to post. Neither secret should go into a chat.
+
 **Done for now?** Delete the server, volume and firewall so nothing keeps billing. It lists what it will delete and asks you to type the server's name:
 
 ```bash
@@ -42,7 +50,7 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 
 Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, then re-run command 2 with the new IP.
 
-> **There is no npm package.** `npm create clearcast` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
+> **There is no npm package.** `npm create fc` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
 
 ## Seed phrases
 
@@ -61,6 +69,7 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 | `node/` | Command 1: Docker, a streamed snapshot load that peaks at 556 GB instead of ~1.5 TB, the official `snapchain.sh`, and `fc-node status` |
 | `client/` | Command 2: `clearcast`, a browser client (`clearcast ui`) and CLI in TypeScript with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
 | `docs/` | Costs and design decisions |
+| `AGENTS.md` | Step-by-step instructions for an AI agent running the setup for you |
 
 ## Help test it
 

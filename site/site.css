@@ -128,6 +128,9 @@ code {
 }
 .fc-done .tg-body { color: var(--tg-text-2); }
 .fc-note { margin-top: 18px; }
+.fc-agent { display: grid; gap: 12px; margin-top: 14px; padding: 24px 28px; border: 1px solid var(--tg-orange-line); border-radius: var(--tg-radius-card); background: var(--tg-orange-wash); }
+.fc-agent .tg-body { margin-top: 6px; color: var(--tg-text-2); }
+.fc-term--prompt pre, .fc-term--prompt code { font-family: var(--tg-font-sans); font-size: var(--tg-text-sm); line-height: 1.6; }
 
 /* ---------- tutorial prose ---------- */
 .fc-doc {
@@ -194,7 +197,7 @@ code {
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
   .fc-try { padding: 22px 20px; }
-  .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
+  .fc-steps > li, .fc-prereq, .fc-done, .fc-agent { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }
   .fc-copy { margin: 0 12px 12px auto; }
