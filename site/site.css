@@ -3,6 +3,10 @@
    blocks and long-form prose (tables, lists, inline code). Tokens only. */
 
 html { scroll-padding-top: 84px; }
+/* Tangerine's header background spans 100vw, which includes the scrollbar
+   where one is visible and pushes the page 8px wide. Clip sideways overflow
+   (clip, not hidden, keeps the sticky header working). */
+html, body { overflow-x: clip; }
 
 /* ---------- inline code ---------- */
 code {
@@ -46,9 +50,11 @@ code {
   font-family: var(--tg-font-mono);
   font-size: var(--tg-text-xs);
   line-height: 1.65;
-  white-space: pre;
+  /* long commands wrap instead of scrolling sideways; URLs may break anywhere */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
-.fc-term code { padding: 0; background: none; color: inherit; font-size: inherit; overflow-wrap: normal; }
+.fc-term code { padding: 0; background: none; color: inherit; font-size: inherit; overflow-wrap: anywhere; }
 .fc-term .fc-p { color: var(--fc-term-prompt); user-select: none; }
 .fc-term .fc-o { color: var(--fc-term-dim); }
 
@@ -69,6 +75,7 @@ code {
   transition: background var(--tg-dur-base);
 }
 .fc-copy:hover { background: rgb(255 255 255 / 0.08); }
+.fc-copy--bar { margin: 0 0 0 auto; padding: 3px 11px; }
 
 /* ---------- hero terminal ---------- */
 .fc-hero-term {

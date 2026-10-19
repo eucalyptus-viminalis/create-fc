@@ -52,7 +52,7 @@
           <button class="tg-tabs__tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">2 · Client</button>
         </div>
         <div id="p0" role="tabpanel" aria-labelledby="t0" tabindex="0">
-          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+          <div class="fc-term"><div class="fc-term__bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i><span>your computer</span><button class="fc-copy fc-copy--bar" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash">Copy command</button></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash
 <span class="fc-o">cx43 is sold out in fsn1 right now; trying the next option
 
@@ -61,7 +61,7 @@ It bills by the hour until you delete it; see the end of this message.</span></c
           <p class="fc-caption">Server, volume and firewall in about half a minute. When a type is sold out, it tries the next location.</p>
         </div>
         <div id="p1" role="tabpanel" aria-labelledby="t1" tabindex="0" hidden>
-          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer → the server</span></div>
+          <div class="fc-term"><div class="fc-term__bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i><span>your computer → the server</span><button class="fc-copy fc-copy--bar" type="button" data-copy="ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'">Copy command</button></div>
 <pre><code><span class="fc-p">$</span> ssh root@&lt;ip&gt; 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'
 <span class="fc-o">fc-node setup: 15 GB RAM, 984 GB free in /root/snapchain
 setup started as a background job.</span>
@@ -71,7 +71,7 @@ setup started as a background job.</span>
           <p class="fc-caption">Returns in 5 seconds. The snapshot loads in about 2 hours, then the node catches up on its own.</p>
         </div>
         <div id="p2" role="tabpanel" aria-labelledby="t2" tabindex="0" hidden>
-          <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
+          <div class="fc-term"><div class="fc-term__bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i><span>your computer</span><button class="fc-copy fc-copy--bar" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381">Copy command</button></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381
 <span class="fc-o">installed clearcast into ~/.fc-client/app, using the node at http://91.99.76.223:3381</span>
 <span class="fc-p">$</span> clearcast cast "posting through a fresh create-fc node, three commands later"
@@ -400,7 +400,8 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".fc-copy");
       if (!btn) return;
-      const text = btn.parentElement.querySelector("code").innerText.trim();
+      // Hero terminals copy just their command (data-copy), not the output.
+      const text = btn.dataset.copy ?? btn.parentElement.querySelector("code").innerText.trim();
       try {
         await navigator.clipboard.writeText(text);
         btn.textContent = "Copied";

@@ -1,6 +1,10 @@
 /* clearcast GUI on Tangerine. Tokens only; the purple comes from fc-theme.css. */
 
 body { background: var(--tg-page); }
+/* Tangerine's header background spans 100vw, which includes the scrollbar
+   where one is visible and pushes the page 8px wide. Clip sideways overflow
+   (clip, not hidden, keeps the sticky header working). */
+html, body { overflow-x: clip; }
 code { font-family: var(--tg-font-mono); font-size: 0.88em; padding: 1px 5px; border-radius: var(--tg-radius-xs); background: var(--tg-orange-wash); }
 
 /* ---------- header ---------- */
