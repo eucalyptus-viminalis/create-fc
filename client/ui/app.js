@@ -67,20 +67,47 @@ async function api(path, body) {
   return json;
 }
 
-// Turn a recorded node call into something you can paste into a terminal.
-const asCurl = (call) =>
-  call.startsWith("#") ? call : call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}  (signed by your app key, sent by clearcast)`;
+// Turn recorded node calls ({ call, at, ms }) into lines you can paste into a
+// terminal. The time and duration ride along as a shell comment, which the
+// shell ignores. Identical calls in a row (the 15-second status check, say)
+// collapse into one line with a count.
+const clock = (t) => new Date(t).toLocaleTimeString([], { hour12: false });
+const command = (call) =>
+  call.startsWith("GET ") ? `curl "${state.node}${call.slice(4)}"` : `# ${call}, signed by your app key and sent by clearcast`;
+
+function lines(calls) {
+  const out = [];
+  for (let i = 0; i < calls.length; ) {
+    const c = calls[i];
+    if (c.note) {
+      out.push(c.note);
+      i++;
+      continue;
+    }
+    let j = i + 1;
+    while (j < calls.length && calls[j].call === c.call) j++;
+    const run = calls.slice(i, j);
+    const times = run.map((r) => r.at).sort((a, b) => a - b);
+    const why = c.call.startsWith("GET /v1/info") ? ", the status check every 15 s" : "";
+    const when = run.length === 1 ? `${clock(c.at)} · ${c.ms} ms` : `×${run.length}, ${clock(times[0])}–${clock(times.at(-1))}${why}`;
+    out.push(`${command(c.call)}  # ${when}`);
+    i = j;
+  }
+  return out;
+}
 
 function showCalls(id, calls) {
   const el = $(id);
-  el.innerHTML = `<summary>Show the ${calls.length} API call${calls.length === 1 ? "" : "s"} to your node behind this view</summary><pre><code>${esc(
+  const real = calls.filter((c) => !c.note);
+  const shown = lines(calls);
+  el.innerHTML = `<summary>Show the ${real.length} API call${real.length === 1 ? "" : "s"} to your node behind this view</summary><pre><code>${esc(
     "# Paste any line into a terminal to get the same data straight from your node.\n" +
-    calls.slice(0, 40).map(asCurl).join("\n") + (calls.length > 40 ? `\n# …and ${calls.length - 40} more` : ""),
+    shown.slice(0, 40).join("\n") + (shown.length > 40 ? `\n# …and ${shown.length - 40} more lines` : ""),
   )}</code></pre>`;
 }
 
 function renderLog() {
-  $("#call-log").textContent = state.log.length ? state.log.map(asCurl).join("\n") : "# nothing yet";
+  $("#call-log").textContent = state.log.length ? lines(state.log).join("\n") : "# nothing yet";
 }
 
 // ----------------------------------------------------------------- status
@@ -144,7 +171,7 @@ async function loadFeed() {
     const { data } = await api(`/api/feed?user=${state.viewAs.fid}`);
     const calls = data.calls;
     const age = Math.round((Date.now() - data.builtAt) / 1000);
-    if (age > 2) calls.unshift(`# built ${age}s ago and kept for 2 minutes; these are the calls that built it`);
+    if (age > 2) calls.unshift({ note: `# built ${age}s ago and kept for 2 minutes; these are the calls that built it` });
     if (age <= 2) {
       for (const c of calls) state.log.unshift(c);
       state.log.length = Math.min(state.log.length, 300);

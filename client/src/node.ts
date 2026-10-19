@@ -56,9 +56,11 @@ export class NodeError extends Error {}
 
 // The GUI shows the node calls behind every panel. Code running inside
 // recordCalls() gets each URL it fetches collected, in order.
-const callLog = new AsyncLocalStorage<string[]>();
-export async function recordCalls<T>(fn: () => Promise<T>): Promise<{ result: T; calls: string[] }> {
-  const calls: string[] = [];
+// Each record says what was called, when (unix ms) and how long it took.
+export type CallRecord = { call: string; at: number; ms: number };
+const callLog = new AsyncLocalStorage<CallRecord[]>();
+export async function recordCalls<T>(fn: () => Promise<T>): Promise<{ result: T; calls: CallRecord[] }> {
+  const calls: CallRecord[] = [];
   const result = await callLog.run(calls, fn);
   return { result, calls };
 }
@@ -72,8 +74,10 @@ export async function get<T>(
   for (const [k, v] of Object.entries(params)) if (v !== undefined) url.searchParams.set(k, String(v));
   let res: Response;
   try {
-    callLog.getStore()?.push(`GET ${url.pathname}${url.search}`);
+    const rec = { call: `GET ${url.pathname}${url.search}`, at: Date.now(), ms: 0 };
+    callLog.getStore()?.push(rec);
     res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    rec.ms = Date.now() - rec.at;
   } catch (e) {
     throw new NodeError(`can't reach your node at ${NODE} (${(e as Error).message}). Is FC_NODE right, and is port 3381 open?`);
   }
@@ -87,8 +91,9 @@ export async function get<T>(
 // /v1/validateMessage runs the same checks and relays nothing.
 export async function post<T>(path: "/v1/submitMessage" | "/v1/validateMessage", bytes: Uint8Array): Promise<T> {
   let res: Response;
+  const rec = { call: `POST ${path} (${bytes.length} bytes of protobuf)`, at: Date.now(), ms: 0 };
+  callLog.getStore()?.push(rec);
   try {
-    callLog.getStore()?.push(`POST ${path} (${bytes.length} bytes of protobuf)`);
     res = await fetch(NODE + path, {
       method: "POST",
       headers: { "content-type": "application/octet-stream" },
@@ -98,6 +103,7 @@ export async function post<T>(path: "/v1/submitMessage" | "/v1/validateMessage",
   } catch (e) {
     throw new NodeError(`can't reach your node at ${NODE} (${(e as Error).message})`);
   }
+  rec.ms = Date.now() - rec.at;
   const body = await res.text();
   if (!res.ok) {
     let detail = body;

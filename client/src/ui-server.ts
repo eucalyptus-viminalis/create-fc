@@ -12,7 +12,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NODE, NodeError, get, pool, recordCalls, type Message, type Page } from "./node.ts";
+import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { castsByFid, following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
 import { loadKey } from "./keys.ts";
@@ -84,7 +84,7 @@ async function shape(casts: Message[]): Promise<CastView[]> {
 // sent in fixed batches with bigger pages). Kept for 2 minutes per account.
 // The calls that built a feed are kept with it, so a cached answer can still
 // show what it took.
-type Feed = { following: number; casts: CastView[]; calls: string[]; builtAt: number };
+type Feed = { following: number; casts: CastView[]; calls: CallRecord[]; builtAt: number };
 const feedCache = new Map<number, Promise<Feed>>();
 function feedFor(fid: number): Promise<Feed> {
   const hit = feedCache.get(fid);
