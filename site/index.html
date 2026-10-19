@@ -39,22 +39,15 @@
   <main id="top">
     <!-- Hero -->
     <section class="tg-hero" aria-labelledby="hero-title">
-      <div class="hero-split">
       <div class="tg-hero__copy">
         <h1 id="hero-title">Your own Farcaster.<br />Three commands.</h1>
         <p class="tg-hero__desc">Rent a <span class="term" tabindex="0">server<span class="tip" role="tooltip">A Hetzner Cloud machine with 8 vCPUs, 16 GB of RAM and a 1000 GB disk, billed by the hour. Delete it when you're done. <a href="#cmd0">Read more</a></span></span>, sync a Snapchain <span class="term" tabindex="0">read node<span class="tip" role="tooltip">A full copy of Farcaster's data that follows the network block by block. It serves reads and relays your posts to the validators. <a href="#cmd1">Read more</a></span></span>, and install a <span class="term" tabindex="0">client<span class="tip" role="tooltip">clearcast: a feed, posting, and a view of every app that can post as you. Runs on your computer and talks only to your node. <a href="#cmd2">Read more</a></span></span>. <span class="term" tabindex="0">No API keys<span class="tip" role="tooltip">Except your own Hetzner API token, which command 0 uses to create the server. Nothing you read or post goes through anyone else's API. <a href="#before">How to make one</a></span></span> needed! Read + write from your own node.</p>
       </div>
-      <aside class="qs-card" aria-labelledby="qs-card-title">
-        <div class="qs-card__head"><h2 id="qs-card-title">Quickstart</h2><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/AGENTS.md">Agent setup ↗</a></div>
-        <div class="qs-card__body">
-          <p class="qs-card__prompt">Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</p>
-          <button class="tg-btn tg-btn--ink tg-btn--sm js-copy qs-card__copy" type="button" data-copy="Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy agent prompt</span></button>
-        </div>
-        <p class="qs-card__note">Paste it into Claude Code, Codex or any agent that can run commands. You still create the Hetzner token yourself.</p>
-        <div class="qs-card__foot"><a href="#quickstart">or by hand ↓</a><span>~$0.16/hour · ~6 hours to sync</span></div>
-      </aside>
-      </div>
 
+
+      <div class="hero-paths">
+        <div class="hero-path">
+          <div class="path-head"><h2 id="path-hand">Do it yourself</h2><span>3 commands</span></div>
       <div class="fc-hero-term">
         <div class="tg-tabs" role="tablist" aria-label="Command" data-tg-tabs>
           <button class="tg-tabs__tab" role="tab" id="t0" aria-controls="p0" aria-selected="true">0 · Server</button>
@@ -69,7 +62,6 @@
 
 Server fc-node is up at 91.99.76.223 (cx43, 1000 GB volume, nbg1).
 It bills by the hour until you delete it; see the end of this message.</span></code></pre></div>
-          <p class="fc-caption">Creates the server, a 1000 GB volume and a firewall. When a type is sold out, it tries the next location.</p>
         </div>
         <div id="p1" role="tabpanel" aria-labelledby="t1" tabindex="0" hidden>
           <p class="lead-in"><span class="lead-in__what">Sync the node</span><span class="lead-in__time">~6 hours</span></p>
@@ -80,7 +72,6 @@ setup started as a background job.</span>
 
 <span class="fc-p">$</span> ssh root@&lt;ip&gt; fc-node status
 <span class="fc-o">catching up: 18.9 h behind, gaining about 4 s per second (~4.7 h to go).</span></code></pre></div>
-          <p class="fc-caption">Returns in seconds. The snapshot loads in about 2 hours, then the node catches up on its own; you can close the terminal.</p>
         </div>
         <div id="p2" role="tabpanel" aria-labelledby="t2" tabindex="0" hidden>
           <p class="lead-in"><span class="lead-in__what">Run the client</span><span class="lead-in__time">~6 seconds</span></p>
@@ -89,7 +80,19 @@ setup started as a background job.</span>
 <span class="fc-o">installed clearcast into ~/.fc-client/app, using the node at http://91.99.76.223:3381</span>
 <span class="fc-p">$</span> clearcast cast "posting through a fresh create-fc node, three commands later"
 <span class="fc-o">posted 0x39d6294b0a9e270aaa40bc404a0a08b3c5e3e6a8</span></code></pre></div>
-          <p class="fc-caption">Then <code>clearcast ui</code> opens it in your browser. This cast went out through the new node and was back on it 4.3 seconds later.</p>
+        </div>
+      </div>
+        </div>
+        <div class="hero-path">
+          <div class="path-head"><h2 id="path-agent">Let an agent do it</h2><span>1 prompt</span></div>
+      <aside class="qs-card" aria-labelledby="path-agent">
+        <div class="qs-card__body">
+          <p class="qs-card__prompt">Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</p>
+          <button class="tg-btn tg-btn--ink tg-btn--sm js-copy qs-card__copy" type="button" data-copy="Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy agent prompt</span></button>
+        </div>
+        <p class="qs-card__note">Paste it into Claude Code, Codex or any agent that can run commands. You still create the Hetzner token yourself.</p>
+        <div class="qs-card__foot"><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/AGENTS.md">What the agent follows ↗</a><span>~$0.16/hour · ~6 hours to sync</span></div>
+      </aside>
         </div>
       </div>
     </section>

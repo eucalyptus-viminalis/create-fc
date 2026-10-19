@@ -108,11 +108,22 @@ code {
 .tip::after { content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: var(--tg-surface); }
 .term:hover .tip, .term:focus-within .tip { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
 
-/* ---------- hero: headline beside the agent quickstart ---------- */
-.hero-split { width: min(1120px, calc(100% - 2 * var(--tg-gutter))); margin: 36px auto 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: center; text-align: left; }
-.hero-split .tg-hero__copy { max-width: none; margin: 0; text-align: left; }
-.hero-split h1 { font-size: clamp(44px, 5vw, 66px); }
-.hero-split .tg-hero__desc { margin-left: 0; max-width: 520px; }
+/* ---------- hero: two paths side by side, bottoms flush ---------- */
+/* Both columns stretch to the row's height, and inside the left one the
+   visible tab's terminal grows to fill it, so the terminal and the agent
+   card always end on the same line, whichever tab is open. */
+.hero-paths { width: min(1180px, calc(100% - 2 * var(--tg-gutter))); margin: 44px auto 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: stretch; text-align: left; }
+.hero-path { display: flex; flex-direction: column; min-width: 0; }
+.path-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 14px; }
+.path-head h2 { font-size: 22px; }
+.path-head span { color: var(--tg-text-3); font-size: var(--tg-text-sm); }
+.hero-path .fc-hero-term { flex: 1; display: flex; flex-direction: column; align-items: stretch; width: 100%; margin: 0; }
+.hero-path .fc-hero-term .tg-tabs { align-self: center; }
+.hero-path [role="tabpanel"]:not([hidden]) { flex: 1; display: flex; flex-direction: column; }
+.hero-path [role="tabpanel"] .fc-term { flex: 1; }
+.hero-path .qs-card { flex: 1; display: flex; flex-direction: column; box-shadow: none; }
+.hero-path .qs-card__body { flex: 1; margin-top: 20px; }
+
 .qs-card { border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); box-shadow: var(--tg-shadow-float); overflow: hidden; }
 .qs-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 18px 20px 12px; }
 .qs-card__head h2 { font-size: 22px; }
@@ -230,11 +241,11 @@ code {
 .fc-try .tg-body { margin-top: 6px; color: var(--tg-text-2); }
 .fc-vouch { margin-top: 22px; }
 
-@media (max-width: 860px) {
-  .hero-split { grid-template-columns: 1fr; gap: 28px; }
+@media (max-width: 900px) {
+  .hero-paths { grid-template-columns: 1fr; gap: 40px; }
 }
 @media (max-width: 700px) {
-  .hero-split { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
+  .hero-paths { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .tip { position: fixed; left: 16px; right: 16px; bottom: 16px; width: auto; transform: translateY(8px); }
   .term:hover .tip, .term:focus-within .tip { transform: none; }
   .tip::after { display: none; }
