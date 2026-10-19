@@ -73,7 +73,8 @@ const asCurl = (call) =>
 
 function showCalls(id, calls) {
   const el = $(id);
-  el.innerHTML = `<summary>Behind this view: ${calls.length} call${calls.length === 1 ? "" : "s"} to your node</summary><pre><code>${esc(
+  el.innerHTML = `<summary>Show the ${calls.length} API call${calls.length === 1 ? "" : "s"} to your node behind this view</summary><pre><code>${esc(
+    "# Paste any line into a terminal to get the same data straight from your node.\n" +
     calls.slice(0, 40).map(asCurl).join("\n") + (calls.length > 40 ? `\n# …and ${calls.length - 40} more` : ""),
   )}</code></pre>`;
 }
