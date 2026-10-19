@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// fc: a minimal Farcaster client for your own Snapchain node.
+// fcli: a minimal Farcaster client for your own Snapchain node.
 import { parseArgs } from "node:util";
 import { NODE, NodeError, get, toDate, type Message } from "./node.ts";
 import { castsByFid, feed, profile, resolveFid, usernames } from "./read.ts";
@@ -8,24 +8,24 @@ import { setUsername } from "./username.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
 import { checkPhrase, findCustody, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
 
-const HELP = `fc: a Farcaster client that talks only to your own node (${NODE})
+const HELP = `fcli: a Farcaster client that talks only to your own node (${NODE})
 
 Usage:
-  fc status                     Is the node in sync?
-  fc login [--dry-run]          Import a seed phrase once, register an app key
-  fc whoami                     Show the saved app key and its status
-  fc username <name> [--dry-run]  Claim an fname and set it as your username
-                                (asks for the seed phrase, like login)
-  fc cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
-                                Post a cast. @names become mentions.
-  fc delete <hash>              Delete one of your casts
-  fc follow | unfollow <name>   Follow or unfollow someone
-  fc like | unlike <user/hash>  Like a cast, e.g. fc like dwr/0x35c7b588
-  fc recast | unrecast <user/hash>
-  fc user <name|fid>            Show a profile
-  fc casts <name|fid> [-n 20]   A user's latest casts
-  fc feed <name|fid|me> [-n 30] Latest casts from everyone they follow
-  fc apps <name|fid>            Which apps hold keys for this account
+  fcli status                     Is the node in sync?
+  fcli login [--dry-run]          Import a seed phrase once, register an app key
+  fcli whoami                     Show the saved app key and its status
+  fcli username <name> [--dry-run]  Claim an fname and set it as your username
+                                  (asks for the seed phrase, like login)
+  fcli cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
+                                  Post a cast. @names become mentions.
+  fcli delete <hash>              Delete one of your casts
+  fcli follow | unfollow <name>   Follow or unfollow someone
+  fcli like | unlike <user/hash>  Like a cast, e.g. fcli like dwr/0x35c7b588
+  fcli recast | unrecast <user/hash>
+  fcli user <name|fid>            Show a profile
+  fcli casts <name|fid> [-n 20]   A user's latest casts
+  fcli feed <name|fid|me> [-n 30] Latest casts from everyone they follow
+  fcli apps <name|fid>            Which apps hold keys for this account
 
 Options:
   -n, --limit <n>    How many casts to show
@@ -83,7 +83,7 @@ async function main() {
   const [cmd, arg] = positionals;
   const limit = values.limit ? Number(values.limit) : undefined;
   const need = () => {
-    if (!arg) throw new NodeError(`fc ${cmd} needs a username or fid`);
+    if (!arg) throw new NodeError(`fcli ${cmd} needs a username or fid`);
     return resolveFid(arg);
   };
 
@@ -100,7 +100,7 @@ async function main() {
     case "login":
       return login(Boolean(values["dry-run"]));
     case "username": {
-      if (!arg) throw new NodeError("fc username needs a name: fc username alice");
+      if (!arg) throw new NodeError("fcli username needs a name: fcli username alice");
       console.error(WARNING);
       const phrase = normalizePhrase(await promptPhrase("seed phrase (hidden): "));
       checkPhrase(phrase);
@@ -118,12 +118,12 @@ async function main() {
         const { signer } = await get<{ signer: { expiresAt?: number } }>("/v1/signer", { fid: key.fid, signer: key.publicKey });
         console.log(`status    active${signer.expiresAt ? `, expires ${new Date(signer.expiresAt * 1000).toISOString().slice(0, 10)} unless used` : ""}`);
       } catch {
-        console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fc login");
+        console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fcli login");
       }
       break;
     }
     case "cast": {
-      if (!arg) throw new NodeError('fc cast needs some text: fc cast "hello"');
+      if (!arg) throw new NodeError('fcli cast needs some text: fcli cast "hello"');
       const replyTo = values.reply ? await resolveCast(values.reply) : undefined;
       const r = await cast(arg, { replyTo, embeds: values.embed, dryRun: values["dry-run"] });
       if (values["dry-run"]) {
@@ -134,7 +134,7 @@ async function main() {
       break;
     }
     case "delete": {
-      if (!arg?.startsWith("0x")) throw new NodeError("fc delete needs the cast's hash (0x...)");
+      if (!arg?.startsWith("0x")) throw new NodeError("fcli delete needs the cast's hash (0x...)");
       const hash = arg.length === 42 ? (arg as `0x${string}`) : (await resolveCast(`${(await loadKey()).fid}/${arg}`)).hash;
       const r = await deleteCast(hash);
       console.log(r.landed ? `deleted ${hash}` : `sent the delete for ${hash}; the cast is still on your node after 60 s`);
@@ -151,7 +151,7 @@ async function main() {
     case "unlike":
     case "recast":
     case "unrecast": {
-      if (!arg) throw new NodeError(`fc ${cmd} needs a cast: user/hash`);
+      if (!arg) throw new NodeError(`fcli ${cmd} needs a cast: user/hash`);
       const target = await resolveCast(arg);
       const r = await react(cmd.endsWith("like") ? "like" : "recast", target, !cmd.startsWith("un"));
       const done = { like: "liked", unlike: "unliked", recast: "recasted", unrecast: "unrecasted" }[cmd];
@@ -207,7 +207,7 @@ async function main() {
         // Show pasted invisible characters (non-breaking or zero-width
         // spaces), e.g. "username\u200b", which otherwise look identical.
         const shown = cmd.replace(/[^\x21-\x7e]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
-        console.error(`fc: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
+        console.error(`fcli: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
         process.exitCode = 1;
       }
   }
@@ -228,7 +228,7 @@ tutorial: powerful, legitimate, and unforgiving.
     (delegated signer authorization), so the phrase never leaves the wallet.
 
 This client uses the phrase only in memory, to sign what this command needs
-(a KEY_ADD, and for fc username, the name claim). It never stores, prints or
+(a KEY_ADD, and for fcli username, the name claim). It never stores, prints or
 sends the phrase. Afterwards it posts with its own app key, which can't
 transfer the account or add other keys.
 `;
@@ -247,6 +247,6 @@ async function login(dryRun: boolean) {
 }
 
 main().catch((e) => {
-  console.error(e instanceof NodeError ? `fc: ${e.message}` : e);
+  console.error(e instanceof NodeError ? `fcli: ${e.message}` : e);
   process.exitCode = 1;
 });

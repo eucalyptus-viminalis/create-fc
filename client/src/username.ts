@@ -99,7 +99,7 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     for (;;) {
       const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name }).catch(() => undefined);
       if (proof?.fid === custody.fid) break;
-      if (Date.now() > until) throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run fc username ${name} again later; it will skip the claim.`);
+      if (Date.now() > until) throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run fcli username ${name} again later; it will skip the claim.`);
       await new Promise((r) => setTimeout(r, 5000));
     }
   }
@@ -120,5 +120,5 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     if ((await profile(custody.fid)).username === name) return log(`done: fid ${custody.fid} is now @${name}`);
     await new Promise((r) => setTimeout(r, 2000));
   }
-  throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run fc username ${name} again.`);
+  throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run fcli username ${name} again.`);
 }

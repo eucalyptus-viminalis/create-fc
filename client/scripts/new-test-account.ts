@@ -39,12 +39,12 @@ async function main() {
 
   // ---- 1. a fresh phrase, shown once
   const phrase = generateMnemonic(wordlist, 128);
-  const account = mnemonicToAccount(phrase); // m/44'/60'/0'/0/0, as fc login expects
+  const account = mnemonicToAccount(phrase); // m/44'/60'/0'/0/0, as fcli login expects
   log(`
 \x1b[1mThis creates a NEW Farcaster account for testing.\x1b[0m
 
 Below is its seed phrase. It is shown once and is not saved anywhere. Write
-it down if you want to use this account again: fc login asks for it. Treat
+it down if you want to use this account again: fcli login asks for it. Treat
 it like a password, even for a throwaway account. Anyone holding it controls
 the account.
 
@@ -121,7 +121,7 @@ custody address: ${account.address}
   for (let i = 0; ; i++) {
     const s = await get<{ units: number }>("/v1/storageLimitsByFid", { fid }).catch(() => ({ units: 0 }));
     if (s.units > 0) break;
-    if (i === 60) throw new NodeError("your node hasn't seen the registration after 5 minutes. Check fc status, then run fc login later.");
+    if (i === 60) throw new NodeError("your node hasn't seen the registration after 5 minutes. Check fcli status, then run fcli login later.");
     await sleep(5000);
   }
   log(`your node has fid ${fid} with storage.`);
@@ -130,7 +130,7 @@ custody address: ${account.address}
   if (answer === "" || answer === "y" || answer === "yes") {
     await registerAppKey({ account, fid, path: "m/44'/60'/0'/0/0" }, { log });
   } else {
-    log("ok. Run fc login later with the phrase you saved.");
+    log("ok. Run fcli login later with the phrase you saved.");
   }
 }
 

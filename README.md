@@ -24,7 +24,7 @@ ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-Then `fc feed dwr`, `fc casts <you>`, and, after reading what it prints, `fc login` to post.
+Then `fcli feed dwr`, `fcli casts <you>`, and, after reading what it prints, `fcli login` to post.
 
 Already have a Linux box with 16 GB RAM and ~700 GB free? Skip command 0 and run command 1 on it.
 
@@ -36,11 +36,11 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 
 Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, then re-run command 2 with the new IP.
 
-> **There is no npm package.** `npm create fc` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
+> **There is no npm package.** `npm create fcli` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
 
 ## Seed phrases
 
-`fc login` asks for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
+`fcli login` asks for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
 
 - Use a **test account**. `node client/scripts/new-test-account.ts` makes one for about $0.20 of ETH on Optimism.
 - Only paste a seed phrase into software from developers you trust, after reading the code ([client/src/keys.ts](client/src/keys.ts)).
@@ -53,7 +53,7 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 | --- | --- |
 | `provision/` | Command 0: Hetzner server, volume and firewall, and `hetzner-delete.sh` to remove them |
 | `node/` | Command 1: Docker, a streamed snapshot load that peaks at 556 GB instead of ~1.5 TB, the official `snapchain.sh`, and `fc-node status` |
-| `client/` | Command 2: `fc`, a TypeScript CLI with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
+| `client/` | Command 2: `fcli`, a TypeScript CLI with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
 | `docs/` | Costs and design decisions |
 
 MIT licensed.

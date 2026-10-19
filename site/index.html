@@ -71,7 +71,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         <div id="p2" role="tabpanel" aria-labelledby="t2" tabindex="0" hidden>
           <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381
-<span class="fc-p">$</span> fc cast "hello from my own snapchain read node 👋"
+<span class="fc-p">$</span> fcli cast "hello from my own snapchain read node 👋"
 <span class="fc-o">posted 0x085bf8a4279a3a92fb443a9c7a66ddd6eca69e3e</span></code></pre></div>
           <p class="fc-caption">Sent to our own read node and confirmed on it 1.8 seconds later.</p>
         </div>
@@ -118,7 +118,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         </li>
         <li>
           <h3 class="tg-title">Install the client</h3>
-          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then try <code>fc feed dwr</code>.</p>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then try <code>fcli feed dwr</code>.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
       </ol>
@@ -129,7 +129,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
       </div>
 
-      <p class="tg-footnote fc-note">Already have a Linux box with 16 GB of RAM and ~700 GB free? Skip step 0 and run step 1's <code>curl … | bash</code> on it as root. There is no npm package: <code>npm create fc</code> runs an unrelated package someone else published in 2022.</p>
+      <p class="tg-footnote fc-note">Already have a Linux box with 16 GB of RAM and ~700 GB free? Skip step 0 and run step 1's <code>curl … | bash</code> on it as root. There is no npm package: <code>npm create fcli</code> runs an unrelated package someone else published in 2022.</p>
     </section>
 
     <!-- Tutorial -->
@@ -202,7 +202,7 @@ snapshot loaded into /root/snapchain/.rocks (556G)</span></code></pre></div>
         <h3>Catching up</h3>
         <p>Our snapshot was 22 hours old by the time it finished loading. The node fetched the missing blocks at about 5 per second per shard and closed the gap by about 4 seconds every second, so it was in sync roughly 5½ hours later. The CPU sat 94% idle: the limit is fetching blocks from peers one after another, not the server.</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>on the server</span></div>
-<pre><code><span class="fc-p">$</span> fc status
+<pre><code><span class="fc-p">$</span> fcli status
 <span class="fc-o">node http://2.28.135.100:3381 · snapchain 0.14.3
   shard 0  height 48242370  47661s behind
   shard 1  height 48938063  26552s behind
@@ -216,19 +216,19 @@ catching up: 13.2h behind. Reads work now, but recent casts may be missing.</spa
 
       <section class="tg-editorial__section" id="cmd2" aria-labelledby="cmd2-title">
         <h2 id="cmd2-title">Command 2: the client</h2>
-        <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>fc</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
+        <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>fcli</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3>Reading</h3>
         <p>Every read is a plain GET to your node, so you can repeat any of them with curl:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
-<pre><code><span class="fc-p">$</span> fc casts pinkmink -n 1
+<pre><code><span class="fc-p">$</span> fcli casts pinkmink -n 1
 <span class="fc-o">@pinkmink · 2m · via @pinkmink  0x085bf8a4
 hello from my own snapchain read node 👋</span>
 
 <span class="fc-p">$</span> curl "http://&lt;ip&gt;:3381/v1/castsByFid?fid=3355372&amp;reverse=true&amp;pageSize=1"</code></pre></div>
         <p>Snapchain has no "home feed" endpoint. A feed is something a client builds. Ours is the simplest version: ask the node who you follow, fetch the latest casts from each, and merge them by time. That's one request per account you follow. For an account following 1,041 people, the feed took 13.5 seconds from Sydney to our node in Germany, while the same 1,041 requests made on the server itself took 1.7 seconds. Running the client close to the node pays off.</p>
-        <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>fc feed</code> skips anything more than 10 minutes ahead.</p>
+        <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>fcli feed</code> skips anything more than 10 minutes ahead.</p>
         <h3>Posting</h3>
-        <p><code>fc login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
+        <p><code>fcli login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
 <pre><code><span class="fc-o">seed phrase (hidden): ************ words
   m/44'/60'/0'/0/0  0x97547ffbA3F3e5a7553aA36948F618f39647F2Ea  fid 3355372
@@ -242,25 +242,25 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
           <caption>Our first writes through our own read node, time until each was readable again</caption>
           <thead><tr><th>Command</th><th>Confirmed after</th></tr></thead>
           <tbody>
-            <tr><td><code>fc cast "hello from my own snapchain read node 👋"</code></td><td>1.8 s</td></tr>
-            <tr><td><code>fc like pinkmink/0x085bf8a4</code> · <code>fc recast …</code></td><td>4.0 s each</td></tr>
-            <tr><td><code>fc unlike …</code> · <code>fc unrecast …</code></td><td>4.0–4.1 s</td></tr>
-            <tr><td><code>fc follow 13642</code> · <code>fc unfollow 13642</code></td><td>6.3 s · 1.8 s</td></tr>
+            <tr><td><code>fcli cast "hello from my own snapchain read node 👋"</code></td><td>1.8 s</td></tr>
+            <tr><td><code>fcli like pinkmink/0x085bf8a4</code> · <code>fcli recast …</code></td><td>4.0 s each</td></tr>
+            <tr><td><code>fcli unlike …</code> · <code>fcli unrecast …</code></td><td>4.0–4.1 s</td></tr>
+            <tr><td><code>fcli follow 13642</code> · <code>fcli unfollow 13642</code></td><td>6.3 s · 1.8 s</td></tr>
           </tbody>
         </table>
         <p><code>@names</code> in a cast become real mentions, <code>--reply user/hash</code> replies, <code>--embed url</code> attaches a link, and <code>--dry-run</code> checks the message with your node without sending it.</p>
         <h3>A username</h3>
-        <p><code>fc username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
+        <p><code>fcli username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
         <h3>Filtering by the app that posted</h3>
-        <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>fc</code> labels each cast with its app, and filters on it:</p>
+        <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>fcli</code> labels each cast with its app, and filters on it:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>your computer</span></div>
-<pre><code><span class="fc-p">$</span> fc apps dwr
+<pre><code><span class="fc-p">$</span> fcli apps dwr
 <span class="fc-o">   1 key   @warpcast (fid 9152)
    1 key   @baseapp.base.eth (fid 309857)
    1 key   @neynar (fid 6131)</span>
 
-<span class="fc-p">$</span> fc feed me --not-app warpcast
-<span class="fc-p">$</span> fc feed me --app fireflyapp --app 9152</code></pre></div>
+<span class="fc-p">$</span> fcli feed me --not-app warpcast
+<span class="fc-p">$</span> fcli feed me --app fireflyapp --app 9152</code></pre></div>
         <p>In one account's feed of 16,416 recent casts, 89% came through the Farcaster app (fid 9152, still called @warpcast). Excluding it is a quick way to see what everything else looks like.</p>
       </section>
     </div>
@@ -273,14 +273,14 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       </div>
       <dl class="fc-concepts">
         <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. Our test account is 3355372.</dd></div>
-        <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>fc login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
+        <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>fcli login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
         <div><dt>App keys (signers)</dt><dd>Ed25519 keys that sign everyday messages for one app. The custody key authorizes each one, naming the app that asked (its <code>requestFid</code>). One account can have many: Farcaster's app, Firefly, this client.</dd></div>
         <div><dt>Gasless app keys</dt><dd>App keys used to be registered with an Optimism transaction. Now a <code>KEY_ADD</code> message does it: no transaction, no gas, about a second. Each key lists the message types it may sign (its scopes) and expires after 30–90 days unused.</dd></div>
-        <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>fc</code>.</dd></div>
+        <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>fcli</code>.</dd></div>
         <div><dt>Shards</dt><dd>Snapchain splits users across shards 1 and 2 by a hash of the FID. Shard 0 orders the other two and holds things every shard needs, like app keys. Each shard is its own chain, so their heights differ.</dd></div>
         <div><dt>Read nodes vs validators</dt><dd>Validators propose and vote on blocks; there's a fixed set of them. A read node, like yours, fetches the decided blocks, checks their signatures, and serves the API. Anyone can run one.</dd></div>
-        <div><dt>Mempool and submission</dt><dd>Your read node accepts writes: it checks the message, gossips it to the validators, and keeps nothing. "Accepted" means "valid and relayed", not "in a block". That's why <code>fc</code> reads every write back. If gossip drops it, send it again.</dd></div>
-        <div><dt>Storage rent</dt><dd>An account needs rented storage units to post, paid on Optimism. One unit comes with registration (about $0.20 when we checked). When a store fills up, the oldest messages are pruned. <code>fc login</code> checks there's at least one unit.</dd></div>
+        <div><dt>Mempool and submission</dt><dd>Your read node accepts writes: it checks the message, gossips it to the validators, and keeps nothing. "Accepted" means "valid and relayed", not "in a block". That's why <code>fcli</code> reads every write back. If gossip drops it, send it again.</dd></div>
+        <div><dt>Storage rent</dt><dd>An account needs rented storage units to post, paid on Optimism. One unit comes with registration (about $0.20 when we checked). When a store fills up, the oldest messages are pruned. <code>fcli login</code> checks there's at least one unit.</dd></div>
         <div><dt>fnames</dt><dd>Usernames like @dwr come from the fname server, which signs a proof that the network stores. ENS names (<code>.eth</code>) work too.</dd></div>
       </dl>
     </section>
@@ -309,8 +309,8 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       <div class="fc-spec">
         <div class="tg-spec__row"><h3><code>volumes size limit exceeded</code></h3><p>Your account's total volume cap is below the requested size. New accounts get 1024 GB and can't ask for more yet. Keep <code>VOLUME_GB</code> at 1000 or less.</p></div>
         <div class="tg-spec__row"><h3><code>error during placement (resource_unavailable)</code></h3><p>That server type is sold out in that location. Command 0 moves on by itself, ending with cpx41. If you pinned <code>TYPE</code> or <code>LOCATION</code>, try another, or wait a few minutes.</p></div>
-        <div class="tg-spec__row"><h3><code>fc</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>fc</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
-        <div class="tg-spec__row"><h3><code>fc login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
+        <div class="tg-spec__row"><h3><code>fcli</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>fcli</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
+        <div class="tg-spec__row"><h3><code>fcli login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
         <div class="tg-spec__row"><h3>"not visible on your node yet" after a write</h3><p>Read nodes relay and forget. If the gossip was lost, the message is gone: run the command again. We haven't lost one yet.</p></div>
         <div class="tg-spec__row"><h3><code>fc-node status</code>: "isn't answering and setup isn't running"</h3><p>Setup stopped partway. Run command 1 again: finished shards are skipped and a partial one is redone.</p></div>
       </div>

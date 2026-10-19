@@ -286,7 +286,7 @@ export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean;
   await submit(bytes);
   log("submitted to your node, which relays it to the validators. Waiting for it to land...");
   if (!(await waitForKey(key.fid, key.publicKey))) {
-    throw new NodeError("the key didn't appear within 90 s. A read node keeps no mempool, so if gossip dropped it, it's gone. Run fc login again.");
+    throw new NodeError("the key didn't appear within 90 s. A read node keeps no mempool, so if gossip dropped it, it's gone. Run fcli login again.");
   }
   await saveKey(key);
   log(`done. App key saved to ${KEY_FILE} (mode 600). Your seed phrase was not saved.`);
@@ -307,7 +307,7 @@ export async function loadKey(): Promise<AppKey> {
   try {
     raw = await readFile(KEY_FILE, "utf8");
   } catch {
-    throw new NodeError(`no app key at ${KEY_FILE}. Run: fc login`);
+    throw new NodeError(`no app key at ${KEY_FILE}. Run: fcli login`);
   }
   return JSON.parse(raw) as AppKey;
 }

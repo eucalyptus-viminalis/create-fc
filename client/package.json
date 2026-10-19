@@ -5,13 +5,13 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "fc": "./src/cli.ts"
+    "fcli": "./src/cli.ts"
   },
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
-    "fc": "node src/cli.ts",
+    "fcli": "node src/cli.ts",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\"",
     "new-test-account": "node scripts/new-test-account.ts"

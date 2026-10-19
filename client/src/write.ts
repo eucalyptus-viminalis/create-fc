@@ -26,8 +26,8 @@ const MAX_CAST_BYTES = 320; // 1,024 for Pro accounts
 
 export type CastRef = { fid: number; hash: Hex };
 
-// "dwr/0x35c7b588" -> the full cast id. The short hash is what `fc casts` and
-// `fc feed` print; we find the full one among that user's recent casts.
+// "dwr/0x35c7b588" -> the full cast id. The short hash is what `fcli casts` and
+// `fcli feed` print; we find the full one among that user's recent casts.
 export async function resolveCast(ref: string): Promise<CastRef> {
   const m = ref.match(/^@?([^/]+)\/(0x[0-9a-fA-F]+)$/);
   if (!m) throw new NodeError(`"${ref}" isn't a cast reference. Use user/hash, e.g. dwr/0x35c7b588`);
