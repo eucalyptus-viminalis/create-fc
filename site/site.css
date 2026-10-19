@@ -152,8 +152,6 @@ code {
   background: var(--tg-surface);
 }
 .fc-prereq .tg-title { margin-bottom: 16px; }
-.fc-steps { list-style: none; counter-reset: step -1; display: grid; gap: 14px; padding: 0; }
-.fc-steps > li {
   counter-increment: step;
   display: grid;
   gap: 10px;
@@ -162,13 +160,11 @@ code {
   border-radius: var(--tg-radius-card);
   background: var(--tg-surface);
 }
-.fc-steps > li .tg-title::before {
   content: counter(step);
   margin-right: 12px;
   color: var(--tg-orange);
   font-variant-numeric: tabular-nums;
 }
-.fc-steps .tg-body { color: var(--tg-text-2); }
 .fc-done {
   display: grid;
   gap: 10px;
@@ -179,6 +175,7 @@ code {
 }
 .fc-done .tg-body { color: var(--tg-text-2); }
 .fc-note { margin-top: 18px; }
+.fc-between__list { display: grid; gap: 8px; padding-left: 20px; color: var(--tg-text-2); font-size: var(--tg-text-body); line-height: 1.7; }
 .fc-term--prompt pre, .fc-term--prompt code { font-family: var(--tg-font-sans); font-size: var(--tg-text-sm); line-height: 1.6; }
 
 /* ---------- tutorial prose ---------- */
@@ -233,6 +230,10 @@ code {
 .fc-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .fc-feature { padding: 24px 26px; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-card); background: var(--tg-surface); }
 .fc-feature .tg-body { margin-top: 8px; color: var(--tg-text-2); }
+.fc-shot { margin: 22px 0 26px; }
+.fc-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-lg); box-shadow: var(--tg-shadow-float); }
+.fc-shot figcaption { margin-top: 10px; color: var(--tg-text-2); font-size: var(--tg-text-sm); line-height: 1.6; }
+.fc-shot figcaption b { color: var(--tg-ink); }
 .fc-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
 .fc-shots figure { margin: 0; }
 .fc-shots img { display: block; width: 100%; height: auto; border: 1px solid var(--tg-border); border-radius: var(--tg-radius-lg); box-shadow: var(--tg-shadow-float); }
@@ -253,7 +254,7 @@ code {
   .fc-doc { width: calc(100% - 2 * var(--tg-gutter-mobile)); }
   .fc-concepts, .fc-features, .fc-shots { grid-template-columns: 1fr; }
   .fc-try { padding: 22px 20px; }
-  .fc-steps > li, .fc-prereq, .fc-done { padding: 22px 20px; }
+  .fc-prereq, .fc-done { padding: 22px 20px; }
   .fc-spec .tg-spec__row { grid-template-columns: 1fr; }
   .fc-term--copy { flex-direction: column; align-items: stretch; }
   .fc-copy { margin: 0 12px 12px auto; }
