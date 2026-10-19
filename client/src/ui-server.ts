@@ -17,6 +17,7 @@ import { castsByFid, following, profile, resolveFid, type Profile } from "./read
 import { appsFor, keysOfUser } from "./filter.ts";
 import { loadKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
+import { changeCleared, clearedFor } from "./cleared.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -139,7 +140,24 @@ const routes: Record<string, Handler> = {
     const [p, follows] = await Promise.all([profileOf(fid), following(fid)]);
     return { ...p, following: follows.length };
   },
-  "GET /api/feed": async (q) => feedFor(await user(q)),
+  "GET /api/feed": async (q) => {
+    const fid = await user(q);
+    if (q.get("fresh")) feedCache.delete(fid);
+    return feedFor(fid);
+  },
+  // What you've cleared from this feed. Stored on this computer only.
+  "GET /api/cleared": async (q) => clearedFor(await user(q)),
+  "POST /api/cleared": async (_q, b) => {
+    const fid = Number(b.fid);
+    if (!Number.isInteger(fid) || fid <= 0) throw new NodeError("which feed? pass fid");
+    const iso = (t: unknown) => (typeof t === "string" && !Number.isNaN(Date.parse(t)) ? new Date(t).toISOString() : undefined);
+    const add = Array.isArray(b.add)
+      ? (b.add as { hash?: unknown; time?: unknown }[]).flatMap((a) => (typeof a.hash === "string" && /^0x[0-9a-f]{40}$/i.test(a.hash) && iso(a.time) ? [{ hash: a.hash, time: iso(a.time)! }] : []))
+      : undefined;
+    const remove = Array.isArray(b.remove) ? (b.remove as unknown[]).filter((h): h is string => typeof h === "string") : undefined;
+    const before = b.before === null ? null : iso(b.before);
+    return changeCleared(fid, { add, remove, before, counted: typeof b.counted === "number" ? b.counted : undefined });
+  },
   // Does the logged-in account follow this one?
   "GET /api/relationship": async (q) => {
     const key = await loadKey().catch(() => undefined);

@@ -14,7 +14,8 @@
     "clearcast": "node src/cli.ts",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\"",
-    "new-test-account": "node scripts/new-test-account.ts"
+    "new-test-account": "node scripts/new-test-account.ts",
+    "coverage": "node scripts/api-coverage.ts"
   },
   "devDependencies": {
     "@types/node": "26.6.5",

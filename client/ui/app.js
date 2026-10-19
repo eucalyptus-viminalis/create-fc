@@ -14,6 +14,11 @@ const state = {
   hidden: new Set(), // app fids (or "?") hidden from the feed
   keysFor: null,
   log: [],
+  // What's been cleared from the feed being viewed: { before, hashes, today }
+  cleared: { before: null, hashes: new Set(), today: 0 },
+  showCleared: false,
+  undo: [], // inverse changes, newest last
+  selected: 0, // keyboard position in the visible list
 };
 
 // ------------------------------------------------------------------ utils
@@ -40,12 +45,15 @@ const pic = (url, cls = "", name = "") =>
     ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
     : `<span class="${cls} ph" aria-hidden="true">${esc(String(name).replace(/^[@!]/, "").charAt(0).toUpperCase())}</span>`;
 
-function toast(msg) {
+// A message at the bottom of the page, with an Undo button when `undo` is given.
+function toast(msg, undo) {
   const t = $("#toast");
-  t.textContent = msg;
+  $("#toast-text").textContent = msg;
+  $("#toast-undo").hidden = !undo;
+  toast.undo = undo;
   t.hidden = false;
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => (t.hidden = true), 2600);
+  toast.timer = setTimeout(() => (t.hidden = true), undo ? 5000 : 2600);
   window.Tangerine?.announce?.(msg);
 }
 
@@ -180,7 +188,10 @@ async function loadFeed() {
   $("#feed-list").innerHTML = loading(`Building @${state.viewAs.username ?? state.viewAs.fid}'s feed from your node…`);
   $("#filterbar").hidden = true;
   try {
-    const { data } = await api(`/api/feed?user=${state.viewAs.fid}`);
+    const fresh = loadFeed.fresh ? "&fresh=1" : "";
+    loadFeed.fresh = false;
+    const [{ data }, { data: cleared }] = await Promise.all([api(`/api/feed?user=${state.viewAs.fid}${fresh}`), api(`/api/cleared?user=${state.viewAs.fid}`)]);
+    setCleared(cleared);
     const calls = data.calls;
     const age = Math.round((Date.now() - data.builtAt) / 1000);
     if (age > 2) calls.unshift({ note: `# built ${age}s ago and kept for 2 minutes; these are the calls that built it` });
@@ -201,6 +212,81 @@ async function loadFeed() {
   }
 }
 
+// ------------------------------------------------------------------ clear
+// Clearing a cast is like archiving an email: it leaves your feed, privately,
+// on this computer. The server keeps the list in ~/.fc-client/cleared.json.
+
+function setCleared(c) {
+  state.cleared = { before: c.before ?? null, hashes: new Set(Object.keys(c.hashes)), today: c.today.n };
+}
+
+const isCleared = (c) => (state.cleared.before && c.time <= state.cleared.before) || state.cleared.hashes.has(c.hash);
+const notHidden = (c) => !state.hidden.has(c.app ? c.app.fid : "?");
+
+async function changeCleared(change, inverse, message) {
+  try {
+    const { data } = await api("/api/cleared", { fid: state.viewAs.fid, ...change });
+    setCleared(data);
+    if (inverse) {
+      state.undo.push(inverse);
+      toast(message, true);
+    }
+  } catch (e) {
+    toast(e.message);
+  }
+  renderFeed();
+}
+
+// Clear these casts, after a short slide-out.
+function clearCasts(casts, message) {
+  casts = casts.filter((c) => !isCleared(c));
+  if (!casts.length) return;
+  const hashes = new Set(casts.map((c) => c.hash));
+  document.querySelectorAll(".cast[data-hash]").forEach((el) => hashes.has(el.dataset.hash) && el.classList.add("is-clearing"));
+  setTimeout(
+    () =>
+      changeCleared(
+        { add: casts.map((c) => ({ hash: c.hash, time: c.time })) },
+        { remove: [...hashes] },
+        message ?? (casts.length === 1 ? "Cleared" : `Cleared ${casts.length}`),
+      ),
+    casts.length > 30 ? 0 : 260,
+  );
+}
+
+// Everything up to a time, as one line in the file ("clear all").
+function clearBefore(time, n, message) {
+  changeCleared({ before: time, counted: n }, { before: state.cleared.before, counted: -n }, message);
+}
+
+function undoClear() {
+  const inverse = state.undo.pop();
+  if (!inverse) return toast("Nothing to undo");
+  $("#toast").hidden = true;
+  changeCleared(inverse);
+}
+
+function unread() {
+  return (state.feed?.casts ?? []).filter((c) => notHidden(c) && !isCleared(c));
+}
+
+function renderInbox(all, left) {
+  const el = $("#inbox");
+  el.hidden = all.length === 0;
+  if (!all.length) return;
+  const clearedHere = all.filter(notHidden).length - left.length;
+  const midnight = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+  const older = left.filter((c) => c.time < midnight).length;
+  el.innerHTML = `<div class="inbox__count"><b>${left.length}</b><span>left to read · ${state.cleared.today} cleared today</span></div>
+    <div class="inbox__actions">
+      ${left.length ? `<button type="button" class="glass-btn" data-clear-all>✓ Clear all</button>` : ""}
+      ${older && older < left.length ? `<button type="button" class="glass-btn glass-btn--quiet" data-clear-older>Clear before today (${older})</button>` : ""}
+      <button type="button" class="glass-btn glass-btn--quiet" data-refresh title="Ask your node again for the newest casts">↻ Check for new</button>
+      ${clearedHere ? `<button type="button" class="link-btn" data-show-cleared aria-pressed="${state.showCleared}">${state.showCleared ? "Hide" : "Show"} ${clearedHere} cleared</button>` : ""}
+    </div>`;
+  document.title = left.length ? `(${left.length}) clearcast` : "clearcast";
+}
+
 function castHtml(c, i) {
   const name = c.author.username ?? `!${c.fid}`;
   const via = c.app
@@ -212,7 +298,12 @@ function castHtml(c, i) {
         <button type="button" class="act" data-act="recast" data-i="${i}" aria-pressed="false">↻ Recast</button>
       </div>`
     : "";
-  return `<article class="cast card">
+  const done = isCleared(c);
+  const clear = `<div class="cast__clear">
+      ${done ? `<button type="button" class="clear-btn" data-unclear="${i}">Bring back</button>` : `<button type="button" class="clear-btn" data-clear="${i}" title="Clear (e)">✓ Clear</button>
+      <button type="button" class="link-btn clear-above" data-clear-above="${i}" title="Clear this cast and every cast above it">Clear to here</button>`}
+    </div>`;
+  return `<article class="cast card${done ? " is-cleared" : ""}" data-hash="${esc(c.hash)}" data-i="${i}">
     ${pic(c.author.pfp, "avatar", name)}
     <div class="cast__body">
       <div class="cast__head">
@@ -222,14 +313,16 @@ function castHtml(c, i) {
       </div>
       <div class="cast__text">${linkify(c.text)}</div>
       ${c.embeds.length ? `<div class="cast__embeds">${c.embeds.map((u) => (u.startsWith("http") ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : `<span>${esc(u)}</span>`)).join("")}</div>` : ""}
-      ${actions}
+      <div class="cast__foot">${actions}${clear}</div>
     </div>
   </article>`;
 }
 
 function renderFeed() {
   const all = state.feed?.casts ?? [];
-  const shown = all.filter((c) => !state.hidden.has(c.app ? c.app.fid : "?"));
+  const left = unread();
+  renderInbox(all, left);
+  const shown = state.showCleared ? all.filter(notHidden) : left;
   const counts = appCounts(all);
   $("#filterbar").hidden = all.length === 0;
   $("#appchips").innerHTML = counts
@@ -238,12 +331,25 @@ function renderFeed() {
         `<button type="button" class="appchip" data-app="${a.fid}" aria-pressed="${!state.hidden.has(a.fid)}">${a.fid === "?" ? "" : pic(feedAppPfp(a.fid))}${a.fid === "?" ? "" : "@"}${esc(a.name)} <span class="n">${a.n}</span></button>`,
     )
     .join("");
+  $("#keys-hint").hidden = !shown.length;
+  state.selected = Math.min(state.selected, Math.max(0, Math.min(shown.length, 120) - 1));
   $("#feed-list").innerHTML = shown.length
     ? shown.slice(0, 120).map((c) => castHtml(c, all.indexOf(c))).join("")
-    : all.length
+    : all.filter(notHidden).length
+      ? `<div class="all-clear glass"><b>All clear.</b><p>You've read everything here. New casts show up when you check again.</p><button type="button" class="glass-btn" data-refresh>↻ Check for new</button></div>`
+      : all.length
       ? empty("Every app in this feed is hidden. Click a chip above to show it again.")
       : `<div class="empty"><p>${state.feed?.following ? "No recent casts from the accounts this feed follows." : "This account doesn't follow anyone yet, so its feed is empty."}</p>
          <p>Try someone else's: <button type="button" class="link-btn" data-view-as="dwr">@dwr</button> · <button type="button" class="link-btn" data-view-as="vitalik.eth">@vitalik.eth</button> · <button type="button" class="link-btn" data-view-as="balajis.eth">@balajis.eth</button></p></div>`;
+  select(state.selected);
+}
+
+function select(n, scroll) {
+  const items = [...document.querySelectorAll("#feed-list .cast")];
+  if (!items.length) return;
+  state.selected = Math.max(0, Math.min(items.length - 1, n));
+  items.forEach((el, k) => el.classList.toggle("is-selected", k === state.selected));
+  if (scroll) items[state.selected].scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
 
 // App avatars come from the profiles the server already looked up.
@@ -357,6 +463,9 @@ async function setViewAs(who) {
     state.feed = null;
     state.keysFor = null;
     state.hidden.clear();
+    state.undo = [];
+    state.showCleared = false;
+    state.selected = 0;
     renderWho();
     const view = document.querySelector('[role="tab"][aria-selected="true"]')?.dataset.view;
     if (view === "keys") loadKeys();
@@ -385,6 +494,45 @@ document.addEventListener("click", async (e) => {
     setTimeout(() => (cb.textContent = "Copy curl"), 1400);
     return;
   }
+  if (e.target.closest("#toast-undo")) return undoClear();
+  const casts = state.feed?.casts ?? [];
+  const cl = e.target.closest("[data-clear]");
+  if (cl) return clearCasts([casts[Number(cl.dataset.clear)]]);
+  const un = e.target.closest("[data-unclear]");
+  if (un) {
+    const c = casts[Number(un.dataset.unclear)];
+    if (state.cleared.hashes.has(c.hash)) return changeCleared({ remove: [c.hash], counted: -1 }, { add: [{ hash: c.hash, time: c.time }] }, "Back in your feed");
+    return toast("This one was cleared with \"Clear all\". Undo that to bring it back.");
+  }
+  const above = e.target.closest("[data-clear-above]");
+  if (above) {
+    const left = unread();
+    const k = left.indexOf(casts[Number(above.dataset.clearAbove)]);
+    return clearCasts(left.slice(0, k + 1));
+  }
+  if (e.target.closest("[data-clear-all]")) {
+    const left = unread();
+    // With some apps hidden, clear only what's showing; otherwise one line in the file covers it.
+    if (state.hidden.size) return clearCasts(left, `Cleared ${left.length}`);
+    return clearBefore(casts[0].time, left.length, `Cleared all ${left.length}`);
+  }
+  if (e.target.closest("[data-clear-older]")) {
+    const midnight = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+    const older = unread().filter((c) => c.time < midnight);
+    if (state.hidden.size) return clearCasts(older);
+    return clearBefore(new Date(Date.parse(midnight) - 1).toISOString(), older.length, `Cleared ${older.length} from before today`);
+  }
+  if (e.target.closest("[data-show-cleared]")) {
+    state.showCleared = !state.showCleared;
+    return renderFeed();
+  }
+  if (e.target.closest("[data-refresh]")) {
+    loadFeed.fresh = true;
+    state.feed = null;
+    return loadFeed();
+  }
+  const card = e.target.closest("#feed-list .cast");
+  if (card && !e.target.closest("a, button")) select([...document.querySelectorAll("#feed-list .cast")].indexOf(card));
   if (e.target.closest("#me-chip") && state.me) return setViewAs(state.me.username ?? state.me.fid);
   const va = e.target.closest("[data-view-as]");
   if (va) return setViewAs(va.dataset.viewAs);
@@ -456,6 +604,46 @@ document.querySelectorAll('[role="tab"]').forEach((t) =>
     if (v === "node") refreshStatus();
   }),
 );
+
+// Keyboard, like an email inbox: j/k move, e clears, u undoes.
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest("input, textarea, [contenteditable]")) return;
+  if ($("#view-feed").hidden) return;
+  const items = [...document.querySelectorAll("#feed-list .cast")];
+  if (e.key === "j") select(state.selected + 1, true);
+  else if (e.key === "k") select(state.selected - 1, true);
+  else if (e.key === "e" && items[state.selected]) {
+    const c = state.feed.casts[Number(items[state.selected].dataset.i)];
+    if (!isCleared(c)) clearCasts([c]);
+  } else if (e.key === "u") undoClear();
+  else return;
+  e.preventDefault();
+});
+
+// On touch screens, swipe a cast to the right to clear it.
+let swipe = null;
+document.addEventListener("pointerdown", (e) => {
+  const card = e.target.closest("#feed-list .cast:not(.is-cleared)");
+  if (!card || e.pointerType !== "touch" || e.target.closest("a, button")) return;
+  swipe = { card, x: e.clientX, y: e.clientY, dx: 0 };
+});
+document.addEventListener("pointermove", (e) => {
+  if (!swipe) return;
+  swipe.dx = e.clientX - swipe.x;
+  if (Math.abs(e.clientY - swipe.y) > 30 && Math.abs(swipe.dx) < 30) return (swipe = null);
+  if (swipe.dx > 0) swipe.card.style.transform = `translateX(${swipe.dx}px)`;
+  swipe.card.style.opacity = String(Math.max(0.3, 1 - swipe.dx / 300));
+});
+const endSwipe = () => {
+  if (!swipe) return;
+  const { card, dx } = swipe;
+  swipe = null;
+  card.style.transform = "";
+  card.style.opacity = "";
+  if (dx > 90) clearCasts([state.feed.casts[Number(card.dataset.i)]]);
+};
+document.addEventListener("pointerup", endSwipe);
+document.addEventListener("pointercancel", endSwipe);
 
 $("#composer-text").addEventListener("input", (e) => {
   $("#composer-count").textContent = `${new TextEncoder().encode(e.target.value).length} / 320`;
