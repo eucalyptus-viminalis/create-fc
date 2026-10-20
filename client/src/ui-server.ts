@@ -324,6 +324,7 @@ async function listenOn(port: number): Promise<string> {
       // The home view is the front page; the earlier all-in-one page lives on at /classic.
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
       if (path === "/classic" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
+      if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
       if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
       if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));

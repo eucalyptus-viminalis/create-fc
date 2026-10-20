@@ -9,6 +9,11 @@
 //    Whoever runs clearcast sets it up once with `clearcast app-account`.
 //    Docs: https://docs.farcaster.xyz/reference/farcaster/signer-requests
 //
+//    Or the node vouches: when the node's owner ran `fc-node app-account`,
+//    fc-companion holds an app account for everyone on that node, so friends
+//    sharing it need no setup of their own, only an invite code. The new key
+//    is still made here; only its public half goes to the companion.
+//
 // 2. Seed phrase in the page (this computer only). The same steps as
 //    `clearcast login`: the phrase goes from your browser to this server on
 //    127.0.0.1, signs one KEY_ADD in memory, and is dropped. A clearcast that
@@ -23,6 +28,7 @@ import QRCode from "qrcode";
 import { bytesToHex, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { NodeError, NODE, get } from "./node.ts";
+import { COMPANION } from "./home.ts";
 import { KEY_DIR, type AppKey, checkPhrase, currentCustody, findCustody, normalizePhrase, registerAppKey, saveKey, type Custody } from "./keys.ts";
 
 const FARCASTER_API = "https://api.farcaster.xyz";
@@ -117,6 +123,55 @@ export async function startAppSignIn() {
   requests.set(req.token, { privateKey: bytesToHex(privateKey), publicKey: bytesToHex(publicKey), requestFid: app.fid, expires: deadline * 1000 });
   const qr = await QRCode.toString(req.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#17151f", light: "#0000" } });
   return { token: req.token, url: req.deeplinkUrl, qr, sponsored: Boolean(sponsorship) };
+}
+
+// --- 1b. the node vouches (fc-companion's app account)
+
+export type NodeSignIn = { phone: boolean; appFid: number | null } | null;
+
+// Can this node's companion start phone sign-ins? null: no companion.
+export async function nodeSignInOptions(): Promise<NodeSignIn> {
+  try {
+    const res = await fetch(`${COMPANION}/v1/signin`, { signal: AbortSignal.timeout(5_000) });
+    return res.ok ? ((await res.json()) as NodeSignIn) : null;
+  } catch {
+    return null;
+  }
+}
+
+// The invite code that last worked, kept so a friend types it once.
+const INVITE_FILE = join(KEY_DIR, "invite.json");
+export async function savedInvite(): Promise<string | undefined> {
+  try {
+    const saved = JSON.parse(await readFile(INVITE_FILE, "utf8")) as { node?: string; code?: string };
+    return saved.node === NODE ? saved.code : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function startNodeSignIn(invite: string) {
+  for (const [t, r] of requests) if (r.expires < Date.now()) requests.delete(t);
+  const privateKey = new Uint8Array(randomBytes(32));
+  const publicKey = bytesToHex((await new NobleEd25519Signer(privateKey).getSignerKey())._unsafeUnwrap());
+  let res: Response;
+  try {
+    res = await fetch(`${COMPANION}/v1/signin`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ key: publicKey, invite }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new NodeError(`can't reach your node's companion at ${COMPANION}`);
+  }
+  const json = (await res.json().catch(() => ({}))) as { error?: string; token: string; deeplinkUrl: string; requestFid: number; deadline: number };
+  if (!res.ok) throw new NodeError(json.error ?? `the companion said ${res.status}`);
+  requests.set(json.token, { privateKey: bytesToHex(privateKey), publicKey, requestFid: json.requestFid, expires: json.deadline * 1000 });
+  await mkdir(KEY_DIR, { recursive: true, mode: 0o700 });
+  await writeFile(INVITE_FILE, JSON.stringify({ node: NODE, code: invite }, null, 2) + "\n");
+  const qr = await QRCode.toString(json.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
+  return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
 }
 
 // Poll Farcaster's service; once the key is on chain and your node has seen

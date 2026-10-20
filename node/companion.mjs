@@ -6,6 +6,8 @@
 //   GET  /v1/companion   when Snapchain started, and how many devices are online
 //   GET  /v1/presence    who is online on this node right now (signed, members only)
 //   POST /v1/presence    "I'm here" from a clearcast, every ~30 s (signed)
+//   GET  /v1/signin      can people sign in here by approving on their phone?
+//   POST /v1/signin      start a phone sign-in for a key (needs an invite code)
 //
 // Both presence calls are signed with the sender's app key, and the key is
 // checked against Snapchain, so nobody can appear online as someone else.
@@ -14,7 +16,16 @@
 // "invisible" devices never appear in the list. Presence lives in memory only
 // and is forgotten 90 s after the last heartbeat.
 //
-// No dependencies: plain Node 22. Run by fc-companion-install in Docker.
+// Phone sign-in: Farcaster's signer-request service only shows a request
+// that an "app account" vouches for, by signing it with its custody key. The
+// node's owner sets one up with `fc-node app-account`; this signs requests as
+// that account, so friends on the node need no setup of their own. Their new
+// key is made on their own computer: only its public half comes here. Each
+// request needs an invite code from `fc-node invite`, so strangers can't use
+// the app account, and each address gets 20 tries an hour.
+//
+// One dependency, viem (EIP-712 signing), loaded only for phone sign-in.
+// Run by fc-companion-install in Docker.
 
 import { createServer } from "node:http";
 import { createPublicKey, verify } from "node:crypto";
@@ -28,6 +39,9 @@ const UPTIME_FILE = process.env.UPTIME_FILE ?? "/state/snapchain.json";
 const TTL_MS = 90_000; // forget a device this long after its last heartbeat
 const SKEW_MS = 60_000; // how far a heartbeat's clock may be from ours
 const MAX_DEVICES = 5_000;
+const APP_FILE = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
+const INVITES_FILE = process.env.INVITES_FILE ?? "/state/invites";
+const FARCASTER_API = "https://api.farcaster.xyz";
 const startedAt = new Date().toISOString();
 
 // ------------------------------------------------------------ presence
@@ -129,6 +143,89 @@ function snapchainStartedAt() {
   }
 }
 
+// ------------------------------------------------------------ phone sign-in
+
+// Written by `fc-node app-account`: { fid, address, privateKey } (the custody key).
+function appAccount() {
+  try {
+    const a = JSON.parse(readFileSync(APP_FILE, "utf8"));
+    return a.fid && a.privateKey ? a : null;
+  } catch {
+    return null;
+  }
+}
+
+// Written by `fc-node invite`: one code per line, then a tab and a note.
+const normCode = (c) => String(c ?? "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+function inviteOk(code) {
+  const c = normCode(code);
+  if (c.length < 6) return false;
+  try {
+    return readFileSync(INVITES_FILE, "utf8").split("\n").some((line) => normCode(line.split("\t")[0]) === c);
+  } catch {
+    return false;
+  }
+}
+
+const tries = new Map(); // ip -> times of recent sign-in attempts
+function limited(ip, perHour = 20) {
+  const now = Date.now();
+  const recent = (tries.get(ip) ?? []).filter((t) => now - t < 3_600_000);
+  const over = recent.length >= perHour;
+  if (!over) recent.push(now);
+  tries.set(ip, recent);
+  if (tries.size > 10_000) tries.clear();
+  return over;
+}
+
+// Does the saved custody key still own the app account? Farcaster only checks
+// when someone approves, so catch it here instead. Kept 10 minutes.
+let ownerCheck = { until: 0, ok: false };
+async function stillOwns(app) {
+  if (ownerCheck.until > Date.now()) return ownerCheck.ok;
+  const url = new URL(`${SNAPCHAIN}/v1/onChainEventsByFid`);
+  url.searchParams.set("fid", String(app.fid));
+  url.searchParams.set("event_type", "EVENT_TYPE_ID_REGISTER");
+  const { events = [] } = await (await fetch(url, { signal: AbortSignal.timeout(15_000) })).json();
+  const last = events.filter((e) => e.idRegisterEventBody && e.idRegisterEventBody.eventType !== "ChangeRecovery").sort((a, b) => a.blockNumber - b.blockNumber).at(-1);
+  const ok = last?.idRegisterEventBody?.to?.toLowerCase() === String(app.address).toLowerCase();
+  ownerCheck = { until: Date.now() + 600_000, ok };
+  return ok;
+}
+
+// The same EIP-712 request clearcast signs for a local app account (client/src/signin.ts).
+const DOMAIN = { name: "Farcaster SignedKeyRequestValidator", version: "1", chainId: 10, verifyingContract: "0x00000000fc700472606ed4fa22623acf62c60553" };
+const TYPES = { SignedKeyRequest: [{ name: "requestFid", type: "uint256" }, { name: "key", type: "bytes" }, { name: "deadline", type: "uint256" }] };
+
+async function startSignIn(b, ip) {
+  const app = appAccount();
+  if (!app) return [404, "this node has no app account yet. Its owner can run: fc-node app-account"];
+  if (limited(ip)) return [429, "too many sign-ins from here. Try again in an hour."];
+  if (!inviteOk(b.invite)) return [403, "that invite code doesn't work on this node"];
+  if (!/^0x[0-9a-f]{64}$/i.test(String(b.key))) return [400, "bad key"];
+  if (!(await stillOwns(app))) return [409, `the saved key no longer owns fid ${app.fid}. The node's owner can run: fc-node app-account`];
+
+  const { privateKeyToAccount } = await import("viem/accounts");
+  const account = privateKeyToAccount(app.privateKey);
+  const deadline = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+  const signature = await account.signTypedData({
+    domain: DOMAIN,
+    types: TYPES,
+    primaryType: "SignedKeyRequest",
+    message: { requestFid: BigInt(app.fid), key: b.key, deadline: BigInt(deadline) },
+  });
+  const res = await fetch(`${FARCASTER_API}/v2/signed-key-requests`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ key: b.key, requestFid: app.fid, signature, deadline }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.result) return [502, `Farcaster's signer-request service said: ${json.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`}`];
+  const r = json.result.signedKeyRequest;
+  return [200, { token: r.token, deeplinkUrl: r.deeplinkUrl, requestFid: app.fid, deadline }];
+}
+
 // ------------------------------------------------------------ server
 
 function send(res, status, body) {
@@ -161,6 +258,14 @@ createServer(async (req, res) => {
       const bad = await signedBy(fid, q.get("key"), q.get("sig"), readPayload(fid, ts));
       if (bad) return send(res, 401, bad);
       return send(res, 200, { online: online() });
+    }
+    if (req.method === "GET" && url.pathname === "/v1/signin") {
+      const app = appAccount();
+      return send(res, 200, { phone: Boolean(app), appFid: app?.fid ?? null, invite: true });
+    }
+    if (req.method === "POST" && url.pathname === "/v1/signin") {
+      const [status, body] = await startSignIn(await readBody(req), req.socket.remoteAddress ?? "?");
+      return send(res, status, body);
     }
     if (req.method === "POST" && url.pathname === "/v1/presence") {
       const [status, body] = await heartbeat(await readBody(req));

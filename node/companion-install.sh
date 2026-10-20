@@ -3,15 +3,36 @@
 # to /usr/local/sbin/fc-companion-install and runs it once the node is up.
 # Safe to run again.
 #
-#   - /usr/local/lib/fc-companion/companion.mjs   the service (setup.sh puts it there)
+#   - /usr/local/lib/fc-companion/                the service, the app-account setup
+#                                                 script and its pinned dependency
+#                                                 (setup.sh puts them there)
 #   - fc-companion-uptime.timer                   writes Snapchain's start time
 #                                                 to /var/lib/fc-companion once a minute
 #   - the fc-companion container                  Node 22, host network, port 3390,
 #                                                 read-only, no Docker socket
 set -euo pipefail
 
-[ -f /usr/local/lib/fc-companion/companion.mjs ] || { echo "fc-companion: companion.mjs is missing; re-run command 1"; exit 1; }
-mkdir -p /var/lib/fc-companion
+LIB=/usr/local/lib/fc-companion
+STATE=/var/lib/fc-companion
+for f in companion.mjs app-account.mjs package.json pnpm-lock.yaml; do
+  [ -f "$LIB/$f" ] || { echo "fc-companion: $f is missing; re-run command 1"; exit 1; }
+done
+mkdir -p "$STATE"
+# The container runs as the image's "node" user (uid 1000). It reads the app
+# account and invites, so they're its own, mode 600.
+touch "$STATE/invites"
+chown 1000:1000 "$STATE/invites"; chmod 600 "$STATE/invites"
+[ -f "$STATE/app-account.json" ] && { chown 1000:1000 "$STATE/app-account.json"; chmod 600 "$STATE/app-account.json"; }
+
+# Its one dependency (viem, for phone sign-in), pinned by the lockfile.
+# Reinstalled only when the lockfile changes.
+want=$(sha256sum "$LIB/pnpm-lock.yaml" | cut -d' ' -f1)
+if [ "$(cat "$LIB/node_modules/.lock-sha" 2>/dev/null)" != "$want" ]; then
+  echo "fc-companion: installing its dependency (viem)..."
+  docker run --rm -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 -v "$LIB:/app" -w /app node:22-alpine \
+    sh -c "corepack enable && pnpm install --prod --frozen-lockfile --reporter=silent" >/dev/null
+  echo "$want" > "$LIB/node_modules/.lock-sha"
+fi
 
 # Uptime: Docker knows when the Snapchain container started. A timer on the
 # host reads it, so the companion never needs the Docker socket.

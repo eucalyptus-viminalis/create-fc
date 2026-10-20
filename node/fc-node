@@ -1,7 +1,12 @@
 #!/bin/bash
 # fc-node: check on a read node set up by node/setup.sh.
-#   fc-node status   setup progress, then how far behind the network it is
-#   fc-node logs     follow the setup log (Ctrl-C to stop; the node keeps going)
+#   fc-node status                 setup progress, then how far behind the network it is
+#   fc-node logs                   follow the setup log (Ctrl-C to stop; the node keeps going)
+#   fc-node app-account [show|remove]
+#                                  let people sign in to clearcast here by approving on
+#                                  their phone: saves an account's custody key on this server
+#   fc-node invite [note]          make an invite code for a friend (phone sign-in needs one)
+#   fc-node invite list | revoke <code>
 set -uo pipefail
 LOG=/var/log/fc-node-setup.log
 
@@ -26,5 +31,35 @@ case "${1:-status}" in
       exit 1
     fi
     ;;
-  *) echo "usage: fc-node status | logs"; exit 1 ;;
+  app-account)
+    # Runs in the fc-companion image, which has viem. The phrase is typed into
+    # this terminal and only lives in that container's memory.
+    shift
+    docker run --rm -it --network host -v /usr/local/lib/fc-companion:/app:ro -v /var/lib/fc-companion:/state \
+      node:22-alpine node /app/app-account.mjs "$@" || exit 1
+    f=/var/lib/fc-companion/app-account.json
+    [ -f "$f" ] && { chown 1000:1000 "$f"; chmod 600 "$f"; }
+    ;;
+  invite)
+    f=/var/lib/fc-companion/invites
+    touch "$f"; chown 1000:1000 "$f"; chmod 600 "$f"
+    case "${2:-new}" in
+      list)
+        [ -s "$f" ] || { echo "No invite codes yet. Make one: fc-node invite"; exit 0; }
+        awk -F'\t' '{ printf "  %s-%s  %s  %s\n", substr($1,1,4), substr($1,5), $2, $3 }' "$f" ;;
+      revoke)
+        code=$(echo "${3:-}" | tr -dc 'A-Za-z0-9' | tr a-z A-Z)
+        [ -n "$code" ] || { echo "usage: fc-node invite revoke <code>"; exit 1; }
+        grep -q "^$code"$'\t' "$f" || { echo "No such code."; exit 1; }
+        sed -i "/^$code\t/d" "$f"; echo "Revoked. Signed-in friends stay signed in." ;;
+      *)
+        code=$(head -c 5 /dev/urandom | base32 | tr -d '=' | head -c 8)
+        note="${*:2}"
+        printf '%s\t%s\t%s\n' "$code" "$(date -u +%F)" "$note" >> "$f"
+        echo "Invite code: ${code:0:4}-${code:4}"
+        echo "Friends type it when they sign in with their phone."
+        [ -f /var/lib/fc-companion/app-account.json ] || echo "Phone sign-in is off until you run: fc-node app-account" ;;
+    esac
+    ;;
+  *) echo "usage: fc-node status | logs | app-account [show|remove] | invite [note|list|revoke <code>]"; exit 1 ;;
 esac

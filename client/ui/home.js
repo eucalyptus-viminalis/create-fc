@@ -85,7 +85,7 @@ function paintClock() {
   const time = d.toTimeString().slice(0, 5);
   $("#who").innerHTML = S.me
     ? `<b>@${esc(S.me.username ?? `!${S.me.fid}`)}</b> · fid ${S.me.fid} · <button class="link" id="signout">${S.confirmSignOut ? "click again to sign out" : "sign out"}</button> · ${time}`
-    : `<a href="/classic">sign in</a> · ${time}`;
+    : `<a href="/signin">sign in</a> · ${time}`;
 }
 
 // Signing out deletes the app key from this computer, so it takes two clicks.
@@ -189,7 +189,7 @@ async function loadSince() {
       ${d.casts ? `<button class="prompt" data-mode-go="curate"><span class="blink">▶</span><span class="btn">A</span><span>curate the ${fmt(d.casts)}, one at a time</span></button>` : d.following ? `<p class="note">All quiet. Nothing new from the people you follow.</p>` : `<p class="note">You don't follow anyone yet, so there's nothing to catch up on.</p>`}`;
   } catch (e) {
     $("#since-ago").textContent = "";
-    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what you missed.</p><a class="btn" href="/classic">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
+    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what you missed.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
   }
 }
 
@@ -254,7 +254,7 @@ async function loadPresence(setTo) {
     paintPresence(await api("/api/presence", setTo ? { status: setTo } : undefined));
   } catch (e) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = e instanceof SignedOut ? `<p>Sign in to show up here.</p><a class="btn" href="/classic">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
+    $("#presence").innerHTML = e instanceof SignedOut ? `<p>Sign in to show up here.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
   }
 }
 function togglePresence() {

@@ -1,0 +1,9 @@
+{
+  "name": "fc-companion",
+  "private": true,
+  "type": "module",
+  "description": "fc-companion's one dependency: viem, to sign key requests as this node's app account",
+  "dependencies": {
+    "viem": "2.57.1"
+  }
+}

@@ -75,9 +75,13 @@ The client shows the person's own feed, so it needs them signed in: an app key, 
 
 > Sign in on the page `clearcast ui` opened: approve in the Farcaster app, or use your seed phrase there (it stays on your computer). Or run `clearcast login` in your own terminal, not through me. Read the warning it prints. Use an account made for this, not your main one: `clearcast new-account` registers a new one for about $0.20 of ETH on Optimism.
 
-For the Farcaster-app option, the person first runs `clearcast app-account` in their own terminal with an account made for it, named after the client and themselves (e.g. `@name-clearcast`), since people approving see that name.
+For the Farcaster-app option, the node needs an app account: an account made for it, named after the client and themselves (e.g. `@name-clearcast`), since people approving see that name. The person sets it up once on the server, in their own SSH session, so everyone using the node can approve on their phone:
 
-Don't run `clearcast login`, `clearcast app-account`, `clearcast username` or `clearcast new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
+> `ssh -t root@<ip> fc-node app-account`
+
+Then `ssh root@<ip> fc-node invite <friend's name>` makes an invite code for each friend who shares the node; they type it on the sign-in page. (`clearcast app-account` on their own computer still works for that computer alone.)
+
+Don't run `clearcast login`, `clearcast app-account`, `fc-node app-account`, `clearcast username` or `clearcast new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
 
 ## When they're done
 
