@@ -10,6 +10,7 @@ const $ = (s) => document.querySelector(s);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
+const DOCS = "https://eucalyptus-viminalis.github.io/create-fc/docs";
 
 async function api(path, body) {
   const res = await fetch(path, {
@@ -140,12 +141,11 @@ function setup() {
 
 function invite(error) {
   S.screen = "invite";
-  const app = S.opts.node?.app;
   show(
     head("approve on your phone") +
-      tile("invite code", "from your node's owner", `
-        <p>Type your invite code.</p>
-        <p class="dim">Your node's owner made it.${app?.username ? ` Your phone will show @${esc(app.username)} asking.` : ""}</p>
+      tile("invite code", "from a friend", `
+        <p>Got a code from a friend? Pop it in.</p>
+        <p class="dim">Codes keep this node for friends only. <a href="${DOCS}/guide/share-your-node#why-codes" target="_blank" rel="noopener">Why?</a></p>
         <form class="field" id="invite-form" autocomplete="off">
           <input id="invite-input" autofocus value="${esc(S.typedInvite ?? S.opts.node?.invite ?? "")}" placeholder="K7Q2-X9MP" spellcheck="false" aria-label="Invite code">
           ${go("next", "↵", 'type="submit"')}
@@ -188,7 +188,7 @@ async function phoneStart(code) {
     return show(head("approve on your phone") + tile("no code this time", "", `<div class="err"><p>${esc(e.message)}</p></div>`));
   }
   if (run !== S.run) return;
-  const fee = req.sponsored ? "clearcast pays the network fee." : "You pay a small fee there.";
+  const fee = req.sponsored ? "clearcast pays the network fee." : "You may be asked to pay a small fee.";
   const paint = (at) =>
     show(
       head("approve on your phone") +
@@ -321,7 +321,8 @@ async function done(already = false) {
     `<section class="tile" style="margin-top:40px"><h2><span>signed in</span><span>${me ? `fid ${me.fid}` : ""}</span></h2><div class="done">
       ${me?.pfp ? `<img class="avatar" src="${esc(me.pfp)}" alt="" referrerpolicy="no-referrer">` : `<span class="avatar"></span>`}
       <h2>${already ? "already in" : "you're in"}</h2><p>${already ? `You're signed in as ${name}.` : `Welcome, ${name}.`}</p>
-      <p class="dim">This computer holds your app key.</p>
+      <p class="dim">Your <a href="${DOCS}/guide/app-key" target="_blank" rel="noopener">app key</a> has been saved on this computer.</p>
+      <p class="dim">You can now start interacting with Farcaster on this device.</p>
       <div class="row">${go("start", "A", 'id="start"')}</div></div></section>`,
     `<span><kbd>A</kbd>/<kbd>↵</kbd> start</span>`,
   );

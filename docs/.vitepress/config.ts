@@ -23,6 +23,7 @@ export default defineConfig({
     ],
     sidebar: [
       { text: "Guides", items: [{ text: "Share your node with friends", link: "/guide/share-your-node" }] },
+      { text: "Explainers", items: [{ text: "Your app key", link: "/guide/app-key" }] },
       { text: "Reference", items: [{ text: "Costs", link: "/Costs" }] },
       {
         text: "Farcaster's docs",

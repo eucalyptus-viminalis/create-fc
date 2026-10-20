@@ -58,7 +58,7 @@ That prints a code like `K7Q2-X9MP`. Send it to Alice. She types it once when sh
 
 The companion listens on port 3390, which is open to the internet. Without codes, anyone who found it could start sign-ins in your app account's name. Here's what that would and wouldn't mean:
 
-- **It can't cost you anything.** Each person pays their own small fee when they approve.
+- **It can't cost you anything.** If approving costs a fee, each person pays their own.
 - **It can't touch anyone's account.** Each person approves on their own phone, for their own account.
 - **It doesn't open your node any further.** Port 3381 is already public, so anyone can read from your node either way.
 - **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. clearcast's "apps in your feed" shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
