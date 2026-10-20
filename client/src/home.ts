@@ -136,6 +136,14 @@ async function heartbeat(key: AppKey, status: PresenceStatus | "offline") {
   return d;
 }
 
+// Tell the companion this device is leaving (on sign out), so it drops off
+// everyone's list now rather than in 90 s. Best effort.
+export async function leaveNode() {
+  try {
+    await heartbeat(await loadKey(), "offline");
+  } catch {}
+}
+
 type Online = { fid: number; devices: { id: string; label: string; status: string; seen: string }[]; lastSeen: string };
 
 export type Presence =

@@ -25,6 +25,8 @@ import {
   getFarcasterTime,
   makeKeyAdd,
   makeKeyAddBody,
+  makeKeyRemove,
+  makeKeyRemoveBodySelfRevoke,
 } from "@farcaster/core";
 import { NODE, get, post, submitUntil, NodeError } from "./node.ts";
 
@@ -277,6 +279,68 @@ export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean;
   await saveKey(key);
   log(`done. App key saved to ${KEY_FILE} (mode 600). Your seed phrase was not saved.`);
   return key;
+}
+
+// ------------------------------------------------------ the self-revoking KEY_REMOVE
+
+export type Revoked = { state: "revoked" | "already gone" | "dry run ok" | "dry run rejected" };
+
+// Revoke an app key using the key itself: a gasless key may sign its own
+// KEY_REMOVE, so no seed phrase is needed. The node checks that the message's
+// signer is the key being removed. The nonce comes from the app that asked for
+// the key (requestFid; for keys clearcast login made, that's your own fid).
+// Keys approved in the Farcaster app are onchain, and only an onchain
+// transaction removes those.
+export async function revokeKey(key: AppKey, opts: { dryRun?: boolean; log: (s: string) => void }): Promise<Revoked> {
+  const { log } = opts;
+  type SignerRecord = { source: string; requestFid?: number };
+  const record = await get<{ signer: SignerRecord }>("/v1/signer", { fid: key.fid, signer: key.publicKey }).then(
+    (r) => r.signer,
+    () => undefined,
+  );
+  if (!record) {
+    log("your node doesn't have this key: it expired, was revoked, or never landed.");
+    return { state: "already gone" };
+  }
+  if (record.source !== "SIGNER_SOURCE_OFFCHAIN")
+    throw new NodeError(
+      "this key was approved in the Farcaster app, so it lives onchain. A message can't remove it: remove it in the Farcaster app's settings instead.",
+    );
+
+  const requestFid = record.requestFid ?? key.fid;
+  const nonces = await get<{ requesterFidNonces?: Record<string, number> }>("/v1/signersByFid", { fid: key.fid, pageSize: 1 });
+  // The node doesn't always report the app nonce it has used, so if it
+  // rejects one as used, try the next few.
+  const first = (nonces.requesterFidNonces?.[String(requestFid)] ?? 0) + 1;
+  const build = async (nonce: number) => {
+    const now = getFarcasterTime()._unsafeUnwrap();
+    const body = makeKeyRemoveBodySelfRevoke({ key: hexToBytes(key.publicKey), nonce, deadline: now + 10 * 60 });
+    if (body.isErr()) throw new NodeError(`couldn't build the KEY_REMOVE: ${body.error.message}`);
+    const message = await makeKeyRemove(body.value, { fid: key.fid, network: FarcasterNetwork.MAINNET }, appSigner(key));
+    if (message.isErr()) throw new NodeError(`couldn't sign the KEY_REMOVE: ${message.error.message}`);
+    log(`KEY_REMOVE: ${bytesToHex(message.value.hash)}, app nonce ${nonce} (requested by fid ${requestFid})`);
+    return MessageProto.encode(message.value).finish();
+  };
+
+  if (opts.dryRun) {
+    const res = await validate(await build(first));
+    log(res.valid ? "dry run: passes your node's stateless checks. Nothing was sent." : "dry run: your node's stateless checks REJECT this KEY_REMOVE. Nothing was sent.");
+    return { state: res.valid ? "dry run ok" : "dry run rejected" };
+  }
+  log("sending to your node. Waiting for the key to disappear...");
+  const gone = () => get("/v1/signer", { fid: key.fid, signer: key.publicKey }).then(() => false, () => true);
+  for (let nonce = first; ; nonce++) {
+    try {
+      if (!(await submitUntil(await build(nonce), gone, 90_000)))
+        throw new NodeError("the key is still there after 90 s, even after resending. Check that your node is in sync, then try again.");
+      break;
+    } catch (e) {
+      if (!(e instanceof NodeError && /nonce/i.test(e.message)) || nonce >= first + 9) throw e;
+      log(`  nonce ${nonce} is used up; trying ${nonce + 1}`);
+    }
+  }
+  log("done. The key can't sign anything now.");
+  return { state: "revoked" };
 }
 
 // ---------------------------------------------------------- the key file

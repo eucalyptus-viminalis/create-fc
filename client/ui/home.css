@@ -23,6 +23,8 @@ body {
 .px, .top .hello, .tile > h2, .cond .word, .count, .btn, .node .state b, .mode, #boot .word { font-family: var(--px); -webkit-font-smoothing: none; }
 a { color: inherit; }
 button { color: inherit; }
+.link { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link:hover { color: var(--g3); }
 .dim { color: var(--g2); }
 .blink { animation: beat .8s steps(2, jump-none) infinite; }
 @keyframes beat { 50% { opacity: .2; } }

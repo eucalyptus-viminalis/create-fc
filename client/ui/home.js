@@ -83,8 +83,34 @@ function paintClock() {
   $("#hello").textContent = h < 5 ? "up late" : h < 12 ? "good morning" : h < 18 ? "good afternoon" : "good evening";
   $("#when").textContent = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" }).toLowerCase();
   const time = d.toTimeString().slice(0, 5);
-  $("#who").innerHTML = S.me ? `<b>@${esc(S.me.username ?? `!${S.me.fid}`)}</b> · fid ${S.me.fid} · ${time}` : `<a href="/classic">sign in</a> · ${time}`;
+  $("#who").innerHTML = S.me
+    ? `<b>@${esc(S.me.username ?? `!${S.me.fid}`)}</b> · fid ${S.me.fid} · <button class="link" id="signout">${S.confirmSignOut ? "click again to sign out" : "sign out"}</button> · ${time}`
+    : `<a href="/classic">sign in</a> · ${time}`;
 }
+
+// Signing out deletes the app key from this computer, so it takes two clicks.
+document.addEventListener("click", async (e) => {
+  if (e.target.id !== "signout") return;
+  if (!S.confirmSignOut) {
+    S.confirmSignOut = true;
+    sfx.back();
+    // The note stays up for as long as the second click counts.
+    toast("Sign out revokes this computer's key. Click again to confirm.", 6000);
+    paintClock();
+    setTimeout(() => { S.confirmSignOut = false; paintClock(); }, 6000);
+    return;
+  }
+  try {
+    $("#signout").textContent = "signing out…";
+    const r = await api("/api/signout", {});
+    sfx.toggle();
+    // Keys approved in the Farcaster app can't revoke themselves; say so before reloading.
+    if (r.revoked.startsWith("not revoked")) { toast("Deleted here. Remove it in the Farcaster app.", 5000); await wait(5000); }
+    location.reload();
+  } catch (err) {
+    toast(err.message);
+  }
+});
 
 // ------------------------------------------------------------------ conditions
 // Pixel weather, 16x16: # ink, + mid grey.
@@ -245,7 +271,7 @@ function select(i, sound = true) {
   modes.forEach((m, j) => m.toggleAttribute("aria-current", j === S.sel));
 }
 let toastT;
-function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600); }
+function toast(msg, ms = 1600) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
 function open() {
   const m = modes[S.sel];
   sfx.open();

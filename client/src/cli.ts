@@ -11,7 +11,7 @@ import { setProfile } from "./profile.ts";
 import { createInterface } from "node:readline/promises";
 import { newAccount } from "./new-account.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
-import { KEY_FILE, checkPhrase, findCustody, forgetKey, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
+import { KEY_FILE, checkPhrase, findCustody, forgetKey, loadKey, normalizePhrase, promptPhrase, registerAppKey, revokeKey } from "./keys.ts";
 
 const HELP = `clearcast: a Farcaster client that talks only to your own node (${NODE})
 
@@ -24,6 +24,8 @@ Usage:
   clearcast login [--dry-run]          Import a seed phrase once, register an app key
   clearcast whoami                     Show the saved app key and its status
   clearcast logout                     Sign out: delete the app key from this computer
+  clearcast revoke [--dry-run]         Revoke this computer's app key on Farcaster, then
+                                       sign out. The key signs its own removal: no seed phrase
   clearcast app-account [--sponsor]    Set up the account that lets people sign in to
                                        clearcast ui by approving in the Farcaster app
   clearcast profile [--display "Name"] [--pfp https://…] [--bio "…"]
@@ -166,6 +168,15 @@ async function main() {
       if (!(await forgetKey())) return console.log("Already signed out: no app key on this computer.");
       console.log(`Signed out${key ? ` of fid ${key.fid}` : ""}: deleted ${KEY_FILE}.`);
       console.log("The key stays registered on Farcaster until it expires, but nobody else has a copy.");
+      console.log("To sign in again: clearcast login");
+      break;
+    }
+    case "revoke": {
+      const key = await loadKey();
+      const r = await revokeKey(key, { dryRun: values["dry-run"], log: (l) => console.error(l) });
+      if (values["dry-run"]) break;
+      await forgetKey();
+      console.log(`${r.state === "revoked" ? "Revoked" : "Nothing to revoke"}: fid ${key.fid}'s key ${key.publicKey.slice(0, 10)}…, and deleted ${KEY_FILE}.`);
       console.log("To sign in again: clearcast login");
       break;
     }

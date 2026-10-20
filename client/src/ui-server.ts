@@ -15,11 +15,11 @@ import { fileURLToPath } from "node:url";
 import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
-import { forgetKey, loadKey } from "./keys.ts";
+import { forgetKey, loadKey, revokeKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
-import { NoAppAccount, appSignInStatus, loadAppAccount, phraseSignInStatus, startAppSignIn, startPhraseSignIn } from "./signin.ts";
-import { companionStatus, conditions, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
+import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
+import { companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -206,20 +206,43 @@ const routes: Record<string, Handler> = {
   "GET /api/signin/options": async () => {
     const app = await loadAppAccount();
     const p = app ? await profileOf(app.fid) : undefined;
-    return { app: app ? { fid: app.fid, username: p?.username, display: p?.display, pfp: p?.pfp, sponsor: app.sponsor } : null, phrase: LOCAL_ONLY };
+    // node: this node's companion can vouch for phone sign-ins (needs an invite code).
+    const [node, invite] = await Promise.all([nodeSignInOptions(), savedInvite()]);
+    const nodeApp = node?.phone && node.appFid ? await profileOf(node.appFid) : undefined;
+    return {
+      app: app ? { fid: app.fid, username: p?.username, display: p?.display, pfp: p?.pfp, sponsor: app.sponsor } : null,
+      node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: invite ?? null } : null,
+      phrase: LOCAL_ONLY,
+    };
   },
-  "POST /api/signin/app": async () => startAppSignIn(),
+  // Phone sign-in: this computer's own app account if it has one, else the node's (with an invite code).
+  "POST /api/signin/app": async (_q, b) => {
+    if (await loadAppAccount()) return startAppSignIn();
+    const invite = String(b.invite ?? "").trim();
+    if (!invite) throw new NodeError("type the invite code from your node's owner");
+    return startNodeSignIn(invite);
+  },
   "GET /api/signin/app": async (q) => appSignInStatus(q.get("token") ?? ""),
   "POST /api/signin/phrase": async (_q, b) => {
     if (!LOCAL_ONLY) throw new NodeError("this clearcast is shared over the network, so it never accepts a seed phrase");
     return { job: startPhraseSignIn(String(b.phrase ?? "")) };
   },
   "GET /api/signin/phrase": async (q) => phraseSignInStatus(q.get("job") ?? ""),
-  // Sign out: delete the app key from this computer.
+  // Sign out: revoke the app key on Farcaster when it can revoke itself (keys
+  // from a seed phrase sign-in can; keys approved in the Farcaster app can't),
+  // then delete it from this computer either way.
   "POST /api/signout": async () => {
-    const fid = await myFid().catch(() => undefined);
-    if (fid !== undefined) feedCache.delete(fid);
-    return { removed: await forgetKey() };
+    const key = await loadKey().catch(() => undefined);
+    let revoked: string = "no key";
+    if (key) {
+      feedCache.delete(key.fid);
+      await leaveNode();
+      revoked = await revokeKey(key, { log: () => {} }).then(
+        (r) => r.state,
+        (e) => `not revoked: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+    return { removed: await forgetKey(), revoked };
   },
   "POST /api/cast": async (_q, b) => {
     const text = String(b.text ?? "").trim();
