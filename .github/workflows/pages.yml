@@ -1,9 +1,10 @@
-# Publish site/ to GitHub Pages on every push to main.
+# Publish site/ to GitHub Pages on every push to main, with the docs
+# (VitePress, source in docs/) built into site/docs/.
 name: pages
 on:
   push:
     branches: [main]
-    paths: [site/**, .github/workflows/pages.yml]
+    paths: [site/**, docs/**, package.json, pnpm-lock.yaml, .github/workflows/pages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +21,15 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm docs:build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

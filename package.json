@@ -1,0 +1,19 @@
+{
+  "name": "create-fc-docs",
+  "private": true,
+  "type": "module",
+  "description": "The create-fc docs site (VitePress). Source in docs/, built into site/docs/ for GitHub Pages.",
+  "scripts": {
+    "docs:dev": "vitepress dev docs --host 0.0.0.0",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --host 0.0.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  }
+}

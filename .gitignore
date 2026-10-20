@@ -7,3 +7,8 @@ node_modules/
 .fc-client/
 .DS_Store
 mockups/
+
+# docs site build output (built by the Pages workflow)
+site/docs/
+docs/.vitepress/cache/
+docs/.vitepress/dist/

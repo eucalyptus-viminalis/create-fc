@@ -29,6 +29,7 @@
     <nav class="tg-header__nav" aria-label="Main navigation">
       <a class="tg-quiet-link" href="#quickstart">Quickstart</a>
       <a class="tg-quiet-link" href="#client">Client</a>
+      <a class="tg-quiet-link" href="docs/">Docs</a>
       <div class="nav-dd">
         <button class="nav-dd__btn" type="button" aria-expanded="false" aria-controls="nav-tutorial">Tutorial<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="dd-panel" id="nav-tutorial">
@@ -121,7 +122,7 @@ setup started as a background job.</span>
       <div class="tg-grid-3">
         <div class="tg-stat"><strong class="tg-numeral">0</strong><h2 class="tg-stat__label">API keys</h2><p class="tg-stat__desc">Your node syncs from the network's own peers and snapshots. Your client only talks to your node.</p></div>
         <div class="tg-stat"><strong class="tg-numeral">6</strong><h2 class="tg-stat__label">Hours to first sync</h2><p class="tg-stat__desc">6 h 20 min on our last run: under 2 to load the snapshot, then about 4½ to catch up. It runs on its own.</p></div>
-        <div class="tg-stat"><strong class="tg-numeral">$4</strong><h2 class="tg-stat__label">For a one-day test</h2><p class="tg-stat__desc">Hetzner bills by the hour: about $0.16. Delete the server when you're done. <a class="tg-text-link" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/Costs.md">Full costs</a></p></div>
+        <div class="tg-stat"><strong class="tg-numeral">$4</strong><h2 class="tg-stat__label">For a one-day test</h2><p class="tg-stat__desc">Hetzner bills by the hour: about $0.16. Delete the server when you're done. <a class="tg-text-link" href="docs/Costs">Full costs</a></p></div>
       </div>
     </section>
 
@@ -249,7 +250,7 @@ setup started as a background job.</span>
             <tr><td>3381</td><td>TCP</td><td>HTTP API. Your client talks to this.</td></tr>
             <tr><td>3382</td><td><b>UDP</b></td><td>Gossip with other nodes (libp2p over QUIC). A TCP-only rule leaves the node unable to peer.</td></tr>
             <tr><td>3383</td><td>TCP</td><td>gRPC API, the same data as 3381 for other tools</td></tr>
-            <tr><td>3390</td><td>TCP</td><td>fc-companion: node uptime and who's online, for clearcast. Presence calls are signed with your app key.</td></tr>
+            <tr><td>3390</td><td>TCP</td><td>fc-companion: node uptime, who's online, and phone sign-in for friends sharing your node (<a class="tg-text-link" href="docs/guide/share-your-node">how</a>).</td></tr>
             <tr><td>22</td><td>TCP</td><td>SSH</td></tr>
             <tr><td>3000</td><td>TCP</td><td><b>Closed.</b> The node ships Grafana with the login admin / admin.</td></tr>
           </tbody>
@@ -447,7 +448,7 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
     <a class="tg-wordmark tg-wordmark--sm" href="#top"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
     <div class="tg-footer__links">
       <a class="tg-btn tg-btn--pill" href="https://github.com/eucalyptus-viminalis/create-fc">GitHub</a>
-      <a class="tg-btn tg-btn--pill" href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/Costs.md">Costs</a>
+      <a class="tg-btn tg-btn--pill" href="docs/Costs">Costs</a>
       <a class="tg-btn tg-btn--pill" href="https://snapchain.farcaster.xyz">Snapchain docs</a>
     </div>
   </footer>

@@ -1,0 +1,16 @@
+/* No brand colour, like clearcast itself: ink for links and buttons. */
+:root {
+  --vp-c-brand-1: #1c1c1a;
+  --vp-c-brand-2: #3a3a36;
+  --vp-c-brand-3: #1c1c1a;
+  --vp-c-brand-soft: rgb(28 28 26 / 0.08);
+  --vp-home-hero-name-color: #1c1c1a;
+}
+.dark {
+  --vp-c-brand-1: #ecebe4;
+  --vp-c-brand-2: #c9c8c0;
+  --vp-c-brand-3: #ecebe4;
+  --vp-c-brand-soft: rgb(236 235 228 / 0.1);
+  --vp-home-hero-name-color: #ecebe4;
+}
+.vp-doc a { text-underline-offset: 3px; }
