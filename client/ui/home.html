@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="clearcast-token" content="__CLEARCAST_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>clearcast</title>
+  <link rel="icon" href="/clearcast.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+</head>
+<body>
+<div id="boot">
+  <div>
+    <div class="word" aria-label="clearcast"><span>c</span><span>l</span><span>e</span><span>a</span><span>r</span><span>c</span><span>a</span><span>s</span><span>t</span></div>
+    <div class="status" id="boot-status" role="status"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="top" data-reveal style="--i:0">
+    <span class="hello" id="hello">hello</span>
+    <span class="dim" id="when"></span>
+    <span class="who" id="who"></span>
+  </header>
+
+  <div class="grid">
+    <section class="tile span7" data-reveal style="--i:1">
+      <h2><span>network conditions</span><span>snapchain</span></h2>
+      <div class="body" id="conditions"></div>
+    </section>
+
+    <section class="tile span5" data-reveal style="--i:2">
+      <h2><span id="since-title">since you last checked in</span><span id="since-ago"></span></h2>
+      <div class="body" id="since"><span class="dim">looking<span class="blink">_</span></span></div>
+    </section>
+
+    <section class="tile span7 node" data-reveal style="--i:3">
+      <h2><span>your node</span><span id="host"></span></h2>
+      <div class="body" id="node"></div>
+    </section>
+
+    <section class="tile span5" data-reveal style="--i:4">
+      <h2><span>on this node</span><span id="online-n"></span></h2>
+      <div class="body" id="presence"><span class="dim">looking<span class="blink">_</span></span></div>
+    </section>
+  </div>
+</div>
+
+<nav class="bar" aria-label="Modes" data-reveal style="--i:5">
+  <div class="in">
+    <button class="mode" data-mode="curate"><span class="k">1</span>curate<span class="soon">soon</span></button>
+    <button class="mode" data-mode="post"><span class="k">2</span>post<span class="soon">soon</span></button>
+    <button class="mode" data-mode="create"><span class="k">3</span>create<span class="soon">soon</span></button>
+    <button class="mode" data-mode="read" data-href="/classic"><span class="k">4</span>read</button>
+    <button class="mode" data-mode="inspect" data-href="/classic"><span class="k">5</span>inspect</button>
+    <span class="hint"><kbd>←</kbd><kbd>→</kbd> <kbd>↵</kbd> go · <kbd>o</kbd> offline · <kbd>m</kbd> sound <span id="snd">on</span> · <span id="pad">no controller</span></span>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="/home.js"></script>
+</body>
+</html>

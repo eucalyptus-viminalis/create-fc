@@ -14,6 +14,8 @@ case "${1:-status}" in
       worst=$(echo "$info" | jq '[.shardInfos[].blockDelay] | max')
       if [ "$worst" -lt 10 ]; then echo "in sync. Run command 2 on your own computer."
       else awk -v w="$worst" 'BEGIN { printf "catching up: %.1f h behind, gaining about 4 s per second (~%.1f h to go).\n", w/3600, w/4/3600 }'; fi
+      if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
+      else echo "companion: not running (re-run command 1 to install it)"; fi
     elif systemctl is-active --quiet fc-node-setup; then
       echo "setup running. Latest:"
       grep -E "shard [0-9]|setup|loaded" "$LOG" | tail -n 2 | sed 's/^/  /'

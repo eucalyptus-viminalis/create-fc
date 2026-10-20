@@ -249,6 +249,7 @@ setup started as a background job.</span>
             <tr><td>3381</td><td>TCP</td><td>HTTP API. Your client talks to this.</td></tr>
             <tr><td>3382</td><td><b>UDP</b></td><td>Gossip with other nodes (libp2p over QUIC). A TCP-only rule leaves the node unable to peer.</td></tr>
             <tr><td>3383</td><td>TCP</td><td>gRPC API, the same data as 3381 for other tools</td></tr>
+            <tr><td>3390</td><td>TCP</td><td>fc-companion: node uptime and who's online, for clearcast. Presence calls are signed with your app key.</td></tr>
             <tr><td>22</td><td>TCP</td><td>SSH</td></tr>
             <tr><td>3000</td><td>TCP</td><td><b>Closed.</b> The node ships Grafana with the login admin / admin.</td></tr>
           </tbody>

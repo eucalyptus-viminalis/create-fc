@@ -41,6 +41,9 @@ fetch() { # repo path -> dest; use a local checkout when there is one
 }
 fetch node/load-snapshot.sh /usr/local/bin/fc-load-snapshot
 fetch node/fc-node /usr/local/bin/fc-node
+mkdir -p /usr/local/lib/fc-companion
+fetch node/companion.mjs /usr/local/lib/fc-companion/companion.mjs
+fetch node/companion-install.sh /usr/local/sbin/fc-companion-install
 
 # --------------------------------------------- the job that does the work
 cat > /usr/local/sbin/fc-node-setup <<'JOB'
@@ -79,12 +82,14 @@ sleep 10
 pkill -P "$up" 2>/dev/null || true
 kill "$up" 2>/dev/null || true
 echo "== $(date -u +%FT%TZ) node running; catching up from the snapshot"
+fc-companion-install || echo "fc-companion didn't start; the node is fine. Re-run command 1 to retry."
 JOB
 sed -i "s|__SNAPCHAIN_RAW__|$SNAPCHAIN_RAW|" /usr/local/sbin/fc-node-setup
 chmod +x /usr/local/sbin/fc-node-setup
 
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx snapchain-snapchain-1; then
   echo "the node is already running."
+  fc-companion-install || true
 elif systemctl is-active --quiet fc-node-setup; then
   echo "setup is already running."
 else

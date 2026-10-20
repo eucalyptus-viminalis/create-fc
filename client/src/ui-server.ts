@@ -19,6 +19,7 @@ import { forgetKey, loadKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
 import { NoAppAccount, appSignInStatus, loadAppAccount, phraseSignInStatus, startAppSignIn, startPhraseSignIn } from "./signin.ts";
+import { companionStatus, conditions, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -139,6 +140,31 @@ const routes: Record<string, Handler> = {
     const info = await get<{ version: string; shardInfos: { shardId: number; maxHeight: number; blockDelay: number }[] }>("/v1/info");
     return { node: NODE, version: info.version, shards: info.shardInfos.sort((a, b) => a.shardId - b.shardId) };
   },
+  // ---- the home view (see home.ts)
+  // Your node, plus uptime and how many devices are online from fc-companion.
+  "GET /api/home": async () => {
+    const [node, companion] = await Promise.all([nodeOverview(), companionStatus()]);
+    return { node, companion };
+  },
+  // Messages a minute right now, and per-block counts for the shard strips.
+  "GET /api/live": async () => live(await nodeOverview()),
+  // Today by the hour against a usual day. Measured in the background; poll for progress.
+  "GET /api/conditions": async () => conditions(await nodeOverview()),
+  // What happened since you last looked.
+  "GET /api/since": async () => {
+    const fid = await myFid();
+    return sinceLastVisit(fid, await feedFor(fid));
+  },
+  // Who's on this node. Each call is also your heartbeat, so the page calls it every 30 s.
+  "GET /api/presence": async () => {
+    await myFid();
+    return presence();
+  },
+  "POST /api/presence": async (_q, b) => {
+    await myFid();
+    if (b.status !== "online" && b.status !== "invisible") throw new NodeError("status must be online or invisible");
+    return presence(b.status as PresenceStatus);
+  },
   "GET /api/me": async () => {
     const key = await loadKey().catch(() => undefined);
     if (!key) return null;
@@ -233,7 +259,7 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel === "index.html") data = data.toString().replace("__CLEARCAST_TOKEN__", token);
+    if (token && rel.endsWith(".html")) data = data.toString().replace("__CLEARCAST_TOKEN__", token);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -272,7 +298,9 @@ async function listenOn(port: number): Promise<string> {
         const { result, calls } = await recordCalls(() => handler(url.searchParams, body));
         return send(res, 200, { data: result, calls });
       }
-      if (path === "/" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
+      // The home view is the front page; the earlier all-in-one page lives on at /classic.
+      if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
+      if (path === "/classic" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
       if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
       if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));

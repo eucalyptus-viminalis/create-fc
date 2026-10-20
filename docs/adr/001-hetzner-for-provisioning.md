@@ -33,7 +33,7 @@ The script creates:
 
 - **Server:** `cx43` (8 shared vCPU, 16 GB RAM, $20.34/mo gross; see `docs/Costs.md`) running Ubuntu 24.04. It tries fsn1, nbg1 and hel1, then falls back to `cpx41` ($41.79/mo) in the same order when Hetzner answers `resource_unavailable`. `TYPE`, `LOCATION` and `IMAGE` pin a choice.
 - **Volume:** 1000 GB, which fits the new-account cap. It is created *after* the server, in the server's location, and attached straight away; first boot waits up to 5 minutes for it. (It was created first originally, but a failed placement then left a location-bound volume billing; see Provenance.)
-- **Firewall:** inbound TCP 22, 3381 and 3383, plus UDP 3382. Everything else, including Grafana's 3000, stays closed.
+- **Firewall:** inbound TCP 22, 3381, 3383 and 3390 (fc-companion), plus UDP 3382. Everything else, including Grafana's 3000, stays closed.
 - **SSH key:** from `~/.ssh/id_ed25519.pub`.
 
 How first boot works:
