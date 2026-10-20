@@ -369,8 +369,7 @@ function castHtml(c, i) {
     : "";
   const done = isCleared(c);
   const clear = `<div class="cast__clear">
-      ${done ? `<button type="button" class="clear-btn" data-unclear="${i}">Bring back</button>` : `<button type="button" class="clear-btn" data-clear="${i}" title="Clear (e)">✓ Clear</button>
-      <button type="button" class="link-btn clear-above" data-clear-above="${i}" title="Clear this cast and every cast above it">Clear to here</button>`}
+      ${done ? `<button type="button" class="clear-btn" data-unclear="${i}">Bring back</button>` : `<button type="button" class="clear-btn" data-clear="${i}" title="Clear (e)">✓ Clear</button>`}
     </div>`;
   return `<article class="cast card${done ? " is-cleared" : ""}" data-hash="${esc(c.hash)}" data-i="${i}">
     ${pic(c.author.pfp, "avatar", name)}
@@ -709,12 +708,6 @@ document.addEventListener("click", async (e) => {
     const c = casts[Number(un.dataset.unclear)];
     if (state.cleared.hashes.has(c.hash)) return changeCleared({ remove: [c.hash], counted: -1 }, { add: [{ hash: c.hash, time: c.time }] }, "Back in your feed");
     return toast("This one was cleared with \"Clear all\". Undo that to bring it back.");
-  }
-  const above = e.target.closest("[data-clear-above]");
-  if (above) {
-    const left = unread();
-    const k = left.indexOf(casts[Number(above.dataset.clearAbove)]);
-    return clearCasts(left.slice(0, k + 1));
   }
   if (e.target.closest("[data-clear-all]")) {
     const left = unread();

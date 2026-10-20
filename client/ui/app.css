@@ -242,8 +242,6 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
 .act:disabled { opacity: 0.5; cursor: progress; }
 .cast__clear { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-direction: row-reverse; }
 .clear-btn { padding: 6px 14px; border-radius: var(--r-pill); font-size: 13px; font-weight: 500; }
-.clear-above { font-size: 12px; opacity: 0; transition: opacity 150ms; }
-.cast:hover .clear-above, .cast.is-selected .clear-above, .clear-above:focus-visible { opacity: 1; }
 
 /* ---------- who can post ---------- */
 .keys-summary { display: flex; gap: 40px; margin-bottom: 18px; }
@@ -364,7 +362,6 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
   .tg-tabs { overflow-x: auto; width: 100%; justify-content: flex-start; }
   .inbox { top: 8px; padding: 12px 14px; }
   .inbox__count b { font-size: 28px; }
-  .clear-above { display: none; }
   .bar { grid-template-columns: 110px 1fr 46px; }
   .keys-summary { gap: 24px; }
   .calltable th:nth-child(1), .calltable td.ct-time { display: none; }
