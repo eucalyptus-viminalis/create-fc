@@ -8,7 +8,7 @@ const $ = (sel) => document.querySelector(sel);
 const state = {
   node: "",
   me: null,
-  viewAs: null, // { fid, username }
+  viewAs: null, // you: { fid, username, pfp, following }. The feed is always your own.
   feed: null, // { following, casts }
   feedFor: null,
   hidden: new Set(), // app fids (or "?") hidden from the feed
@@ -69,6 +69,7 @@ async function api(path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+  if (res.status === 401) showSignedOut(); // the key was removed, e.g. from a terminal
   if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
   for (const c of json.calls ?? []) state.log.unshift(c);
   state.log.length = Math.min(state.log.length, 300);
@@ -252,12 +253,12 @@ function appCounts(casts) {
 async function loadFeed() {
   if (!state.viewAs) return;
   if (state.feedFor === state.viewAs.fid && state.feed) return renderFeed();
-  $("#feed-list").innerHTML = loading(`Building @${state.viewAs.username ?? state.viewAs.fid}'s feed from your node…`);
+  $("#feed-list").innerHTML = loading("Building your feed from your node…");
   $("#filterbar").hidden = true;
   try {
-    const fresh = loadFeed.fresh ? "&fresh=1" : "";
+    const fresh = loadFeed.fresh ? "?fresh=1" : "";
     loadFeed.fresh = false;
-    const [{ data }, { data: cleared }] = await Promise.all([api(`/api/feed?user=${state.viewAs.fid}${fresh}`), api(`/api/cleared?user=${state.viewAs.fid}`)]);
+    const [{ data }, { data: cleared }] = await Promise.all([api(`/api/feed${fresh}`), api("/api/cleared")]);
     setCleared(cleared);
     const calls = data.calls;
     const age = Math.round((Date.now() - data.builtAt) / 1000);
@@ -292,7 +293,7 @@ const notHidden = (c) => !state.hidden.has(c.app ? c.app.fid : "?");
 
 async function changeCleared(change, inverse, message) {
   try {
-    const { data } = await api("/api/cleared", { fid: state.viewAs.fid, ...change });
+    const { data } = await api("/api/cleared", change);
     setCleared(data);
     if (inverse) {
       state.undo.push(inverse);
@@ -406,9 +407,9 @@ function renderFeed() {
     : all.filter(notHidden).length
       ? `<div class="all-clear"><b>All clear.</b><p>You've read everything here. New casts show up when you check again.</p><button type="button" class="glass-btn" data-refresh>↻ Check for new</button></div>`
       : all.length
-      ? empty("Every app in this feed is hidden. Click a chip above to show it again.")
-      : `<div class="empty"><p>${state.feed?.following ? "No recent casts from the accounts this feed follows." : "This account doesn't follow anyone yet, so its feed is empty."}</p>
-         <p>Try someone else's: <button type="button" class="link-btn" data-view-as="dwr">@dwr</button> · <button type="button" class="link-btn" data-view-as="vitalik.eth">@vitalik.eth</button> · <button type="button" class="link-btn" data-view-as="balajis.eth">@balajis.eth</button></p></div>`;
+      ? empty("Every app in your feed is hidden. Click a chip above to show it again.")
+      : `<div class="empty"><p>${state.feed?.following ? "No recent casts from the accounts you follow." : "You don't follow anyone yet, so your feed is empty."}</p>
+         <p>Follow someone above, for example <button type="button" class="link-btn" data-follow="dwr">@dwr</button> or <button type="button" class="link-btn" data-follow="vitalik.eth">@vitalik.eth</button>.</p></div>`;
   select(state.selected);
 }
 
@@ -424,17 +425,24 @@ function select(n, scroll) {
 const appPfps = new Map();
 const feedAppPfp = (fid) => appPfps.get(fid);
 
-// Whose feed this is, with a follow button when it isn't yours.
-async function renderWho() {
+// Your feed's header, with a box to follow someone by name.
+function renderWho() {
   const v = state.viewAs;
   const el = $("#who");
-  const mine = state.me && state.me.fid === v.fid;
   el.hidden = false;
-  el.innerHTML = `${pic(v.pfp, "avatar", v.username ?? String(v.fid))}<div class="who__text"><b>${mine ? "Your feed" : `@${esc(v.username ?? v.fid)}'s feed`}</b><br />The latest casts from the ${v.following?.toLocaleString() ?? "?"} accounts ${mine ? "you follow" : "they follow"}</div>`;
-  if (!state.me || mine) return;
-  const { data } = await api(`/api/relationship?user=${v.fid}`).catch(() => ({ data: {} }));
-  if (data.following === null || data.following === undefined) return;
-  el.insertAdjacentHTML("beforeend", `<button type="button" class="tg-btn ${data.following ? "tg-btn--pill" : "tg-btn--ink"} tg-btn--sm" id="follow-btn" data-on="${!data.following}">${data.following ? "Unfollow" : "Follow"}</button>`);
+  el.innerHTML = `${pic(v.pfp, "avatar", v.username ?? String(v.fid))}<div class="who__text"><b>Your feed</b><br />The latest casts from the ${v.following?.toLocaleString() ?? "?"} accounts you follow</div>
+    <form class="follow-form" id="follow-form"><input name="user" autocomplete="off" spellcheck="false" placeholder="@username" aria-label="Username to follow" /><button class="glass-btn" type="submit">Follow</button></form>`;
+}
+
+async function followUser(user, on = true) {
+  try {
+    const { data } = await api("/api/follow", { user, on });
+    const name = `@${data.user.username ?? data.user.fid}`;
+    toast(data.landed ? `${on ? "Following" : "Unfollowed"} ${name}. Check for new to see their casts.` : "Sent, but not visible on your node yet");
+    if (data.landed) state.viewAs.following = (state.viewAs.following ?? 0) + (on ? 1 : -1), renderWho();
+  } catch (e) {
+    toast(e.message);
+  }
 }
 
 // --------------------------------------------------------- apps in feed
@@ -449,7 +457,7 @@ function renderApps() {
   const top = counts[0];
   const pct = (n) => Math.round((n / all.length) * 100);
   $("#apps-top").innerHTML = `<strong class="tg-numeral">${pct(top.n)}%</strong>
-    <p>of the latest ${all.length} casts from the ${state.feed.following.toLocaleString()} accounts @${esc(state.viewAs.username ?? state.viewAs.fid)} follows came through <b>@${esc(top.name)}</b>. ${counts.length} apps in total.</p>`;
+    <p>of the latest ${all.length} casts from the ${state.feed.following.toLocaleString()} accounts you follow came through <b>@${esc(top.name)}</b>. ${counts.length} apps in total.</p>`;
   $("#apps-bars").innerHTML = counts
     .map(
       (a) => `<button type="button" class="bar" data-only="${a.fid}" title="Show only @${esc(a.name)} in the feed">
@@ -465,17 +473,11 @@ function renderApps() {
 
 async function loadKeys() {
   if (!state.viewAs) return;
-  const who = `@${state.viewAs.username ?? state.viewAs.fid}`;
-  const mine = state.me && state.me.fid === state.viewAs.fid;
-  $("#keys-title").textContent = mine ? "Who can post as you" : `Who can post as ${who}`;
-  $("#keys-intro").textContent = mine
-    ? "Every app you've signed in to holds a key that can post as you. Here's the full list, straight from your node."
-    : `Every app ${who} has signed in to holds a key that can post as them. Here's the full list, straight from your node.`;
   if (state.keysFor === state.viewAs.fid) return;
-  $("#keys-list").innerHTML = loading(`Asking your node for ${who}'s keys…`);
+  $("#keys-list").innerHTML = loading("Asking your node for your keys…");
   $("#keys-summary").innerHTML = "";
   try {
-    const { data: keys, calls } = await api(`/api/keys?user=${state.viewAs.fid}`);
+    const { data: keys, calls } = await api("/api/keys");
     state.keysFor = state.viewAs.fid;
     showCalls("#calls-keys", calls);
     const groups = new Map();
@@ -487,7 +489,7 @@ async function loadKeys() {
     }
     const anything = keys.filter((k) => k.source === "onchain").length;
     $("#keys-summary").innerHTML = `
-      <div><strong class="tg-numeral">${keys.length}</strong><span>keys can post as ${esc(who)}</span></div>
+      <div><strong class="tg-numeral">${keys.length}</strong><span>keys can post as you</span></div>
       <div><strong class="tg-numeral">${groups.size}</strong><span>apps hold them</span></div>
       <div><strong class="tg-numeral">${anything}</strong><span>can sign anything</span></div>`;
     const day = (t) => (t ? new Date(t * 1000).toISOString().slice(0, 10) : "?");
@@ -518,36 +520,80 @@ async function loadKeys() {
   }
 }
 
-// -------------------------------------------------------------- view as
+// ------------------------------------------------------- signed in or out
 
-async function setViewAs(who) {
-  const q = String(who).trim().replace(/^@/, "");
-  if (!q) return;
-  try {
-    const { data } = await api(`/api/profile?user=${encodeURIComponent(q)}`);
-    state.viewAs = { fid: data.fid, username: data.username, pfp: data.pfp, following: data.following };
-    $("#viewas-input").value = data.username ?? String(data.fid);
-    try { localStorage.setItem("clearcast.viewAs", $("#viewas-input").value); } catch {}
-    state.feed = null;
-    state.keysFor = null;
-    state.hidden.clear();
-    state.undo = [];
-    state.showCleared = false;
-    state.selected = 0;
-    renderWho();
-    const view = document.querySelector('[role="tab"][aria-selected="true"]')?.dataset.view;
-    if (view === "keys") loadKeys();
-    else loadFeed();
-  } catch (e) {
-    toast(e.message);
-  }
+// Signed out, the page only explains how to sign in, and checks every few
+// seconds whether you have.
+function showSignedOut() {
+  if (!$("#signin").hidden) return;
+  state.me = state.viewAs = state.feed = null;
+  state.keysFor = null;
+  $("#app").hidden = true;
+  $("#signin").hidden = false;
+  $("#me-chip").hidden = true;
+  $("#signout-btn").hidden = true;
+  document.title = "clearcast";
+  clearInterval(showSignedOut.poll);
+  showSignedOut.poll = setInterval(async () => {
+    const me = await api("/api/me").then((r) => r.data, () => null);
+    if (me) {
+      clearInterval(showSignedOut.poll);
+      showSignedIn(me);
+    }
+  }, 3000);
 }
+
+async function showSignedIn(me) {
+  state.me = me;
+  const name = me.username ?? `!${me.fid}`;
+  $("#signin").hidden = true;
+  $("#app").hidden = false;
+  const chip = $("#me-chip");
+  chip.hidden = false;
+  chip.innerHTML = `${pic(me.pfp, "avatar", name)}<span><small>Signed in as</small><b>@${esc(name)}</b></span>`;
+  chip.title = `This computer holds an app key for @${name}, so you can cast, like and follow.`;
+  $("#signout-btn").hidden = false;
+  $("#composer").hidden = false;
+  $("#composer .avatar").outerHTML = pic(me.pfp, "avatar", name);
+  try {
+    const { data } = await api("/api/profile");
+    state.viewAs = { fid: data.fid, username: data.username, pfp: data.pfp, following: data.following };
+  } catch (e) {
+    return toast(e.message);
+  }
+  state.feed = null;
+  state.hidden.clear();
+  state.undo = [];
+  state.showCleared = false;
+  state.selected = 0;
+  renderWho();
+  const view = document.querySelector('[role="tab"][aria-selected="true"]')?.dataset.view;
+  if (view === "keys") loadKeys();
+  else loadFeed();
+}
+
+$("#signout-btn").addEventListener("click", () => {
+  $("#signout-name").textContent = `@${state.me?.username ?? state.me?.fid}`;
+  $("#signout-dialog").showModal();
+});
+$("#signout-dialog").addEventListener("close", async () => {
+  if ($("#signout-dialog").returnValue !== "signout") return;
+  try {
+    await api("/api/signout", {});
+    toast("Signed out. The app key is gone from this computer.");
+  } catch (e) {
+    return toast(e.message);
+  }
+  showSignedOut();
+});
 
 // ----------------------------------------------------------------- events
 
-$("#viewas").addEventListener("submit", (e) => {
+document.addEventListener("submit", (e) => {
+  if (e.target.id !== "follow-form") return;
   e.preventDefault();
-  setViewAs($("#viewas-input").value);
+  const user = e.target.user.value.trim().replace(/^@/, "");
+  if (user) followUser(user).then(() => (e.target.user.value = ""));
 });
 
 document.addEventListener("click", async (e) => {
@@ -601,9 +647,18 @@ document.addEventListener("click", async (e) => {
   }
   const card = e.target.closest("#feed-list .cast");
   if (card && !e.target.closest("a, button")) select([...document.querySelectorAll("#feed-list .cast")].indexOf(card));
-  if (e.target.closest("#me-chip") && state.me) return setViewAs(state.me.username ?? state.me.fid);
-  const va = e.target.closest("[data-view-as]");
-  if (va) return setViewAs(va.dataset.viewAs);
+  const fl = e.target.closest("[data-follow]");
+  if (fl) return followUser(fl.dataset.follow);
+  const cp = e.target.closest("[data-copy]");
+  if (cp) {
+    try {
+      await navigator.clipboard.writeText(cp.dataset.copy);
+      cp.textContent = "Copied";
+    } catch {
+      cp.textContent = "Couldn't copy";
+    }
+    return setTimeout(() => (cp.textContent = "Copy"), 1400);
+  }
   const chip = e.target.closest(".appchip");
   if (chip) {
     const k = chip.dataset.app === "?" ? "?" : Number(chip.dataset.app);
@@ -622,20 +677,6 @@ document.addEventListener("click", async (e) => {
     state.hidden = new Set(appCounts(state.feed.casts).map((a) => a.fid).filter((f) => f !== keep));
     renderFeed();
     return $("#tab-feed").click();
-  }
-  const fb = e.target.closest("#follow-btn");
-  if (fb) {
-    const on = fb.dataset.on === "true";
-    fb.disabled = true;
-    try {
-      const { data } = await api("/api/follow", { fid: state.viewAs.fid, on });
-      toast(data.landed ? `${on ? "Following" : "Unfollowed"} @${state.viewAs.username ?? state.viewAs.fid}` : "Sent, but not visible on your node yet");
-      renderWho();
-    } catch (err) {
-      toast(err.message);
-      fb.disabled = false;
-    }
-    return;
   }
   if (e.target.closest("#hide-farcaster")) {
     state.hidden.add(FARCASTER_APP);
@@ -743,27 +784,8 @@ $("#composer").addEventListener("submit", async (e) => {
   renderLog();
   await refreshStatus();
   setInterval(refreshStatus, 15_000);
-  try {
-    state.me = (await api("/api/me")).data;
-  } catch {}
-  const chip = $("#me-chip");
-  chip.hidden = false;
-  if (state.me) {
-    $("#composer").hidden = false;
-    const name = state.me.username ?? `!${state.me.fid}`;
-    $("#composer-avatar").outerHTML = pic(state.me.pfp, "avatar", name);
-    chip.innerHTML = `${pic(state.me.pfp, "avatar", name)}<span><small>Signed in as</small><b>@${esc(name)}</b></span>`;
-    chip.title = `This computer holds an app key for @${name}, so you can cast, like and follow. Click to see your own feed.`;
-  } else {
-    $("#readonly-note").hidden = false;
-    chip.classList.add("me-chip--readonly");
-    chip.textContent = "Read-only";
-    chip.title = "No app key on this computer. Run clearcast login in a terminal to post, like and follow.";
-  }
-  let saved = null;
-  try { saved = localStorage.getItem("clearcast.viewAs"); } catch {}
-  const start = new URLSearchParams(location.search).get("user") ?? saved ?? state.me?.username ?? state.me?.fid ?? "dwr";
+  const me = await api("/api/me").then((r) => r.data, () => null);
   const tab = location.hash.slice(1);
   if (["keys", "apps", "node"].includes(tab)) document.querySelector(`[data-view="${tab}"]`)?.click();
-  await setViewAs(start);
+  me ? showSignedIn(me) : showSignedOut();
 })();

@@ -9,7 +9,7 @@
 // listed in SCOPES, and which the node expires after TTL seconds unused.
 
 import { randomBytes } from "node:crypto";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { validateMnemonic } from "@scure/bip39";
@@ -310,6 +310,19 @@ export async function loadKey(): Promise<AppKey> {
     throw new NodeError(`no app key at ${KEY_FILE}. Run: clearcast login`);
   }
   return JSON.parse(raw) as AppKey;
+}
+
+// Sign out: delete the app key from this computer. The key stays registered
+// on the network until it expires, but nobody else holds a copy. Signing in
+// again means running clearcast login with the seed phrase.
+export async function forgetKey(): Promise<boolean> {
+  try {
+    await unlink(KEY_FILE);
+    return true;
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw e;
+  }
 }
 
 export const appSigner = (key: AppKey) => new NobleEd25519Signer(hexToBytes(key.privateKey));

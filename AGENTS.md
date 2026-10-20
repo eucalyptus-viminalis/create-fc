@@ -71,7 +71,7 @@ Then tell the person to run `clearcast ui`, which opens the client in their brow
 
 ## Posting: the person does this themselves
 
-Reading needs nothing more. To post, like and follow, the client needs an app key, and creating one needs the account's seed phrase. Tell the person:
+The client shows the person's own feed, so it needs them signed in: an app key, and creating one needs the account's seed phrase. Until then `clearcast ui` shows a sign-in page. Tell the person:
 
 > Run `clearcast login` in your own terminal, not through me. Read the warning it prints. Use a test account, not your main one: `node ~/.fc-client/app/client/scripts/new-test-account.ts` creates one for about $0.20 of ETH on Optimism.
 

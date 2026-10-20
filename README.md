@@ -24,7 +24,7 @@ ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-Then `clearcast ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. Prefer a terminal? `clearcast feed dwr`, `clearcast casts <you>`, and, after reading what it prints, `clearcast login` to post.
+Then `clearcast ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. It shows your own feed, so first run `clearcast login` in a terminal (read what it prints; use a test account). Prefer a terminal? `clearcast feed`, `clearcast casts <name>`, and `clearcast logout` to sign out.
 
 **Just want to try the client?** Point it at our demo node, up until 24 October, then run `clearcast ui`:
 

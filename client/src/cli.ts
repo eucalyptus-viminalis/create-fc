@@ -7,7 +7,7 @@ import { cast, deleteCast, follow, react, resolveCast } from "./write.ts";
 import { setUsername } from "./username.ts";
 import { startUi } from "./ui-server.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
-import { checkPhrase, findCustody, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
+import { KEY_FILE, checkPhrase, findCustody, forgetKey, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
 
 const HELP = `clearcast: a Farcaster client that talks only to your own node (${NODE})
 
@@ -16,6 +16,7 @@ Usage:
   clearcast status                     Is the node in sync?
   clearcast login [--dry-run]          Import a seed phrase once, register an app key
   clearcast whoami                     Show the saved app key and its status
+  clearcast logout                     Sign out: delete the app key from this computer
   clearcast username <name> [--dry-run]  Claim an fname and set it as your username
                                        (asks for the seed phrase, like login)
   clearcast cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
@@ -26,7 +27,7 @@ Usage:
   clearcast recast | unrecast <user/hash>
   clearcast user <name|fid>            Show a profile
   clearcast casts <name|fid> [-n 20]   A user's latest casts
-  clearcast feed <name|fid|me> [-n 30] Latest casts from everyone they follow
+  clearcast feed [-n 30]               Your feed: latest casts from everyone you follow
   clearcast apps <name|fid>            Which apps hold keys for this account
 
 Options:
@@ -119,6 +120,14 @@ async function main() {
       const custody = await findCustody(phrase, (line) => console.error(line));
       return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], log: (l) => console.error(l) });
     }
+    case "logout": {
+      const key = await loadKey().catch(() => undefined);
+      if (!(await forgetKey())) return console.log("Already signed out: no app key on this computer.");
+      console.log(`Signed out${key ? ` of fid ${key.fid}` : ""}: deleted ${KEY_FILE}.`);
+      console.log("The key stays registered on Farcaster until it expires, but nobody else has a copy.");
+      console.log("To sign in again: clearcast login");
+      break;
+    }
     case "whoami": {
       const key = await loadKey();
       const p = await profile(key.fid);
@@ -194,7 +203,8 @@ async function main() {
       break;
     }
     case "feed": {
-      const fid = await need();
+      if (arg && arg !== "me") throw new NodeError(`clearcast feed shows your own feed. For someone else's casts: clearcast casts ${arg}`);
+      const fid = (await loadKey()).fid;
       const filter = { include: await resolveApps(values.app), exclude: await resolveApps(values["not-app"]) };
       const filtering = Boolean(filter.include || filter.exclude);
       const { following, casts: all } = await feed(fid, { limit: Infinity, perUser: filtering ? 20 : 5, replies: values.replies });
@@ -202,7 +212,7 @@ async function main() {
       const casts = kept.slice(0, limit ?? 30);
       if (values.json) return console.log(JSON.stringify(casts, null, 2));
       await show(casts, apps);
-      console.log(`\x1b[2m${casts.length} casts from ${following} accounts fid ${fid} follows${filtering ? `; ${all.length - kept.length} of ${all.length} filtered out by app` : ""}\x1b[0m`);
+      console.log(`\x1b[2m${casts.length} casts from the ${following} accounts you follow${filtering ? `; ${all.length - kept.length} of ${all.length} filtered out by app` : ""}\x1b[0m`);
       break;
     }
     case "apps": {

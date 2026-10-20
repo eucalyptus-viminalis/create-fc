@@ -145,6 +145,29 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
 .who__text { flex: 1; min-width: 0; font-size: 14px; color: var(--text-2); }
 .who__text b { color: var(--ink); font-weight: 600; }
 
+.follow-form { display: flex; align-items: center; gap: 6px; padding: 3px; border-radius: var(--r-pill); background: var(--sheet-2); box-shadow: 0 0 0 1px var(--sheet-line), var(--lit); }
+.follow-form input { width: 130px; border: 0; outline: 0; padding: 6px 10px; border-radius: var(--r-pill); background: transparent; color: var(--ink); font: inherit; font-size: 13px; }
+.follow-form input::placeholder { color: var(--text-3); }
+.follow-form .glass-btn { padding: 5px 12px; background: rgb(255 255 255 / 0.9); }
+
+/* ---------- signed out ---------- */
+.signin { display: grid; place-items: center; min-height: calc(100vh - 140px); }
+.signin__card { max-width: 560px; padding: 34px 34px 28px; }
+.signin__card .tg-body { margin-top: 12px; color: var(--text-2); }
+.signin__cmd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 10px 10px 10px 18px; border-radius: 14px; background: var(--sheet-2); box-shadow: 0 0 0 1px var(--sheet-line), var(--lit); }
+.signin__cmd code { padding: 0; border: 0; background: none; box-shadow: none; font-size: 15px; }
+.signin__note { margin-top: 14px; color: var(--text-2); font-size: 13px; }
+.signin__wait { display: flex; align-items: center; gap: 10px; margin-top: 22px; color: var(--text-3); font-size: 13px; }
+.signin__wait .tg-spinner { width: 14px; height: 14px; }
+
+/* ---------- sign out ---------- */
+.signout { max-width: 440px; padding: 24px 26px 20px; color: var(--ink); background: rgb(255 255 255 / 0.85); }
+.signout::backdrop { background: rgb(23 21 31 / 0.25); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.signout p { margin-top: 10px; color: var(--text-2); font-size: 14px; }
+.signout__row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+#signout-btn { margin-left: 0; }
+.me-chip { cursor: default; }
+
 /* ---------- app filter ---------- */
 .filterbar { padding: 14px 16px; margin-bottom: 12px; }
 .filterbar__head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
@@ -311,8 +334,9 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
 
 @media (max-width: 700px) {
   .tg-header { flex-wrap: wrap; border-radius: 24px; position: relative; top: 0; }
-  .viewas { order: 3; width: 100%; margin-left: 0; }
-  .viewas input { flex: 1; width: auto; }
+  .who { flex-wrap: wrap; }
+  .follow-form { width: 100%; }
+  .follow-form input { flex: 1; }
   .me-chip small { display: none; }
   .tg-tabs { overflow-x: auto; width: 100%; justify-content: flex-start; }
   .inbox { top: 8px; padding: 12px 14px; }

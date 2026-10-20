@@ -12,19 +12,27 @@
 <body>
   <header class="tg-header app-header">
     <a class="tg-wordmark" href="#feed"><span class="tg-mark" aria-hidden="true"></span>clearcast</a>
-    <button type="button" class="me-chip" id="me-chip" hidden></button>
-    <form class="viewas" id="viewas" role="search">
-      <label for="viewas-input" class="viewas__label">Viewing</label>
-      <input id="viewas-input" name="user" autocomplete="off" spellcheck="false" placeholder="username or fid" />
-    </form>
+    <span class="me-chip" id="me-chip" hidden></span>
+    <button type="button" class="glass-btn glass-btn--quiet" id="signout-btn" hidden>Sign out</button>
     <a class="node-pill" id="node-pill" href="#node"><span class="dot"></span><span id="node-pill-text">connecting…</span></a>
   </header>
 
-  <main class="app">
+  <!-- Signed out: the only thing to do is sign in, in a terminal -->
+  <main class="app signin" id="signin" hidden>
+    <section class="card signin__card">
+      <h1 class="tg-display-2">Sign in to see your feed</h1>
+      <p class="tg-body">clearcast shows your own feed, your keys and your apps, so it needs to know who you are. Signing in registers an app key for your account on this computer. It needs your seed phrase once, so it happens in a terminal, not in this page.</p>
+      <div class="signin__cmd"><code>clearcast login</code><button type="button" class="glass-btn" data-copy="clearcast login">Copy</button></div>
+      <p class="signin__note">Use a test account, not your main one. Read what <code>clearcast login</code> prints before you paste anything. This page notices when you're signed in.</p>
+      <p class="signin__wait"><span class="tg-spinner" aria-hidden="true"></span> Waiting for you to sign in…</p>
+    </section>
+  </main>
+
+  <main class="app" id="app" hidden>
     <div class="tg-tabs app-tabs" role="tablist" aria-label="Views" data-tg-tabs>
       <button class="tg-tabs__tab" role="tab" id="tab-feed" aria-controls="view-feed" aria-selected="true" data-view="feed">Feed</button>
-      <button class="tg-tabs__tab" role="tab" id="tab-keys" aria-controls="view-keys" aria-selected="false" data-view="keys">Who can post as them</button>
-      <button class="tg-tabs__tab" role="tab" id="tab-apps" aria-controls="view-apps" aria-selected="false" data-view="apps">Apps in this feed</button>
+      <button class="tg-tabs__tab" role="tab" id="tab-keys" aria-controls="view-keys" aria-selected="false" data-view="keys">Who can post as you</button>
+      <button class="tg-tabs__tab" role="tab" id="tab-apps" aria-controls="view-apps" aria-selected="false" data-view="apps">Apps in your feed</button>
       <button class="tg-tabs__tab" role="tab" id="tab-node" aria-controls="view-node" aria-selected="false" data-view="node">Your node</button>
     </div>
 
@@ -41,7 +49,6 @@
         </div>
       </form>
       <div class="who card" id="who" hidden></div>
-      <p class="readonly-note" id="readonly-note" hidden>Read-only: this computer has no app key. Run <code>clearcast login</code> in a terminal to post, like and follow.</p>
 
       <div class="filterbar card" id="filterbar" hidden>
         <div class="filterbar__head">
@@ -61,8 +68,8 @@
     <!-- Who can post -->
     <section id="view-keys" role="tabpanel" aria-labelledby="tab-keys" tabindex="0" hidden>
       <div class="panel-intro">
-        <h1 class="tg-display-2" id="keys-title">Who can post as them</h1>
-        <p class="tg-body" id="keys-intro">Every app you've signed in to holds a key that can post as you. Here's the full list, straight from your node.</p>
+        <h1 class="tg-display-2">Who can post as you</h1>
+        <p class="tg-body">Every app you've signed in to holds a key that can post as you. Here's the full list, straight from your node.</p>
       </div>
       <div class="keys-summary" id="keys-summary"></div>
       <div id="keys-list" class="list"></div>
@@ -72,8 +79,8 @@
     <!-- Apps in this feed -->
     <section id="view-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0" hidden>
       <div class="panel-intro">
-        <h1 class="tg-display-2">Apps in this feed</h1>
-        <p class="tg-body">Every cast is signed by the app it was posted from. This is which apps the people in this feed actually use. Click one to see only its casts.</p>
+        <h1 class="tg-display-2">Apps in your feed</h1>
+        <p class="tg-body">Every cast is signed by the app it was posted from. This is which apps the people you follow actually use. Click one to see only its casts.</p>
       </div>
       <div class="apps-top" id="apps-top"></div>
       <div id="apps-bars" class="bars"></div>
@@ -92,6 +99,15 @@
       <div class="calltable-card" id="call-log"></div>
     </section>
   </main>
+
+  <dialog class="card signout" id="signout-dialog">
+    <form method="dialog">
+      <h2 class="tg-title">Sign out of <span id="signout-name"></span>?</h2>
+      <p>This deletes the app key from this computer (<code>~/.fc-client/appkey.json</code>). To sign in again you'll run <code>clearcast login</code> with your seed phrase.</p>
+      <p>The key stays registered on Farcaster until it expires, but nobody else has a copy. Your cleared casts are kept for next time.</p>
+      <div class="signout__row"><button class="glass-btn glass-btn--quiet" value="cancel">Cancel</button><button class="tg-btn tg-btn--ink tg-btn--sm" value="signout">Sign out</button></div>
+    </form>
+  </dialog>
 
   <div class="tg-toast" id="toast" role="status" hidden><span id="toast-text"></span><button type="button" id="toast-undo" hidden>Undo</button></div>
   <script src="/tangerine/js/tangerine.js" defer></script>

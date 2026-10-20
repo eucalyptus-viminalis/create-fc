@@ -157,7 +157,7 @@ setup started as a background job.</span>
         </li>
         <li>
           <h3 class="tg-title">Install the client</h3>
-          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser, or try <code>clearcast feed dwr</code> in the terminal.</p>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser. Sign in with <code>clearcast login</code> to see your feed.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
       </ol>
@@ -192,7 +192,7 @@ setup started as a background job.</span>
       <div class="fc-try" id="try">
         <div>
           <h3 class="tg-title">Try it in 60 seconds</h3>
-          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Reading needs nothing else. To post, run <code>clearcast login</code> with a test account.</p>
+          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Then sign in with <code>clearcast login</code>, using a test account: the client shows your own feed.</p>
         </div>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         <div class="fc-term fc-term--copy"><pre><code>clearcast ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
@@ -295,10 +295,10 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
         <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a></nav>
         <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>clearcast</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3 id="gui">The browser client</h3>
-        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. The header shows two different things: <b>Signed in as</b> is the account this computer holds an app key for, and <b>Viewing</b> is whose data you're looking at, which can be anyone.</p>
+        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account: until you sign in with <code>clearcast login</code>, it shows a sign-in page. <b>Sign out</b> in the header deletes the app key from this computer.</p>
         <figure class="fc-shot"><img src="img/clearcast-feed.png" width="1100" height="508" loading="lazy" alt="clearcast's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more." /><figcaption><b>Feed.</b> Every cast carries a “via @app” label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or “Hide the Farcaster app” to see everything else.</figcaption></figure>
-        <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as them.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. Look up your own account here.</figcaption></figure>
-        <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in this feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
+        <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as you.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. See every app that can post as you.</figcaption></figure>
+        <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in your feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-node.png" width="1100" height="640" loading="lazy" alt="Your node view: address, Snapchain 0.14.3, in sync, three shards 0–4 s behind, and a table of every request the page made, with times and a Copy curl button." /><figcaption><b>Your node.</b> Sync status, and every request the page made to your node, each with a Copy curl button so you can run it yourself.</figcaption></figure>
         <h3 id="reading">Reading from the terminal</h3>
         <p>Every view above is a handful of plain GETs to your node, so you can repeat any of them with curl:</p>

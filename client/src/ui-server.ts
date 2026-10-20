@@ -13,9 +13,9 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
-import { castsByFid, following, profile, resolveFid, type Profile } from "./read.ts";
+import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
-import { loadKey } from "./keys.ts";
+import { forgetKey, loadKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
 import type { Hex } from "viem";
@@ -119,10 +119,12 @@ async function buildFeed(fid: number) {
 
 type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<unknown>;
 
-const user = async (q: URLSearchParams) => {
-  const who = q.get("user");
-  if (!who) throw new NodeError("which account? pass ?user=");
-  return resolveFid(who);
+// Everything but status needs you signed in: the feed, keys and apps are always your own.
+class SignedOut extends NodeError {}
+const myFid = async () => {
+  const key = await loadKey().catch(() => undefined);
+  if (!key) throw new SignedOut("signed out: run clearcast login in a terminal");
+  return key.fid;
 };
 
 const routes: Record<string, Handler> = {
@@ -135,21 +137,20 @@ const routes: Record<string, Handler> = {
     if (!key) return null;
     return { ...(await profileOf(key.fid)), scopes: key.scopes, publicKey: key.publicKey };
   },
-  "GET /api/profile": async (q) => {
-    const fid = await user(q);
+  "GET /api/profile": async () => {
+    const fid = await myFid();
     const [p, follows] = await Promise.all([profileOf(fid), following(fid)]);
     return { ...p, following: follows.length };
   },
   "GET /api/feed": async (q) => {
-    const fid = await user(q);
+    const fid = await myFid();
     if (q.get("fresh")) feedCache.delete(fid);
     return feedFor(fid);
   },
-  // What you've cleared from this feed. Stored on this computer only.
-  "GET /api/cleared": async (q) => clearedFor(await user(q)),
+  // What you've cleared from your feed. Stored on this computer only.
+  "GET /api/cleared": async () => clearedFor(await myFid()),
   "POST /api/cleared": async (_q, b) => {
-    const fid = Number(b.fid);
-    if (!Number.isInteger(fid) || fid <= 0) throw new NodeError("which feed? pass fid");
+    const fid = await myFid();
     const iso = (t: unknown) => (typeof t === "string" && !Number.isNaN(Date.parse(t)) ? new Date(t).toISOString() : undefined);
     const add = Array.isArray(b.add)
       ? (b.add as { hash?: unknown; time?: unknown }[]).flatMap((a) => (typeof a.hash === "string" && /^0x[0-9a-f]{40}$/i.test(a.hash) && iso(a.time) ? [{ hash: a.hash, time: iso(a.time)! }] : []))
@@ -158,17 +159,8 @@ const routes: Record<string, Handler> = {
     const before = b.before === null ? null : iso(b.before);
     return changeCleared(fid, { add, remove, before, counted: typeof b.counted === "number" ? b.counted : undefined });
   },
-  // Does the logged-in account follow this one?
-  "GET /api/relationship": async (q) => {
-    const key = await loadKey().catch(() => undefined);
-    const target = await user(q);
-    if (!key || key.fid === target) return { following: null };
-    const following = await get("/v1/linkById", { fid: key.fid, target_fid: target, link_type: "follow" }).then(() => true, () => false);
-    return { following };
-  },
-  "GET /api/casts": async (q) => shape(await castsByFid(await user(q), 30, { replies: true })),
-  "GET /api/keys": async (q) => {
-    const keys = await keysOfUser(await user(q));
+  "GET /api/keys": async () => {
+    const keys = await keysOfUser(await myFid());
     const names = new Map(
       (await Promise.all([...new Set(keys.map((k) => k.appFid).filter((a): a is number => a !== undefined))].map(profileOf))).map((p) => [
         p.fid,
@@ -176,6 +168,12 @@ const routes: Record<string, Handler> = {
       ]),
     );
     return keys.map((k) => ({ ...k, app: k.appFid === undefined ? undefined : { fid: k.appFid, name: names.get(k.appFid)?.username, pfp: names.get(k.appFid)?.pfp } }));
+  },
+  // Sign out: delete the app key from this computer.
+  "POST /api/signout": async () => {
+    const fid = await myFid().catch(() => undefined);
+    if (fid !== undefined) feedCache.delete(fid);
+    return { removed: await forgetKey() };
   },
   "POST /api/cast": async (_q, b) => {
     const text = String(b.text ?? "").trim();
@@ -185,7 +183,13 @@ const routes: Record<string, Handler> = {
   },
   "POST /api/react": async (_q, b) =>
     react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false),
-  "POST /api/follow": async (_q, b) => follow(Number(b.fid), b.on !== false),
+  // Follow by username or fid.
+  "POST /api/follow": async (_q, b) => {
+    await myFid();
+    const fid = await resolveFid(String(b.user ?? "").trim().replace(/^@/, ""));
+    const p = await profileOf(fid);
+    return { ...(await follow(fid, b.on !== false)), user: { fid, username: p.username } };
+  },
 };
 
 // ------------------------------------------------------------------ server
@@ -254,7 +258,7 @@ async function listenOn(port: number): Promise<string> {
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      send(res, e instanceof NodeError ? 400 : 500, { error: message });
+      send(res, e instanceof SignedOut ? 401 : e instanceof NodeError ? 400 : 500, { error: message });
     }
   });
 
