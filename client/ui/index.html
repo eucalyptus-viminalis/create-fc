@@ -20,11 +20,26 @@
   <!-- Signed out: the only thing to do is sign in, in a terminal -->
   <main class="app signin" id="signin" hidden>
     <section class="card signin__card">
-      <h1 class="tg-display-2">Sign in to see your feed</h1>
-      <p class="tg-body">clearcast shows your own feed, your keys and your apps, so it needs to know who you are. Signing in registers an app key for your account on this computer. It needs your seed phrase once, so it happens in a terminal, not in this page.</p>
-      <div class="signin__cmd"><code>clearcast login</code><button type="button" class="glass-btn" data-copy="clearcast login">Copy</button></div>
-      <p class="signin__note">Use a test account, not your main one. Read what <code>clearcast login</code> prints before you paste anything. This page notices when you're signed in.</p>
-      <p class="signin__wait"><span class="tg-spinner" aria-hidden="true"></span> Waiting for you to sign in…</p>
+      <h1 class="tg-display-2">Sign in to clearcast</h1>
+      <p class="tg-body">clearcast shows your own feed and posts as you, so it needs an app key for your account: a key that can post, like and follow, but can't move your account or add other keys.</p>
+
+      <div class="signin__way" id="way-app">
+        <div class="signin__head"><h2 class="tg-title">Approve in the Farcaster app</h2><span class="signin__tag">Recommended</span></div>
+        <p>Scan a code with your phone and approve. Your seed phrase stays on your phone.</p>
+        <div id="app-body"><button type="button" class="tg-btn tg-btn--ink tg-btn--sm" id="app-start">Show the code</button></div>
+      </div>
+
+      <details class="signin__way" id="way-phrase">
+        <summary><h2 class="tg-title">Use your seed phrase</h2><span class="signin__tag signin__tag--quiet">This computer only</span></summary>
+        <p>The phrase goes from this page to clearcast on this computer, signs one key, and is forgotten. It's never saved or sent anywhere else. Use a test account, not your main one: whoever has a seed phrase owns the account.</p>
+        <form id="phrase-form" autocomplete="off">
+          <input type="password" id="phrase-input" name="phrase" autocomplete="off" spellcheck="false" placeholder="12 or 24 words" aria-label="Seed phrase" />
+          <button class="tg-btn tg-btn--ink tg-btn--sm" type="submit">Sign in</button>
+        </form>
+        <ol class="signin__log" id="phrase-log" hidden></ol>
+      </details>
+
+      <p class="signin__note">Or in a terminal: <code>clearcast login</code> <button type="button" class="link-btn" data-copy="clearcast login">Copy</button>. This page notices when you're signed in.</p>
     </section>
   </main>
 

@@ -142,3 +142,24 @@ export async function pool<T, R>(items: T[], limit: number, fn: (item: T) => Pro
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
   return out;
 }
+
+// Submit a message, then poll `landed` until it shows up. A read node passes
+// your message to the validators over gossip and keeps no copy, so if it has
+// no peers at that moment the message is lost without an error. (We saw this
+// once: the demo node lost all its peers for 27 s, and a KEY_ADD sent 3 s in
+// vanished.) Sending the same signed message again is harmless, so resend it
+// every 15 s until it lands.
+export async function submitUntil(bytes: Uint8Array, landed: () => Promise<boolean>, timeoutMs = 60_000): Promise<boolean> {
+  await post("/v1/submitMessage", bytes);
+  const until = Date.now() + timeoutMs;
+  let resendAt = Date.now() + 15_000;
+  while (Date.now() < until) {
+    if (await landed().catch(() => false)) return true;
+    if (Date.now() >= resendAt) {
+      await post("/v1/submitMessage", bytes).catch(() => {}); // e.g. "duplicate" once it's in
+      resendAt = Date.now() + 15_000;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  return false;
+}

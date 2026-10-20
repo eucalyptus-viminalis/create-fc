@@ -140,7 +140,7 @@ setup started as a background job.</span>
           <li>The <code>hcloud</code> CLI, logged in: <code>brew install hcloud</code>, then <code>hcloud context create fc-node</code></li>
           <li>An SSH key in <code>~/.ssh</code> (<code>ssh-keygen -t ed25519</code> if you don't have one)</li>
           <li>Node.js 22.18 or newer, and git</li>
-          <li>To post: a Farcaster account that already has storage. Use a test account; see <a class="tg-text-link" href="#safety">seed phrases</a></li>
+          <li>To post: a Farcaster account that already has storage. Use one made for this, not your main one; see <a class="tg-text-link" href="#safety">seed phrases</a></li>
         </ul>
       </div>
 
@@ -157,7 +157,7 @@ setup started as a background job.</span>
         </li>
         <li>
           <h3 class="tg-title">Install the client</h3>
-          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser. Sign in with <code>clearcast login</code> to see your feed.</p>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser. Sign in on its first page to see your feed.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
       </ol>
@@ -192,7 +192,7 @@ setup started as a background job.</span>
       <div class="fc-try" id="try">
         <div>
           <h3 class="tg-title">Try it in 60 seconds</h3>
-          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Then sign in with <code>clearcast login</code>, using a test account: the client shows your own feed.</p>
+          <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Then sign in on the page it opens, with an account made for trying things: the client shows your own feed.</p>
         </div>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         <div class="fc-term fc-term--copy"><pre><code>clearcast ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
@@ -295,7 +295,7 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
         <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a></nav>
         <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>clearcast</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3 id="gui">The browser client</h3>
-        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account: until you sign in with <code>clearcast login</code>, it shows a sign-in page. <b>Sign out</b> in the header deletes the app key from this computer.</p>
+        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account, so it opens on a sign-in page with two ways in. <b>Approve in the Farcaster app</b>: scan a QR code and approve on your phone, so your seed phrase never leaves it. The request comes from an <b>app account</b>, the account the phone shows as "@name wants to post on your behalf". Whoever runs clearcast sets it up once with <code>clearcast app-account</code>, or at the end of <code>clearcast new-account</code>; name it after the client and yourself, like <code>@yourname-clearcast</code>, so people know what they're approving and who runs it. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number. <b>Use your seed phrase</b>: the same steps as <code>clearcast login</code>, offered only because the server listens on your computer alone. <b>Sign out</b> in the header deletes the app key from this computer.</p>
         <figure class="fc-shot"><img src="img/clearcast-feed.png" width="1100" height="508" loading="lazy" alt="clearcast's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more." /><figcaption><b>Feed.</b> Every cast carries a “via @app” label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or “Hide the Farcaster app” to see everything else.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as you.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. See every app that can post as you.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in your feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
@@ -361,9 +361,10 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
         <h2 class="tg-display-2" id="concepts-title">The pieces you just used.</h2>
       </div>
       <dl class="fc-concepts">
-        <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. Our test account is 3355372.</dd></div>
+        <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. The account we tested with is 3355372.</dd></div>
         <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>clearcast login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
         <div><dt>App keys (signers)</dt><dd>Ed25519 keys that sign everyday messages for one app. The custody key authorizes each one, naming the app that asked (its <code>requestFid</code>). One account can have many: Farcaster's app, Firefly, this client.</dd></div>
+        <div><dt>App account</dt><dd>The account that asks for an app key: its custody key signs the request, and its name is what you approve on your phone and what your casts show "via". There's no shared @clearcast, since every install would need its key, so each one names its own, like <code>@yourname-clearcast</code>.</dd></div>
         <div><dt>Gasless app keys</dt><dd>App keys used to be registered with an Optimism transaction. Now a <code>KEY_ADD</code> message does it: no transaction, no gas, about a second. Each key lists the message types it may sign (its scopes) and expires after 30–90 days unused.</dd></div>
         <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>clearcast</code>.</dd></div>
         <div><dt>Shards</dt><dd>Snapchain splits users across shards 1 and 2 by a hash of the FID. Shard 0 orders the other two and holds things every shard needs, like app keys. Each shard is its own chain, so their heights differ.</dd></div>
@@ -382,9 +383,9 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
         <p class="tg-body fc-split-text">A seed phrase is the master key to an account. Whoever has it can post as you, move your FID to themselves, and take any funds at the custody address. Like <code>rm -rf</code>, it's a normal tool that's unforgiving when used carelessly.</p>
       </div>
       <div class="fc-points">
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">Use a test account</h3><p class="tg-point__text">Not your main one. <code>client/scripts/new-test-account.ts</code> makes a fresh account for about $0.20 of ETH on Optimism, and shows its phrase once.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">Use an account made for this</h3><p class="tg-point__text">Not your main one. <code>clearcast new-account</code> registers a fresh, real account for about $0.20 of ETH on Optimism, and shows its phrase once. Add <code>--recovery</code> with an address you control for one you'll keep, like an app account.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="document"></span><h3 class="tg-point__title">Read before you paste</h3><p class="tg-point__text">Only give a seed phrase to software from developers you trust, after reading what it does with it. For this client that's <code>client/src/keys.ts</code>: in memory, one signature, never written or sent.</p></article>
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet approves the key, and the phrase never leaves the wallet. Paste a phrase only when no such flow exists, as here.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet or the Farcaster app approves the key, and the phrase never leaves it. In clearcast that's <b>Approve in the Farcaster app</b>. Type a phrase only for an account made for it, on your own computer.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="terminal"></span><h3 class="tg-point__title">Not through an AI's shell</h3><p class="tg-point__text">We learned this one live: run through a coding assistant's shell, the account script's output, phrase included, landed in the chat transcript. Run phrase commands in your own terminal.</p></article>
       </div>
     </section>

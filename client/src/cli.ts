@@ -6,6 +6,10 @@ import { castsByFid, feed, profile, resolveFid, usernames } from "./read.ts";
 import { cast, deleteCast, follow, react, resolveCast } from "./write.ts";
 import { setUsername } from "./username.ts";
 import { startUi } from "./ui-server.ts";
+import { setUpAppAccount } from "./app-account.ts";
+import { setProfile } from "./profile.ts";
+import { createInterface } from "node:readline/promises";
+import { newAccount } from "./new-account.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
 import { KEY_FILE, checkPhrase, findCustody, forgetKey, loadKey, normalizePhrase, promptPhrase, registerAppKey } from "./keys.ts";
 
@@ -14,9 +18,16 @@ const HELP = `clearcast: a Farcaster client that talks only to your own node (${
 Usage:
   clearcast ui [--port 4747]           Open the client in your browser
   clearcast status                     Is the node in sync?
+  clearcast new-account [--recovery 0x..] [--dry-run]
+                                       Register a new Farcaster account (~$0.20 of ETH
+                                       on Optimism), for you or as the app account
   clearcast login [--dry-run]          Import a seed phrase once, register an app key
   clearcast whoami                     Show the saved app key and its status
   clearcast logout                     Sign out: delete the app key from this computer
+  clearcast app-account [--sponsor]    Set up the account that lets people sign in to
+                                       clearcast ui by approving in the Farcaster app
+  clearcast profile [--display "Name"] [--pfp https://…] [--bio "…"]
+                                       Show or change your display name, picture and bio
   clearcast username <name> [--dry-run]  Claim an fname and set it as your username
                                        (asks for the seed phrase, like login)
   clearcast cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
@@ -37,6 +48,7 @@ Options:
   --not-app <name|fid>  (casts, feed) Hide casts posted through this app. Repeatable.
   --json             Print raw messages as JSON
   --dry-run          (login) Build and check the KEY_ADD, but don't send it
+  --sponsor          (app-account) Pay the onchain fee for people who sign in
 
 Set FC_NODE to your node's HTTP address, e.g. FC_NODE=http://203.0.113.7:3381
 `;
@@ -82,6 +94,11 @@ async function main() {
       "not-app": { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
       port: { type: "string" },
+      sponsor: { type: "boolean" },
+      recovery: { type: "string" },
+      display: { type: "string" },
+      pfp: { type: "string" },
+      bio: { type: "string" },
     },
   });
   const [cmd, arg] = positionals;
@@ -119,6 +136,30 @@ async function main() {
       checkPhrase(phrase);
       const custody = await findCustody(phrase, (line) => console.error(line));
       return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], log: (l) => console.error(l) });
+    }
+    case "new-account":
+      return newAccount({ dryRun: values["dry-run"], recovery: values.recovery });
+    case "app-account": {
+      console.error(APP_ACCOUNT_WARNING);
+      const phrase = normalizePhrase(await promptPhrase("app account's seed phrase (hidden): "));
+      checkPhrase(phrase);
+      const custody = await findCustody(phrase, (line) => console.error(line));
+      const rl = process.stdin.isTTY ? createInterface({ input: process.stdin, output: process.stderr }) : undefined;
+      try {
+        await setUpAppAccount(custody, { sponsor: Boolean(values.sponsor), ask: rl && ((q) => rl.question(q)), log: (l) => console.error(l) });
+      } finally {
+        rl?.close();
+      }
+      console.log(`\nclearcast ui now offers "Approve in the Farcaster app".${values.sponsor ? " Sign-ins are sponsored: the app account needs warps in the Farcaster app." : ""}`);
+      break;
+    }
+    case "profile": {
+      const key = await loadKey();
+      const fields = { display: values.display, pfp: values.pfp, bio: values.bio };
+      if (Object.values(fields).some((v) => v !== undefined)) await setProfile(key, fields, (l) => console.error(l));
+      const p = await profile(key.fid);
+      console.log(`@${p.username ?? "?"} (fid ${key.fid})\ndisplay  ${p.display ?? "-"}\npicture  ${p.pfp ?? "-"}\nbio      ${p.bio ?? "-"}`);
+      break;
     }
     case "logout": {
       const key = await loadKey().catch(() => undefined);
@@ -247,7 +288,8 @@ account. Whoever has it can post as you, transfer your FID to themselves,
 and take any funds held at the custody address. It's the rm -rf of this
 tutorial: powerful, legitimate, and unforgiving.
 
-  - Use a test account, not your main one.
+  - Use an account made for this, not your main one: clearcast new-account
+    makes a fresh one.
   - Only paste a seed phrase into software whose source you've read, or from
     developers you trust. That includes this one: see client/src/keys.ts.
   - Prefer signing in through an app that asks your wallet to approve a key
@@ -257,6 +299,22 @@ This client uses the phrase only in memory, to sign what this command needs
 (a KEY_ADD, and for clearcast username, the name claim). It never stores, prints or
 sends the phrase. Afterwards it posts with its own app key, which can't
 transfer the account or add other keys.
+`;
+
+const APP_ACCOUNT_WARNING = `
+\x1b[1mThis saves an account's custody key on this computer. Read this first.\x1b[0m
+
+To let people sign in by approving in the Farcaster app, clearcast needs an
+"app account": a Farcaster account that vouches for every key it asks people
+to approve. Its custody key signs each request, so it's saved here
+(mode 600). Anyone who copies that file controls the app account.
+
+  - Use an account made for this, never your personal one.
+    clearcast new-account makes one.
+  - People who sign in see this account's name as the app asking for access,
+    and their casts show "via" it. Name it after the client and who runs it,
+    e.g. @yourname-clearcast with display name "clearcast (run by Your Name)".
+    One shared @clearcast can't work: every clearcast would need its key.
 `;
 
 async function login(dryRun: boolean) {

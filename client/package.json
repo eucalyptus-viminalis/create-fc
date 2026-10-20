@@ -14,16 +14,17 @@
     "clearcast": "node src/cli.ts",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\"",
-    "new-test-account": "node scripts/new-test-account.ts",
     "coverage": "node scripts/api-coverage.ts"
   },
   "devDependencies": {
     "@types/node": "26.6.5",
+    "@types/qrcode": "1.5.5",
     "typescript": "7.0.2"
   },
   "dependencies": {
     "@farcaster/core": "0.20.0",
     "@scure/bip39": "1.6.0",
+    "qrcode": "1.5.4",
     "viem": "2.57.1"
   }
 }

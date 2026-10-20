@@ -533,6 +533,8 @@ function showSignedOut() {
   $("#me-chip").hidden = true;
   $("#signout-btn").hidden = true;
   document.title = "clearcast";
+  $("#app-body").innerHTML = `<button type="button" class="tg-btn tg-btn--ink tg-btn--sm" id="app-start">Show the code</button>`;
+  loadSignInOptions();
   clearInterval(showSignedOut.poll);
   showSignedOut.poll = setInterval(async () => {
     const me = await api("/api/me").then((r) => r.data, () => null);
@@ -571,6 +573,96 @@ async function showSignedIn(me) {
   if (view === "keys") loadKeys();
   else loadFeed();
 }
+
+// ---------------------------------------------------------------- sign in
+
+async function loadSignInOptions() {
+  const { data } = await api("/api/signin/options").catch(() => ({ data: { app: null, phrase: false } }));
+  $("#way-phrase").hidden = !data.phrase;
+  if (!data.app)
+    $("#app-body").innerHTML = `<p class="signin__off">Not set up here yet. Whoever runs this clearcast sets it up once, in a terminal: <code>clearcast app-account</code></p>`;
+  else signInApp.app = data.app;
+}
+
+// 1. Approve in the Farcaster app: show a QR code, then poll until the key is
+// on chain and your node has it.
+async function signInApp() {
+  const body = $("#app-body");
+  body.innerHTML = loading("Asking Farcaster for a sign-in code…");
+  let req;
+  try {
+    req = (await api("/api/signin/app", {})).data;
+  } catch (e) {
+    body.innerHTML = `<p class="signin__err">${esc(e.message)}</p><button type="button" class="glass-btn" id="app-start">Try again</button>`;
+    return;
+  }
+  const app = signInApp.app;
+  body.innerHTML = `<div class="signin__qr">${req.qr}</div>
+    <div class="signin__steps">
+      <p>Scan with your phone's camera and approve in the Farcaster app. On a phone? <a href="${esc(req.url)}">Open the Farcaster app</a>.</p>
+      <p class="signin__fine">It will say <b>@${esc(app?.username ?? app?.fid)}</b>${app?.display ? ` (${esc(app.display)})` : ""} is asking to post on your behalf: that's the account whoever runs this clearcast set up to ask. Approving adds the key on chain${req.sponsored ? ", and the fee is covered" : "; the app may ask you to cover a small fee"}.</p>
+      <p class="signin__status" id="app-status"><span class="tg-spinner" aria-hidden="true"></span> Waiting for you to approve…</p>
+    </div>`;
+  const labels = { pending: "Waiting for you to approve…", approved: "Approved. Adding the key on chain…", completed: "On chain. Waiting for your node to see it…", syncing: "On chain. Waiting for your node to see it…" };
+  clearInterval(signInApp.poll);
+  signInApp.poll = setInterval(async () => {
+    if ($("#signin").hidden) return clearInterval(signInApp.poll);
+    try {
+      const { data } = await api(`/api/signin/app?token=${encodeURIComponent(req.token)}`);
+      if (data.state === "signed-in") {
+        clearInterval(signInApp.poll);
+        const me = (await api("/api/me")).data;
+        if (me) showSignedIn(me);
+        return;
+      }
+      $("#app-status").innerHTML = `<span class="tg-spinner" aria-hidden="true"></span> ${labels[data.state] ?? esc(data.state)}`;
+    } catch (e) {
+      clearInterval(signInApp.poll);
+      $("#app-status").innerHTML = `${esc(e.message)} <button type="button" class="link-btn" id="app-start">Start again</button>`;
+    }
+  }, 2000);
+}
+
+// 2. Seed phrase, this computer only: the same steps as clearcast login.
+$("#phrase-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = $("#phrase-input");
+  const phrase = input.value;
+  input.value = ""; // don't leave it sitting in the page
+  if (!phrase.trim()) return;
+  const log = $("#phrase-log");
+  const btn = e.target.querySelector("button");
+  btn.disabled = true;
+  log.hidden = false;
+  log.innerHTML = "";
+  const show = (lines, cls = "") => (log.innerHTML = lines.map((l) => `<li class="${cls}">${esc(l)}</li>`).join(""));
+  try {
+    const { data } = await api("/api/signin/phrase", { phrase });
+    const poll = setInterval(async () => {
+      try {
+        const { data: job } = await api(`/api/signin/phrase?job=${data.job}`);
+        show(job.lines);
+        if (!job.done) return;
+        clearInterval(poll);
+        btn.disabled = false;
+        if (job.error) return log.insertAdjacentHTML("beforeend", `<li class="signin__err">${esc(job.error)}</li>`);
+        const me = (await api("/api/me")).data;
+        if (me) showSignedIn(me);
+      } catch (err) {
+        clearInterval(poll);
+        btn.disabled = false;
+        log.insertAdjacentHTML("beforeend", `<li class="signin__err">${esc(err.message)}</li>`);
+      }
+    }, 1000);
+  } catch (err) {
+    btn.disabled = false;
+    show([err.message], "signin__err");
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#app-start")) signInApp();
+});
 
 $("#signout-btn").addEventListener("click", () => {
   $("#signout-name").textContent = `@${state.me?.username ?? state.me?.fid}`;

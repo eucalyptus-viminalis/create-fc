@@ -17,8 +17,9 @@
 import { FarcasterNetwork, Message as MessageProto, UserDataType, ViemLocalEip712Signer, makeUserDataAdd, makeUserNameProofClaim } from "@farcaster/core";
 import { bytesToHex } from "viem";
 import { appSigner, loadKey, registerAppKey, type Custody } from "./keys.ts";
-import { NodeError, get, post } from "./node.ts";
+import { NodeError, get, post, submitUntil } from "./node.ts";
 import { profile } from "./read.ts";
+import { loadAppAccount, saveAppAccount } from "./signin.ts";
 
 const FNAMES = "https://fnames.farcaster.xyz";
 const FNAME = /^[a-z0-9][a-z0-9-]{0,15}$/;
@@ -84,11 +85,16 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
   // 2. an app key allowed to sign USER_DATA_ADD. Keys from older versions of
   // this client lack that scope, and scopes are fixed at KEY_ADD time, so we
   // add a new key. The old one expires on its own once it stops being used.
-  let key = await loadKey().catch(() => undefined);
-  if (!key || key.fid !== custody.fid || !key.scopes.includes("USER_DATA_ADD")) {
+  // For this clearcast's app account, use its own key so this computer's
+  // sign-in key isn't replaced.
+  const app = await loadAppAccount();
+  const forApp = app?.fid === custody.fid;
+  let key = forApp ? app.appKey : await loadKey().catch(() => undefined);
+  if (!key || key.fid !== custody.fid || !(key.scopes.includes("USER_DATA_ADD") || key.scopes.includes("ALL"))) {
     log(key ? "your app key can't edit profiles; registering a new one with that scope" : "registering an app key");
-    const fresh = await registerAppKey(custody, { dryRun: o.dryRun, log });
+    const fresh = await registerAppKey(custody, { dryRun: o.dryRun, save: !forApp, log });
     if (!fresh) return log("dry run: stopping before USER_DATA_ADD, since there's no key that could sign it.");
+    if (forApp) await saveAppAccount(custody, app.sponsor, fresh);
     key = fresh;
   }
 
@@ -115,10 +121,6 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     const { valid } = await post<{ valid: boolean }>("/v1/validateMessage", bytes);
     return log(`dry run: USER_DATA_ADD username=${name} ${valid ? "passes" : "FAILS"} your node's stateless checks. Nothing was sent.`);
   }
-  await post("/v1/submitMessage", bytes);
-  for (let i = 0; i < 30; i++) {
-    if ((await profile(custody.fid)).username === name) return log(`done: fid ${custody.fid} is now @${name}`);
-    await new Promise((r) => setTimeout(r, 2000));
-  }
+  if (await submitUntil(bytes, async () => (await profile(custody.fid)).username === name)) return log(`done: fid ${custody.fid} is now @${name}`);
   throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run clearcast username ${name} again.`);
 }

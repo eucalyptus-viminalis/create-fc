@@ -152,13 +152,36 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
 
 /* ---------- signed out ---------- */
 .signin { display: grid; place-items: center; min-height: calc(100vh - 140px); }
-.signin__card { max-width: 560px; padding: 34px 34px 28px; }
-.signin__card .tg-body { margin-top: 12px; color: var(--text-2); }
-.signin__cmd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 10px 10px 10px 18px; border-radius: 14px; background: var(--sheet-2); box-shadow: 0 0 0 1px var(--sheet-line), var(--lit); }
-.signin__cmd code { padding: 0; border: 0; background: none; box-shadow: none; font-size: 15px; }
-.signin__note { margin-top: 14px; color: var(--text-2); font-size: 13px; }
-.signin__wait { display: flex; align-items: center; gap: 10px; margin-top: 22px; color: var(--text-3); font-size: 13px; }
-.signin__wait .tg-spinner { width: 14px; height: 14px; }
+.signin__card { max-width: 600px; padding: 32px 32px 24px; }
+.signin__card > .tg-body { margin-top: 12px; color: var(--text-2); }
+.signin__way { margin-top: 18px; padding: 18px 20px; border-radius: 16px; background: var(--sheet-2); box-shadow: 0 0 0 1px var(--sheet-line), var(--lit); }
+.signin__way > p, .signin__way summary + p { margin: 6px 0 14px; color: var(--text-2); font-size: 14px; }
+.signin__head, .signin__way summary { display: flex; align-items: center; gap: 10px; }
+.signin__way summary { cursor: pointer; list-style: none; }
+.signin__way summary::-webkit-details-marker { display: none; }
+.signin__way summary::after { content: "›"; margin-left: auto; color: var(--text-3); transition: transform 150ms; }
+.signin__way[open] summary::after { transform: rotate(90deg); }
+.signin__way .tg-title { font-size: 17px; }
+.signin__tag { padding: 2px 9px; border-radius: var(--r-pill); background: rgb(121 89 255 / 0.12); color: var(--accent-ink); font-size: 11px; font-weight: 600; }
+.signin__tag--quiet { background: var(--sheet); color: var(--text-2); box-shadow: 0 0 0 1px var(--sheet-line); }
+.signin__qr { width: 176px; height: 176px; padding: 12px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--sheet-line); flex-shrink: 0; }
+.signin__qr svg { display: block; width: 100%; height: 100%; }
+#app-body:has(.signin__qr) { display: flex; gap: 18px; align-items: flex-start; }
+.signin__steps p { font-size: 14px; color: var(--text-2); }
+.signin__steps p + p { margin-top: 10px; }
+.signin__fine { font-size: 13px !important; }
+.signin__status { display: flex; align-items: center; gap: 8px; color: var(--ink) !important; }
+.signin__status .tg-spinner, #app-body .tg-spinner { width: 14px; height: 14px; }
+#app-body .empty { padding: 8px 0; text-align: left; display: flex; gap: 10px; align-items: center; }
+#app-body .empty .tg-spinner { margin: 0; }
+.signin__off { font-size: 13px; color: var(--text-2); }
+.signin__err { color: #b42318; font-size: 13px; }
+#phrase-form { display: flex; gap: 8px; }
+#phrase-input { flex: 1; min-width: 0; border: 0; outline: 0; padding: 9px 14px; border-radius: var(--r-pill); background: rgb(255 255 255 / 0.9); box-shadow: inset 0 1px 2px rgb(23 21 31 / 0.08), 0 0 0 1px var(--sheet-line); font: inherit; font-size: 14px; color: var(--ink); }
+#phrase-input:focus-visible { outline: 2px solid var(--accent); }
+.signin__log { margin: 12px 0 0; padding-left: 18px; font-family: var(--mono); font-size: 12px; color: var(--text-2); line-height: 1.7; overflow-wrap: anywhere; }
+.signin__note { margin-top: 18px; color: var(--text-3); font-size: 13px; }
+@media (max-width: 700px) { #app-body:has(.signin__qr) { flex-direction: column; } #phrase-form { flex-direction: column; } }
 
 /* ---------- sign out ---------- */
 .signout { max-width: 440px; padding: 24px 26px 20px; color: var(--ink); background: rgb(255 255 255 / 0.85); }

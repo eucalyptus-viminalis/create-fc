@@ -73,9 +73,11 @@ Then tell the person to run `clearcast ui`, which opens the client in their brow
 
 The client shows the person's own feed, so it needs them signed in: an app key, and creating one needs the account's seed phrase. Until then `clearcast ui` shows a sign-in page. Tell the person:
 
-> Run `clearcast login` in your own terminal, not through me. Read the warning it prints. Use a test account, not your main one: `node ~/.fc-client/app/client/scripts/new-test-account.ts` creates one for about $0.20 of ETH on Optimism.
+> Sign in on the page `clearcast ui` opened: approve in the Farcaster app, or use your seed phrase there (it stays on your computer). Or run `clearcast login` in your own terminal, not through me. Read the warning it prints. Use an account made for this, not your main one: `clearcast new-account` registers a new one for about $0.20 of ETH on Optimism.
 
-Don't run `clearcast login`, `clearcast username` or `new-test-account.ts` yourself. Their output or input includes a seed phrase.
+For the Farcaster-app option, the person first runs `clearcast app-account` in their own terminal with an account made for it, named after the client and themselves (e.g. `@name-clearcast`), since people approving see that name.
+
+Don't run `clearcast login`, `clearcast app-account`, `clearcast username` or `clearcast new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
 
 ## When they're done
 

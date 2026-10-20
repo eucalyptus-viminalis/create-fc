@@ -18,6 +18,7 @@ import { appsFor, keysOfUser } from "./filter.ts";
 import { forgetKey, loadKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
+import { NoAppAccount, appSignInStatus, loadAppAccount, phraseSignInStatus, startAppSignIn, startPhraseSignIn } from "./signin.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -119,6 +120,12 @@ async function buildFeed(fid: number) {
 
 type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<unknown>;
 
+// This server only ever listens on 127.0.0.1, so the person at the keyboard
+// is the only one who can reach it, and typing a seed phrase into its page is
+// as safe as typing it into a terminal. A shared (hosted) mode must set this
+// to false.
+const LOCAL_ONLY = true;
+
 // Everything but status needs you signed in: the feed, keys and apps are always your own.
 class SignedOut extends NodeError {}
 const myFid = async () => {
@@ -169,6 +176,19 @@ const routes: Record<string, Handler> = {
     );
     return keys.map((k) => ({ ...k, app: k.appFid === undefined ? undefined : { fid: k.appFid, name: names.get(k.appFid)?.username, pfp: names.get(k.appFid)?.pfp } }));
   },
+  // Signing in (see signin.ts). Which ways are available here?
+  "GET /api/signin/options": async () => {
+    const app = await loadAppAccount();
+    const p = app ? await profileOf(app.fid) : undefined;
+    return { app: app ? { fid: app.fid, username: p?.username, display: p?.display, pfp: p?.pfp, sponsor: app.sponsor } : null, phrase: LOCAL_ONLY };
+  },
+  "POST /api/signin/app": async () => startAppSignIn(),
+  "GET /api/signin/app": async (q) => appSignInStatus(q.get("token") ?? ""),
+  "POST /api/signin/phrase": async (_q, b) => {
+    if (!LOCAL_ONLY) throw new NodeError("this clearcast is shared over the network, so it never accepts a seed phrase");
+    return { job: startPhraseSignIn(String(b.phrase ?? "")) };
+  },
+  "GET /api/signin/phrase": async (q) => phraseSignInStatus(q.get("job") ?? ""),
   // Sign out: delete the app key from this computer.
   "POST /api/signout": async () => {
     const fid = await myFid().catch(() => undefined);
@@ -258,7 +278,7 @@ async function listenOn(port: number): Promise<string> {
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      send(res, e instanceof SignedOut ? 401 : e instanceof NodeError ? 400 : 500, { error: message });
+      send(res, e instanceof SignedOut ? 401 : e instanceof NoAppAccount ? 409 : e instanceof NodeError ? 400 : 500, { error: message });
     }
   });
 

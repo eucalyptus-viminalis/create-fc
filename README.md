@@ -24,7 +24,7 @@ ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-Then `clearcast ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. It shows your own feed, so first run `clearcast login` in a terminal (read what it prints; use a test account). Prefer a terminal? `clearcast feed`, `clearcast casts <name>`, and `clearcast logout` to sign out.
+Then `clearcast ui` opens the client in your browser. It shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. It shows your own feed, so it starts with a sign-in page: approve in the Farcaster app by scanning a QR code (after `clearcast app-account` sets up the account that asks), or type a seed phrase (use an account made for this), which only works on this computer. `clearcast login` does the same in a terminal. Prefer a terminal? `clearcast feed`, `clearcast casts <name>`, and `clearcast logout` to sign out.
 
 **Just want to try the client?** Point it at our demo node, up until 24 October, then run `clearcast ui`:
 
@@ -50,13 +50,22 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 
 > **There is no npm package.** `npm create fc` / `npx create-fc` run an unrelated package that someone else published in 2022. Use the commands above.
 
+## Signing in
+
+`clearcast ui` opens on a sign-in page with two ways in:
+
+- **Approve in the Farcaster app** (recommended). Scan a QR code and approve on your phone; your seed phrase never leaves it. The request comes from an **app account**: the account people see as "@name wants to post on your behalf", and whose name their casts show "via". Whoever runs clearcast sets it up once with `clearcast app-account` (or picks "app account" at the end of `clearcast new-account`), which saves that account's custody key on the computer, so use an account made for this. Name it after the client and who runs it, e.g. `@yourname-clearcast` with display name "clearcast (run by Your Name)". Setup then offers to give it a display name, picture and bio (by default the clearcast mark and "it's so clear to me now"), so the approval screen looks like an app and not a bare number. There's no shared `@clearcast` account: every install would need its key. The approval adds the key on chain; add `--sponsor` to pay that fee for the people signing in (the app account needs warps in the Farcaster app).
+- **Use your seed phrase.** The same steps as `clearcast login`. It's offered only because the server listens on your computer alone; a clearcast other people reach over the network must never take a phrase.
+
+`clearcast profile --display … --pfp … --bio …` changes your own profile. `clearcast logout`, or **Sign out** in the page, deletes the app key from this computer.
+
 ## Seed phrases
 
-`clearcast login` asks for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
+`clearcast login` and the page's seed phrase option ask for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:
 
-- Use a **test account**. `node client/scripts/new-test-account.ts` makes one for about $0.20 of ETH on Optimism.
+- Use an **account made for this**, not your main one. `clearcast new-account` registers a new one for about $0.20 of ETH on Optimism. It's a real account; "made for this" just means nothing else depends on it. Pass `--recovery <address>` for one you'll keep, like an app account.
 - Only paste a seed phrase into software from developers you trust, after reading the code ([client/src/keys.ts](client/src/keys.ts)).
-- Prefer apps that ask your wallet to approve a key (delegated signer authorization), so the phrase never leaves the wallet.
+- Prefer approving a key in your wallet or the Farcaster app (delegated signer authorization), so the phrase never leaves it. In clearcast that's **Approve in the Farcaster app**.
 - Run it in your own terminal, never through an AI assistant's shell. Whatever the command prints ends up in the assistant's transcript.
 
 ## What's in here

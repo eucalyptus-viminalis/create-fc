@@ -26,7 +26,7 @@ import {
   makeKeyAdd,
   makeKeyAddBody,
 } from "@farcaster/core";
-import { NODE, get, post, NodeError } from "./node.ts";
+import { NODE, get, post, submitUntil, NodeError } from "./node.ts";
 
 export const KEY_DIR = process.env.FC_HOME ?? join(homedir(), ".fc-client");
 export const KEY_FILE = join(KEY_DIR, "appkey.json");
@@ -236,30 +236,12 @@ export async function validate(bytes: Uint8Array) {
   return post<{ valid: boolean }>("/v1/validateMessage", bytes);
 }
 
-export async function submit(bytes: Uint8Array) {
-  return post<unknown>("/v1/submitMessage", bytes);
-}
-
-// A read node relays your message to the validators and forgets it. Success
-// from submitMessage means "valid and relayed", not "in a block". Poll until
-// the key shows up in the node's own state.
-export async function waitForKey(fid: number, publicKey: Hex, timeoutMs = 90_000): Promise<boolean> {
-  const until = Date.now() + timeoutMs;
-  while (Date.now() < until) {
-    try {
-      await get("/v1/signer", { fid, signer: publicKey });
-      return true;
-    } catch (e) {
-      if (!(e instanceof NodeError)) throw e;
-    }
-    await new Promise((r) => setTimeout(r, 3000));
-  }
-  return false;
-}
 
 // Check storage, build the KEY_ADD, send it to your node, wait for it to land,
 // then save the app key. With dryRun, stop after the node's stateless checks.
-export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean; log: (s: string) => void }) {
+// With save: false the key is returned but not saved as this computer's key
+// (an app account keeps its own, in app-account.json).
+export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean; save?: boolean; log: (s: string) => void }) {
   const { log } = opts;
   const units = await storageUnits(custody.fid);
   if (units === 0) throw new NodeError(`fid ${custody.fid} has no storage units, so the network would reject every message from it. Rent storage first.`);
@@ -283,10 +265,14 @@ export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean;
     return undefined;
   }
 
-  await submit(bytes);
-  log("submitted to your node, which relays it to the validators. Waiting for it to land...");
-  if (!(await waitForKey(key.fid, key.publicKey))) {
-    throw new NodeError("the key didn't appear within 90 s. A read node keeps no mempool, so if gossip dropped it, it's gone. Run clearcast login again.");
+  log("sending to your node, which relays it to the validators. Waiting for it to land...");
+  const seen = () => get("/v1/signer", { fid: key.fid, signer: key.publicKey }).then(() => true, () => false);
+  if (!(await submitUntil(bytes, seen, 90_000))) {
+    throw new NodeError("the key didn't appear within 90 s, even after resending. Check clearcast status (is your node in sync and connected?), then try again.");
+  }
+  if (opts.save === false) {
+    log("done. App key registered.");
+    return key;
   }
   await saveKey(key);
   log(`done. App key saved to ${KEY_FILE} (mode 600). Your seed phrase was not saved.`);

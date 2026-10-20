@@ -19,7 +19,7 @@ import {
 } from "@farcaster/core";
 import { bytesToHex, hexToBytes, type Hex } from "viem";
 import { appSigner, loadKey, type AppKey } from "./keys.ts";
-import { NodeError, get, post, type Message, type Page } from "./node.ts";
+import { NodeError, get, post, submitUntil, type Message, type Page } from "./node.ts";
 import { resolveFid } from "./read.ts";
 
 const MAX_CAST_BYTES = 320; // 1,024 for Pro accounts
@@ -68,29 +68,21 @@ async function extractMentions(text: string) {
   return { text: out, mentions, mentionsPositions };
 }
 
-async function send(key: AppKey, built: HubAsyncResult<ProtoMessage>, dryRun = false): Promise<Hex> {
+// Build and sign a message. With dryRun, only run the node's stateless checks.
+async function build(built: HubAsyncResult<ProtoMessage>, dryRun = false) {
   const r = await built;
   if (r.isErr()) throw new NodeError(`couldn't build the message: ${r.error.message}`);
   const bytes = MessageProto.encode(r.value).finish();
   if (dryRun) {
     const { valid } = await post<{ valid: boolean }>("/v1/validateMessage", bytes);
     if (!valid) throw new NodeError("your node's stateless checks reject this message");
-  } else {
-    await post("/v1/submitMessage", bytes);
   }
-  return bytesToHex(r.value.hash);
+  return { hash: bytesToHex(r.value.hash), bytes };
 }
 
-// Poll a read until it succeeds (or, for removals, until it stops succeeding).
-async function confirm(read: () => Promise<unknown>, wantPresent = true, timeoutMs = 60_000): Promise<boolean> {
-  const until = Date.now() + timeoutMs;
-  while (Date.now() < until) {
-    const present = await read().then(() => true, () => false);
-    if (present === wantPresent) return true;
-    await new Promise((r) => setTimeout(r, 2000));
-  }
-  return false;
-}
+// Send it and poll a read until it succeeds (or, for removals, until it stops succeeding).
+const sendAndConfirm = (bytes: Uint8Array, read: () => Promise<unknown>, wantPresent = true) =>
+  submitUntil(bytes, () => read().then(() => wantPresent, () => !wantPresent));
 
 const opts = (key: AppKey) => ({ fid: key.fid, network: FarcasterNetwork.MAINNET });
 
@@ -99,8 +91,7 @@ export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string
   const body = await extractMentions(text);
   const bytes = new TextEncoder().encode(body.text).length;
   if (bytes > MAX_CAST_BYTES) throw new NodeError(`that's ${bytes} bytes; casts max out at ${MAX_CAST_BYTES}`);
-  const hash = await send(
-    key,
+  const { hash, bytes: msg } = await build(
     makeCastAdd(
       {
         ...body,
@@ -115,22 +106,22 @@ export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string
     o.dryRun,
   );
   if (o.dryRun) return { hash, landed: false, text: body.text, mentions: body.mentions };
-  const landed = await confirm(() => get<Message>("/v1/castById", { fid: key.fid, hash }));
+  const landed = await sendAndConfirm(msg, () => get<Message>("/v1/castById", { fid: key.fid, hash }));
   return { hash, landed, text: body.text, mentions: body.mentions };
 }
 
 export async function deleteCast(hash: Hex) {
   const key = await loadKey();
-  await send(key, makeCastRemove({ targetHash: hexToBytes(hash) }, opts(key), appSigner(key)));
-  const landed = await confirm(() => get<Message>("/v1/castById", { fid: key.fid, hash }), false);
+  const { bytes } = await build(makeCastRemove({ targetHash: hexToBytes(hash) }, opts(key), appSigner(key)));
+  const landed = await sendAndConfirm(bytes, () => get<Message>("/v1/castById", { fid: key.fid, hash }), false);
   return { landed };
 }
 
 export async function follow(targetFid: number, on = true) {
   const key = await loadKey();
   const body = { type: "follow", targetFid };
-  await send(key, on ? makeLinkAdd(body, opts(key), appSigner(key)) : makeLinkRemove(body, opts(key), appSigner(key)));
-  const landed = await confirm(() => get<Message>("/v1/linkById", { fid: key.fid, target_fid: targetFid, link_type: "follow" }), on);
+  const { bytes } = await build(on ? makeLinkAdd(body, opts(key), appSigner(key)) : makeLinkRemove(body, opts(key), appSigner(key)));
+  const landed = await sendAndConfirm(bytes, () => get<Message>("/v1/linkById", { fid: key.fid, target_fid: targetFid, link_type: "follow" }), on);
   return { landed };
 }
 
@@ -138,8 +129,9 @@ export async function react(kind: "like" | "recast", target: CastRef, on = true)
   const key = await loadKey();
   const type = kind === "like" ? ReactionType.LIKE : ReactionType.RECAST;
   const body = { type, targetCastId: { fid: target.fid, hash: hexToBytes(target.hash) } };
-  await send(key, on ? makeReactionAdd(body, opts(key), appSigner(key)) : makeReactionRemove(body, opts(key), appSigner(key)));
-  const landed = await confirm(
+  const { bytes } = await build(on ? makeReactionAdd(body, opts(key), appSigner(key)) : makeReactionRemove(body, opts(key), appSigner(key)));
+  const landed = await sendAndConfirm(
+    bytes,
     () =>
       get<Message>("/v1/reactionById", {
         fid: key.fid,
