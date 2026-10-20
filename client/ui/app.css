@@ -105,6 +105,12 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
    from inside, on a purple bead so the glow reads on a light page. */
 .tg-mark { position: relative; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, #9a80ff, #5d43d6); box-shadow: 0 0 0 1px rgb(93 67 214 / 0.35), 0 0 14px rgb(121 89 255 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.45); }
 .tg-mark::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: repeating-conic-gradient(from -54deg, #fff 0 104deg, transparent 104deg 120deg); filter: drop-shadow(0 0 1.5px rgb(255 255 255 / 0.85)); }
+/* clearcast's own mark: the glass sphere (client/logo) replaces the create-fc disc */
+.tg-mark--img { background: none; box-shadow: none; }
+.tg-mark--img::after { content: none; }
+/* clearcast-small.svg is the sphere tuned for 28px; the hairline and soft
+   shadow sit it on the header instead of reading as a hole in it. */
+.tg-mark--img img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 0.5px rgb(23 21 31 / 0.35)) drop-shadow(0 1px 2px rgb(23 21 31 / 0.16)); }
 .me-chip { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; padding: 3px 12px 3px 3px; border-radius: var(--r-pill); font-size: 12px; white-space: nowrap; }
 .me-chip .avatar { width: 26px; height: 26px; }
 .me-chip small { display: block; color: var(--text-3); font-size: 10px; line-height: 1.2; }
