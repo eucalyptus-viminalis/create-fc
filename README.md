@@ -61,6 +61,10 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 
 `clearcast profile --display … --pfp … --bio …` changes your own profile. `clearcast logout` deletes the app key from this computer. `clearcast revoke`, or **sign out** in the page, also revokes it on Farcaster first: the key signs its own removal, so no seed phrase is needed. Keys approved in the Farcaster app live onchain; remove those in the Farcaster app.
 
+## Posting
+
+**post** in the home screen opens a composer: @-mentions from the people you follow, a byte counter (Farcaster counts bytes, and mentions are free), and up to two images. Images upload to your own node, and the cast links to them there over HTTPS (`https://<ip with dashes>.sslip.io/img/…`, served by Caddy, which needs ports 80 and 443 open). Each person gets 500 MB, each image up to 5 MB, and the node 10 GB in all; the node's owner can change that in `/var/lib/fc-companion/limits.json`. Images live as long as the server does. More in [Images in your casts](https://eucalyptus-viminalis.github.io/create-fc/docs/guide/images).
+
 ## Seed phrases
 
 `clearcast login` and the page's seed phrase option ask for a seed phrase once, to authorize an app key. A seed phrase controls the whole account, so treat it like `rm -rf`:

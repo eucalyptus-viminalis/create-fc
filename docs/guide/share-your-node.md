@@ -91,6 +91,7 @@ Sharing your node means friends rely on it:
 - **Their reads.** clearcast reads everything from your node. If it's down or behind, so is their feed.
 - **When they're online.** The companion sees each device's internet address and when it checks in. It keeps that in memory only, and forgets a device 90 seconds after it leaves.
 - **Not their account.** You can't post as them, and neither could anyone who broke into your server. Their key never leaves their computer.
+- **Their images.** Images they attach to casts live on your node, up to 500 MB each. If you delete the server, those images stop loading in their casts too. See [Images in your casts](./images).
 
 ## Learn more
 
