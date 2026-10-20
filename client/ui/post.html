@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="clearcast-token" content="__CLEARCAST_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>post · clearcast</title>
+  <link rel="icon" href="/clearcast.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/post.css" />
+</head>
+<body class="ready">
+<div id="app">
+  <header class="post-top">
+    <h1>post</h1>
+    <span class="dim">write a cast</span>
+    <span class="who" id="who"><a href="/">home</a></span>
+  </header>
+
+  <div class="post-grid">
+    <section class="tile" id="compose">
+      <h2><span>new cast</span><span id="saved"></span></h2>
+      <div class="body">
+        <div class="editor">
+          <textarea id="text" placeholder="What's clear to you today?" spellcheck="true" aria-label="Cast text"></textarea>
+          <div class="mirror" id="mirror" aria-hidden="true"></div>
+          <div class="menu" id="menu" role="listbox" aria-label="Mention someone"></div>
+        </div>
+        <div class="atts" id="atts"></div>
+        <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
+        <div class="row">
+          <button class="tool" id="add-image" type="button">+ image <kbd>⌘I</kbd></button>
+          <button class="tool" id="add-at" type="button">@ mention</button>
+          <span class="dim small" id="slots">0 of 2 attachments</span>
+          <span class="counter" title="Farcaster counts bytes, not letters"><span class="cells" id="cells"></span><span class="left" id="left">320</span></span>
+        </div>
+        <div class="row">
+          <span class="note" style="margin:0">Paste or drop images here.</span>
+          <button class="cast-btn" id="cast" type="button">cast <kbd>⌘↵</kbd></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="tile">
+        <h2><span>how it looks</span><span>preview</span></h2>
+        <div class="body">
+          <div class="cast">
+            <span id="pv-av"><span class="av"></span></span>
+            <div>
+              <div class="who" id="pv-who"><b>you</b> <span>now</span></div>
+              <div class="text" id="pv-text"></div>
+              <div class="pics" id="pv-pics"></div>
+              <div class="foot"><span>↩ 0</span><span>⟲ 0</span><span>♥ 0</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="tile">
+        <h2><span>what counts</span><span>320 bytes</span></h2>
+        <div class="body">
+          <table class="counts" id="counts"></table>
+          <p class="note">Farcaster counts bytes, not letters. Emoji take three or four. Mentions cost nothing.</p>
+        </div>
+      </section>
+      <section class="tile">
+        <h2><span>your image space</span><span>on your node</span></h2>
+        <div class="body" id="space"><span class="dim">checking<span class="blink">_</span></span></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Casting"><section class="tile"><h2><span>casting</span><span id="ov-r"></span></h2><div class="body" id="ov"></div></section></div>
+
+<nav class="bar" aria-label="Modes">
+  <div class="in">
+    <a class="mode" href="/"><span class="k">0</span>home</a>
+    <button class="mode" aria-current><span class="k">2</span>post</button>
+    <a class="mode" href="/classic"><span class="k">4</span>read</a>
+    <span class="hint"><kbd>@</kbd> mention · <kbd>⌘V</kbd> paste image · <kbd>⌘↵</kbd> cast · <kbd>esc</kbd> home</span>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<script src="/post.js"></script>
+</body>
+</html>

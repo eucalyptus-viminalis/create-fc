@@ -8,6 +8,9 @@
 //   POST /v1/presence    "I'm here" from a clearcast, every ~30 s (signed)
 //   GET  /v1/signin      can people sign in here by approving on their phone?
 //   POST /v1/signin      start a phone sign-in for a key (needs an invite code)
+//   POST /v1/images      upload an image for a cast (signed, people on this node)
+//   DELETE /v1/images/<file>   give an image's space back (signed, its uploader)
+//   GET  /v1/images/usage      how much of your image space you've used (signed)
 //
 // Both presence calls are signed with the sender's app key, and the key is
 // checked against Snapchain, so nobody can appear online as someone else.
@@ -24,12 +27,19 @@
 // request needs an invite code from `fc-node invite`, so strangers can't use
 // the app account, and each address gets 20 tries an hour.
 //
+// Images: a cast can only link to an image, so the node hosts them. Files go
+// in IMAGES_DIR, which Caddy serves over HTTPS at IMAGE_BASE (set up by
+// fc-companion-install). Each person gets 500 MB and the node 10 GB, unless
+// /state/limits.json says otherwise; a ledger records who uploaded what.
+// Images live as long as this server does.
+//
 // One dependency, viem (EIP-712 signing), loaded only for phone sign-in.
 // Run by fc-companion-install in Docker.
 
 import { createServer } from "node:http";
 import { createPublicKey, verify } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const PORT = Number(process.env.PORT ?? 3390);
 const SNAPCHAIN = (process.env.SNAPCHAIN ?? "http://127.0.0.1:3381").replace(/\/$/, "");
@@ -42,6 +52,10 @@ const MAX_DEVICES = 5_000;
 const APP_FILE = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
 const INVITES_FILE = process.env.INVITES_FILE ?? "/state/invites";
 const FARCASTER_API = "https://api.farcaster.xyz";
+const IMAGES_DIR = process.env.IMAGES_DIR ?? "/images";
+const LEDGER_FILE = process.env.LEDGER_FILE ?? "/ledger/images.json";
+const LIMITS_FILE = process.env.LIMITS_FILE ?? "/state/limits.json";
+const IMAGE_BASE = (process.env.IMAGE_BASE ?? "").replace(/\/$/, "");
 const startedAt = new Date().toISOString();
 
 // ------------------------------------------------------------ presence
@@ -116,6 +130,7 @@ async function heartbeat(b) {
     if (!devices.has(id) && devices.size >= MAX_DEVICES) return [503, "too many devices"];
     devices.set(id, { fid: h.fid, device: h.device, label: h.label, status: h.status, seen: Date.now() });
   }
+  if (h.status !== "offline") members.set(h.fid, Date.now());
   return [200, { ok: true }];
 }
 
@@ -226,6 +241,127 @@ async function startSignIn(b, ip) {
   return [200, { token: r.token, deeplinkUrl: r.deeplinkUrl, requestFid: app.fid, deadline }];
 }
 
+// ------------------------------------------------------------ images
+
+const MB = 1024 * 1024;
+function limits() {
+  let l = {};
+  try {
+    l = JSON.parse(readFileSync(LIMITS_FILE, "utf8"));
+  } catch {}
+  return { perPerson: Number(l.perPersonMB ?? 500) * MB, total: Number(l.totalMB ?? 10_240) * MB, perFile: Number(l.perFileMB ?? 5) * MB };
+}
+
+// { files: { "<sha256>.<ext>": { size, by: [fid, ...], at } } }. Per-person use
+// is the sum of the files they uploaded; the node total counts each file once.
+function ledger() {
+  try {
+    return JSON.parse(readFileSync(LEDGER_FILE, "utf8"));
+  } catch {
+    return { files: {} };
+  }
+}
+function saveLedger(l) {
+  writeFileSync(LEDGER_FILE + ".tmp", JSON.stringify(l));
+  renameSync(LEDGER_FILE + ".tmp", LEDGER_FILE);
+}
+function usage(l, fid) {
+  let used = 0, files = 0, total = 0;
+  for (const f of Object.values(l.files)) {
+    total += f.size;
+    if (f.by.includes(fid)) (used += f.size), files++;
+  }
+  const lim = limits();
+  return { used, files, cap: lim.perPerson, nodeUsed: total, nodeCap: lim.total, fileCap: lim.perFile };
+}
+
+// What the bytes are, from their first few bytes (not the name or a header).
+function imageType(buf) {
+  if (buf.length > 8 && buf[0] === 0x89 && buf.toString("ascii", 1, 4) === "PNG") return { ext: "png", type: "image/png" };
+  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return { ext: "jpg", type: "image/jpeg" };
+  if (buf.length > 6 && buf.toString("ascii", 0, 4) === "GIF8") return { ext: "gif", type: "image/gif" };
+  if (buf.length > 12 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") return { ext: "webp", type: "image/webp" };
+  return null;
+}
+
+// Only people using this node (a heartbeat in the last 10 minutes) may upload.
+const members = new Map(); // fid -> last heartbeat, ms
+const isMember = (fid) => (members.get(fid) ?? 0) > Date.now() - 600_000;
+
+async function readRaw(req, max) {
+  const chunks = [];
+  let size = 0;
+  for await (const c of req) {
+    size += c.length;
+    if (size > max) throw Object.assign(new Error("too big"), { status: 413 });
+    chunks.push(c);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function uploadImage(req, ip) {
+  const h = req.headers, fid = Number(h["x-fid"]), ts = Number(h["x-ts"]);
+  if (!IMAGE_BASE) return [503, "this node doesn't host images yet. Its owner can re-run command 1."];
+  if (!Number.isInteger(fid) || !Number.isFinite(ts) || Math.abs(Date.now() - ts) > SKEW_MS) return [400, "sign the upload with fid and a current ts"];
+  if (!isMember(fid)) return [403, "only people using this node can upload"];
+  if (limited(`img:${ip}`, 120)) return [429, "too many uploads from here. Try again in an hour."];
+  const lim = limits();
+  let buf;
+  try {
+    buf = await readRaw(req, lim.perFile);
+  } catch (e) {
+    if (e.status === 413) return [413, `images max out at ${lim.perFile / MB} MB`];
+    throw e;
+  }
+  const kind = imageType(buf);
+  if (!kind) return [415, "that isn't a PNG, JPEG, GIF or WebP image"];
+  const hash = createHash("sha256").update(buf).digest("hex");
+  const bad = await signedBy(fid, h["x-key"], h["x-sig"], `clearcast-image:v1:${fid}:${hash}:${ts}`);
+  if (bad) return [401, bad];
+
+  const name = `${hash}.${kind.ext}`;
+  const l = ledger();
+  const entry = l.files[name];
+  const u = usage(l, fid);
+  if (!entry?.by.includes(fid)) {
+    if (u.used + buf.length > u.cap) return [413, `that would put you over your ${Math.round(u.cap / MB)} MB of image space`];
+    if (!entry && u.nodeUsed + buf.length > u.nodeCap) return [507, "this node's image space is full"];
+  }
+  if (!entry) {
+    writeFileSync(`${IMAGES_DIR}/${name}.tmp`, buf);
+    renameSync(`${IMAGES_DIR}/${name}.tmp`, `${IMAGES_DIR}/${name}`);
+    l.files[name] = { size: buf.length, by: [fid], at: new Date().toISOString() };
+  } else if (!entry.by.includes(fid)) entry.by.push(fid);
+  saveLedger(l);
+  return [200, { url: `${IMAGE_BASE}/img/${name}`, name, size: buf.length, type: kind.type, usage: usage(l, fid) }];
+}
+
+async function deleteImage(req, name) {
+  const h = req.headers, fid = Number(h["x-fid"]), ts = Number(h["x-ts"]);
+  if (!/^[0-9a-f]{64}\.(png|jpg|gif|webp)$/.test(name)) return [400, "bad image name"];
+  if (!Number.isInteger(fid) || !Number.isFinite(ts) || Math.abs(Date.now() - ts) > SKEW_MS) return [400, "sign the request with fid and a current ts"];
+  const bad = await signedBy(fid, h["x-key"], h["x-sig"], `clearcast-image-delete:v1:${fid}:${name}:${ts}`);
+  if (bad) return [401, bad];
+  const l = ledger();
+  const entry = l.files[name];
+  if (!entry?.by.includes(fid)) return [404, "you didn't upload that image"];
+  entry.by = entry.by.filter((f) => f !== fid);
+  if (!entry.by.length) {
+    delete l.files[name];
+    if (existsSync(`${IMAGES_DIR}/${name}`)) unlinkSync(`${IMAGES_DIR}/${name}`);
+  }
+  saveLedger(l);
+  return [200, { usage: usage(l, fid) }];
+}
+
+async function imageUsage(q) {
+  const fid = Number(q.get("fid")), ts = Number(q.get("ts"));
+  if (!Number.isInteger(fid) || !Number.isFinite(ts) || Math.abs(Date.now() - ts) > SKEW_MS) return [400, "sign the request with fid and a current ts"];
+  const bad = await signedBy(fid, q.get("key"), q.get("sig"), `clearcast-image-usage:v1:${fid}:${ts}`);
+  if (bad) return [401, bad];
+  return [200, { hosting: Boolean(IMAGE_BASE), ...usage(ledger(), fid) }];
+}
+
 // ------------------------------------------------------------ server
 
 function send(res, status, body) {
@@ -258,6 +394,18 @@ createServer(async (req, res) => {
       const bad = await signedBy(fid, q.get("key"), q.get("sig"), readPayload(fid, ts));
       if (bad) return send(res, 401, bad);
       return send(res, 200, { online: online() });
+    }
+    if (req.method === "POST" && url.pathname === "/v1/images") {
+      const [status, body] = await uploadImage(req, req.socket.remoteAddress ?? "?");
+      return send(res, status, body);
+    }
+    if (req.method === "GET" && url.pathname === "/v1/images/usage") {
+      const [status, body] = await imageUsage(url.searchParams);
+      return send(res, status, body);
+    }
+    if (req.method === "DELETE" && url.pathname.startsWith("/v1/images/")) {
+      const [status, body] = await deleteImage(req, url.pathname.slice("/v1/images/".length));
+      return send(res, status, body);
     }
     if (req.method === "GET" && url.pathname === "/v1/signin") {
       const app = appAccount();

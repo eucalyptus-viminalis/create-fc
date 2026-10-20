@@ -123,7 +123,7 @@ export const presenceStatus = async () => (await readJson<{ status?: PresenceSta
 
 // Ed25519 over the exact bytes the companion checks (see node/companion.mjs).
 const PKCS8_ED25519 = Buffer.from("302e020100300506032b657004220420", "hex");
-function signWith(key: AppKey, payload: string): string {
+export function signWith(key: AppKey, payload: string): string {
   const pk = createPrivateKey({ key: Buffer.concat([PKCS8_ED25519, Buffer.from(key.privateKey.replace(/^0x/, ""), "hex")]), format: "der", type: "pkcs8" });
   return "0x" + sign(null, Buffer.from(payload), pk).toString("hex");
 }
@@ -134,6 +134,13 @@ async function heartbeat(key: AppKey, status: PresenceStatus | "offline") {
   const sig = signWith(key, `clearcast-presence:v1:${h.fid}:${h.device}:${h.label}:${h.status}:${h.ts}`);
   await companion("/v1/presence", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...h, key: key.publicKey, sig }) });
   return d;
+}
+
+// Say "I'm here" without reading the list: uploads need a recent heartbeat.
+export async function heartbeatNow() {
+  try {
+    await heartbeat(await loadKey(), await presenceStatus());
+  } catch {}
 }
 
 // Tell the companion this device is leaving (on sign out), so it drops off

@@ -20,6 +20,7 @@ import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
 import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
+import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -116,6 +117,51 @@ async function buildFeed(fid: number) {
     .slice(0, 400);
   return { following: fids.length, casts: await shape(casts) };
 }
+
+// ------------------------------------------------------------- mentions
+
+// Your node can't search usernames by prefix, so suggestions come from the
+// people you follow: their profiles load once, in the background, and the
+// list fills in as they arrive. A full username finds anyone else.
+type Following = { people: Profile[]; total: number; done: boolean };
+const followingCache = new Map<number, Following>();
+function followingProfiles(fid: number): Following {
+  let c = followingCache.get(fid);
+  if (c) return c;
+  const made: Following = { people: [], total: 0, done: false };
+  followingCache.set(fid, made);
+  (async () => {
+    const fids = await following(fid);
+    made.total = fids.length;
+    await pool(fids, 96, async (f) => {
+      const p = await profileOf(f);
+      if (p.username) made.people.push(p);
+    });
+  })().finally(() => {
+    made.done = true;
+    setTimeout(() => followingCache.delete(fid), 30 * 60_000).unref();
+  });
+  return made;
+}
+
+async function mentionSuggestions(me: number, raw: string) {
+  const q = raw.toLowerCase().replace(/^@/, "").trim();
+  const c = followingProfiles(me);
+  const score = (p: Profile) => (p.username!.startsWith(q) ? 0 : 1) * 100 + p.username!.length;
+  const people: (Profile & { relation: string })[] = c.people
+    // the username's start, or the start of a word in the display name ("@lin", "@xie")
+    .filter((p) => !q || p.username!.startsWith(q) || (p.display ?? "").toLowerCase().split(/\s+/).some((w) => w.startsWith(q)))
+    .sort((a, b) => score(a) - score(b))
+    .slice(0, 6)
+    .map((p) => ({ ...p, relation: "you follow" }));
+  if (q.length >= 2 && !people.some((p) => p.username === q)) {
+    const fid = await resolveFid(q).catch(() => undefined);
+    if (fid !== undefined && fid !== me) people.unshift({ ...(await profileOf(fid)), relation: "exact name" });
+  }
+  return { people: people.slice(0, 6), loading: !c.done, following: c.total };
+}
+
+const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
 
 // ------------------------------------------------------------------ routes
 
@@ -246,9 +292,22 @@ const routes: Record<string, Handler> = {
   },
   "POST /api/cast": async (_q, b) => {
     const text = String(b.text ?? "").trim();
-    if (!text) throw new NodeError("nothing to post");
+    const embeds = Array.isArray(b.embeds) ? (b.embeds as unknown[]).filter((u): u is string => typeof u === "string" && EMBED_URL.test(u)) : [];
+    if (embeds.length > 2) throw new NodeError("a cast holds two attachments at most");
+    if (!text && !embeds.length) throw new NodeError("nothing to post");
     const replyTo = b.replyTo as { fid: number; hash: Hex } | undefined;
-    return cast(text, { replyTo });
+    return cast(text, { replyTo, embeds });
+  },
+  // People to @mention: those you follow whose name starts with q, plus an exact username.
+  "GET /api/mentions": async (q) => mentionSuggestions(await myFid(), q.get("q") ?? ""),
+  // Image space on your node (images.ts). Uploads come in as raw bytes; see the server below.
+  "GET /api/images/usage": async () => {
+    await myFid();
+    return imageUsage();
+  },
+  "POST /api/images/delete": async (_q, b) => {
+    await myFid();
+    return deleteImage(String(b.name ?? ""));
   },
   "POST /api/react": async (_q, b) =>
     react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false),
@@ -315,6 +374,19 @@ async function listenOn(port: number): Promise<string> {
         // Only this page may call the API: same origin, and the page's token.
         const from = req.headers.origin;
         if ((from && from !== origin) || req.headers["x-clearcast-token"] !== token) return send(res, 403, { error: "forbidden" });
+        // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
+        if (req.method === "POST" && path === "/api/images") {
+          await myFid();
+          const chunks: Buffer[] = [];
+          let size = 0;
+          for await (const c of req) {
+            size += (c as Buffer).length;
+            if (size > 6 * 1024 * 1024) throw new NodeError("images max out at 5 MB");
+            chunks.push(c as Buffer);
+          }
+          const { result, calls } = await recordCalls(() => uploadImage(Buffer.concat(chunks)));
+          return send(res, 200, { data: result, calls });
+        }
         const handler = routes[`${req.method} ${path}`];
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};
@@ -325,6 +397,7 @@ async function listenOn(port: number): Promise<string> {
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
       if (path === "/classic" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
       if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
+      if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token);
       if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
       if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));

@@ -35,12 +35,14 @@ key_name="$NAME-key"
 hcloud ssh-key describe "$key_name" >/dev/null 2>&1 \
   || hcloud ssh-key create --name "$key_name" --public-key-from-file "$SSH_KEY_FILE" >/dev/null
 
-# Firewall: SSH, HTTP API, gossip over UDP, gRPC, and fc-companion (3390:
-# uptime and who's online, for clearcast). Grafana (3000) stays closed.
+# Firewall: SSH, HTTP API, gossip over UDP, gRPC, fc-companion (3390: uptime,
+# who's online and sign-in, for clearcast), and 80/443 for fc-images (Caddy
+# serves cast images over HTTPS; 80 is how it gets its certificate).
+# Grafana (3000) stays closed.
 fw="$NAME-fw"
 if ! hcloud firewall describe "$fw" >/dev/null 2>&1; then
   hcloud firewall create --name "$fw" >/dev/null
-  for rule in "tcp 22" "tcp 3381" "udp 3382" "tcp 3383" "tcp 3390"; do
+  for rule in "tcp 22" "tcp 80" "tcp 443" "tcp 3381" "udp 3382" "tcp 3383" "tcp 3390"; do
     set -- $rule
     hcloud firewall add-rule "$fw" --direction in --protocol "$1" --port "$2" \
       --source-ips 0.0.0.0/0 --source-ips ::/0 --description "$1/$2" >/dev/null
