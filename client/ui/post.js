@@ -168,7 +168,7 @@ function pick() {
   closeMenu(); sfx.pick(); paint(); ta.focus();
 }
 
-// A name typed by hand becomes a mention once your node knows it.
+// A name typed by hand becomes a mention once this node knows it.
 let checkT;
 function checkTypedMentions() {
   clearTimeout(checkT);
@@ -240,7 +240,7 @@ async function addFiles(files) {
   for (const f of files) {
     if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) { toast("Only PNG, JPEG, GIF or WebP."); continue; }
     if (S.atts.length >= MAX_EMBEDS) { sfx.over(); toast("Two attachments max. Remove one first."); break; }
-    if (S.usage && !S.usage.hosting) { toast("Your node doesn't host images yet."); break; }
+    if (S.usage && !S.usage.hosting) { toast("This node doesn't host images yet."); break; }
     const att = { id: Math.random().toString(36).slice(2), preview: URL.createObjectURL(f), size: f.size, progress: 0 };
     S.atts.push(att); sfx.add(); renderAtts(); paint();
     try {
@@ -271,7 +271,7 @@ async function removeAtt(id) {
 
 function renderAtts() {
   $("#atts").innerHTML = S.atts.map((a) => {
-    const status = a.error ? "failed" : a.url ? "on your node" : "uploading";
+    const status = a.error ? "failed" : a.url ? "on this node" : "uploading";
     const bar = !a.url && !a.error ? `<div class="up">${Array.from({ length: 10 }, (_, j) => `<i class="${j < a.progress ? "on" : ""}"></i>`).join("")}</div>` : "";
     return `<div class="att${a.error ? " failed" : ""}" title="${esc(a.error ?? "")}"><img src="${esc(a.url ?? a.preview)}" alt=""><div class="meta"><span>${status}</span><span>${Math.max(1, Math.round(a.size / 1024))} KB</span></div>${bar}<button class="x" data-id="${a.id}" aria-label="Remove image">x</button></div>`;
   }).join("");
@@ -292,7 +292,7 @@ function paintSpace() {
   const u = S.usage, el = $("#space");
   if (!u) return;
   if (!u.hosting) {
-    el.innerHTML = `<p>Your node doesn't host images yet.</p><p class="note">Its owner can re-run command 1.</p>`;
+    el.innerHTML = `<p>This node doesn't host images yet.</p><p class="note">Its owner can re-run command 1.</p>`;
     return;
   }
   const on = Math.round((u.used / u.cap) * 25);
@@ -303,12 +303,12 @@ function paintSpace() {
 }
 async function loadSpace() {
   try { S.usage = await api("/api/images/usage"); }
-  catch (e) { $("#space").innerHTML = `<p class="dim">${esc(/companion/.test(e.message) ? "Your node's companion isn't answering." : e.message)}</p>`; return; }
+  catch (e) { $("#space").innerHTML = `<p class="dim">${esc(/companion/.test(e.message) ? "This node's companion isn't answering." : e.message)}</p>`; return; }
   paintSpace(); paint();
 }
 
 // ------------------------------------------------------------------ cast
-const STEPS = ["Sign it with your app key", "Send it to your node", "Wait for it to land"];
+const STEPS = ["Sign it with your app key", "Send it to this node", "Wait for it to land"];
 function drawSteps(at) {
   return `<ul class="steps">${STEPS.map((s, i) => `<li class="${i <= at ? "" : "todo"}"><span class="mk">${i < at ? "■" : i === at ? '<span class="blink">▶</span>' : "□"}</span><span>${s}</span></li>`).join("")}</ul>`;
 }
@@ -336,7 +336,7 @@ async function cast() {
   $("#ov-r").textContent = r.landed ? "landed" : "sent";
   if (r.landed) sfx.win();
   $("#ov").innerHTML = `<p class="count" style="margin:6px 0 10px">${r.landed ? "cast!" : "sent"}</p>
-    <p>${r.landed ? "Your cast is on Farcaster." : "Your node hasn't seen it yet."}</p>
+    <p>${r.landed ? "Your cast is on Farcaster." : "This node hasn't seen it yet."}</p>
     <p class="dim">${r.landed ? "Every node has it now." : "It usually lands within a minute."}</p>
     <div class="row"><button class="cast-btn" id="again" style="margin-left:0">write another <kbd>A</kbd></button>${link ? `<a class="tool" href="${esc(link)}" target="_blank" rel="noopener">see it</a>` : ""}<a class="tool" href="/">home</a></div>`;
   // The images now belong to a cast, so clearing the draft keeps them.

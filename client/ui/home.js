@@ -1,5 +1,5 @@
 // clearcast home: boot, then four tiles that keep themselves fresh.
-// Every number comes from your node (via the local server's /api) or from
+// Every number comes from this node (via the local server's /api) or from
 // fc-companion on the same server. Nothing here is made up: when something
 // isn't known yet, the tile says so.
 
@@ -55,13 +55,13 @@ const sfx = {
 };
 
 // ------------------------------------------------------------------ boot
-// The c blinks for as long as your node takes to answer, then the rest of
+// The c blinks for as long as this node takes to answer, then the rest of
 // the name lights up and the dashboard appears.
 async function boot() {
   const b = $("#boot"), letters = [...b.querySelectorAll(".word span")], status = $("#boot-status");
   let on = false;
   const blink = setInterval(() => { on = !on; letters[0].classList.toggle("on", on); if (on) sfx.blink(); }, 260);
-  status.textContent = "connecting to your node";
+  status.textContent = "connecting to this node";
   let home;
   for (;;) {
     try { home = await api("/api/home"); break; }
@@ -142,7 +142,7 @@ function paintConditions() {
   const rate = now == null ? "" : `<b>${fmt(now)} messages a minute</b>`;
   const why =
     word === "measuring"
-      ? now == null ? "Listening to your node…" : `${rate} right now. Working out what's usual for this time of day.`
+      ? now == null ? "Listening to this node…" : `${rate} right now. Working out what's usual for this time of day.`
       : `${WORDS[word]} ${rate}, usually ${fmt(usualNow)}.`;
 
   let chart;
@@ -221,14 +221,14 @@ function paintNode(home) {
       })
       .join("")}</div>
     <div class="totals"><span><b>${fmt(n.totals.messages)}</b> messages</span><span><b>${fmt(n.totals.accounts)}</b> accounts</span><span><b>${fmt(Math.round(n.totals.bytes / 1e9))} GB</b> on disk</span></div>
-    <div class="note">peer <span title="${esc(n.peerId)}">${esc(n.peerId.slice(0, 10))}…${esc(n.peerId.slice(-8))}</span>: your node's name on the network</div>`;
+    <div class="note">peer <span title="${esc(n.peerId)}">${esc(n.peerId.slice(0, 10))}…${esc(n.peerId.slice(-8))}</span>: this node's name on the network</div>`;
 }
 
 // ------------------------------------------------------------------ presence
 function paintPresence(p) {
   if (!p.companion) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = `<p>fc-companion isn't running on your node yet, so clearcast can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
+    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so clearcast can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
     return;
   }
   S.presence = p.status;

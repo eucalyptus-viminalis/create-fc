@@ -77,7 +77,7 @@ function waysFrom(o) {
       tag: phoneReady ? "best" : "needs setup",
       desc: phoneReady
         ? ["Scan a code with your phone.", "Approve it in the Farcaster app.", "Your seed phrase stays there."]
-        : ["Your node can't vouch for keys yet.", "One command turns this on."],
+        : ["This node can't vouch for keys yet.", "One command turns this on."],
     },
   ];
   if (o.phrase) {
@@ -128,10 +128,10 @@ function setup() {
   S.screen = "setup";
   show(
     head("approve on your phone") +
-      tile("one setup step first", "your node", `
+      tile("one setup step first", "this node", `
         <p>Phone approval needs an app account.</p>
         <p class="dim">It vouches for each sign-in.</p>
-        <p>Run this on your node's server:</p>
+        <p>Run this on the node's server:</p>
         ${copyable("fc-node app-account")}
         <p class="dim">Use an account made for this. Then reload this page.</p>
         <div class="warn"><span class="bang">?</span><div><p>Not your node? Ask its owner.</p></div></div>`),
@@ -164,16 +164,16 @@ function invite(error) {
 
 // The companion's errors, in this page's voice.
 function inviteError(message) {
-  if (/invite code doesn't work/.test(message)) return ["That code doesn't work here.", "Check it with your node's owner."];
+  if (/invite code doesn't work/.test(message)) return ["That code doesn't work here.", "Check it with this node's owner."];
   if (/too many sign-ins/.test(message)) return ["Too many tries from here.", "Wait an hour, then try again."];
-  if (/no longer owns|no app account/.test(message)) return ["Your node's app account needs fixing.", "Its owner can run fc-node app-account."];
-  if (/can't reach/.test(message)) return ["Your node's companion isn't answering.", "Try again in a minute."];
+  if (/no longer owns|no app account/.test(message)) return ["This node's app account needs fixing.", "Its owner can run fc-node app-account."];
+  if (/can't reach/.test(message)) return ["This node's companion isn't answering.", "Try again in a minute."];
   if (/signer-request service/.test(message)) return ["Farcaster's sign-in service said no.", message];
   return [message];
 }
 
 // ------------------------------------------------------------------ phone: scan and wait
-const PHONE_STEPS = ["Show the code", "Approve on your phone", "Your node sees the key", "You're in"];
+const PHONE_STEPS = ["Show the code", "Approve on your phone", "This node sees the key", "You're in"];
 
 async function phoneStart(code) {
   S.screen = "phone";
@@ -199,7 +199,7 @@ async function phoneStart(code) {
             <p class="dim">${fee}</p>
             <p class="mobile-only"><a href="${esc(req.url)}">On this phone? Open the link.</a></p>
             <div style="margin-top:14px">${steps(PHONE_STEPS, at)}</div></div></div>
-          ${at < 2 ? waiting("Waiting for you") : waiting("Your node is picking up the key")}`),
+          ${at < 2 ? waiting("Waiting for you") : waiting("This node is picking up the key")}`),
     );
   paint(1);
   keyHandler = backKeys;
@@ -217,7 +217,7 @@ async function phoneStart(code) {
 }
 
 // ------------------------------------------------------------------ seed phrase
-const PHRASE_STEPS = ["Find your account", "Check your storage", "Sign a new key", "Send it to your node", "Wait for it to land"];
+const PHRASE_STEPS = ["Find your account", "Check your storage", "Sign a new key", "Send it to this node", "Wait for it to land"];
 
 function phrase(error) {
   S.screen = "phrase"; S.run++;
@@ -262,7 +262,7 @@ function phraseError(message) {
   if (/none of the first/.test(message)) return ["No account uses this phrase.", "clearcast checked ten addresses."];
   if (/invalid|checksum|words|mnemonic|phrase/i.test(message) && !/node/i.test(message)) return ["These words don't form a phrase.", "Check spelling and word order."];
   if (/no storage units/.test(message)) return ["This account has no storage.", "Rent storage, then try again."];
-  if (/didn't appear within/.test(message)) return ["Your node never saw the key.", "Check that your node is in sync."];
+  if (/didn't appear within/.test(message)) return ["This node never saw the key.", "Check that this node is in sync."];
   return [message];
 }
 

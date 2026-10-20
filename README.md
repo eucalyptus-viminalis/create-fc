@@ -63,7 +63,7 @@ Your app key in `~/.fc-client` survives. Next time, run commands 0 and 1 again, 
 
 ## Posting
 
-**post** in the home screen opens a composer: @-mentions from the people you follow, a byte counter (Farcaster counts bytes, and mentions are free), and up to two images. Images upload to your own node, and the cast links to them there over HTTPS (`https://<ip with dashes>.sslip.io/img/…`, served by Caddy, which needs ports 80 and 443 open). Each person gets 500 MB, each image up to 5 MB, and the node 10 GB in all; the node's owner can change that in `/var/lib/fc-companion/limits.json`. Images live as long as the server does. More in [Images in your casts](https://eucalyptus-viminalis.github.io/create-fc/docs/guide/images).
+**post** in the home screen opens a composer: @-mentions from the people you follow, a byte counter (Farcaster counts bytes, and mentions are free), and up to two images. Images upload to the node clearcast uses (your own, or a friend's you share), and the cast links to them there over HTTPS (`https://<ip with dashes>.sslip.io/img/…`, served by Caddy, which needs ports 80 and 443 open). Each person gets 500 MB, each image up to 5 MB, and the node 10 GB in all; the node's owner can change that in `/var/lib/fc-companion/limits.json`. Images live as long as the server does. More in [Images in your casts](https://eucalyptus-viminalis.github.io/create-fc/docs/guide/images).
 
 ## Seed phrases
 
