@@ -120,14 +120,81 @@ function callTable(calls, limit) {
   return `<table class="calltable"><thead><tr><th>Time</th><th>Request to your node</th><th class="ct-took">Took</th><th></th></tr></thead><tbody>${body}${more}</tbody></table>`;
 }
 
+// The same calls grouped by route (the path without its query), one row per
+// route in the order it was first called, so a view reads as the steps that
+// built it. Each row opens to its own calls.
+const WHY = {
+  "/v1/info": "node status",
+  "/v1/linksByFid": "who an account follows",
+  "/v1/linkById": "does one account follow another",
+  "/v1/castsByFid": "latest casts from each account",
+  "/v1/castById": "one cast, to confirm a write",
+  "/v1/reactionById": "one like or recast, to confirm a write",
+  "/v1/signersByFid": "which app signed each cast",
+  "/v1/signer": "is this key active",
+  "/v1/userDataByFid": "names and avatars",
+  "/v1/userNameProofByName": "username to account number",
+  "/v1/storageLimitsByFid": "storage the account has",
+  "/v1/onChainEventsByFid": "keys added on chain",
+  "/v1/validateMessage": "check a signed message",
+  "/v1/submitMessage": "send a signed message",
+};
+const routeOf = (c) => c.call.slice(0, c.call.indexOf("?") === -1 ? undefined : c.call.indexOf("?"));
+const openRoutes = new Set(); // "<container id> <route>" rows left open across re-renders
+
+function callsByRoute(id, calls, { log = false } = {}) {
+  const notes = calls.filter((c) => c.note).map((c) => c.note.replace(/^#\s*/, ""));
+  const real = calls.filter((c) => !c.note);
+  const groups = new Map();
+  for (const c of real) {
+    const key = routeOf(c);
+    const g = groups.get(key) ?? { key, calls: [], first: Infinity, ms: 0 };
+    g.calls.push(c);
+    g.first = Math.min(g.first, c.at);
+    g.ms += c.ms;
+    groups.set(key, g);
+  }
+  const list = [...groups.values()].sort((a, b) => a.first - b.first);
+  const max = Math.max(1, ...list.map((g) => g.calls.length));
+  const start = Math.min(...real.map((c) => c.at));
+  const span = log
+    ? `<div><b>${clock(start)}</b><span>first call</span></div>`
+    : `<div><b>${((Math.max(...real.map((c) => c.at + c.ms)) - start) / 1000).toFixed(1)} s</b><span>start to finish</span></div>`;
+  return `<div class="calls-sum"><div><b>${real.length}</b><span>call${real.length === 1 ? "" : "s"}</span></div><div><b>${list.length}</b><span>distinct route${list.length === 1 ? "" : "s"}</span></div>${span}</div>
+    ${notes.map((n) => `<p class="calls-note">${esc(n)}</p>`).join("")}
+    <div class="routes">${list
+      .map((g, i) => {
+        const [method, path] = g.key.split(" ");
+        return `<details class="route" data-key="${esc(`${id} ${g.key}`)}"${openRoutes.has(`${id} ${g.key}`) ? " open" : ""}><summary>
+          <span class="route__step">${i + 1}</span>
+          <span class="route__name">${method === "GET" ? "" : `<span class="ct-method">${esc(method)}</span> `}${esc(path.replace("/v1/", ""))}<span class="route__why">${esc(WHY[path] ?? "")}</span></span>
+          <span class="route__bar"><i style="width:${(g.calls.length / max) * 100}%"></i></span>
+          <span class="route__n">${g.calls.length} <small>×</small></span>
+          <span class="route__ms">avg ${Math.round(g.ms / g.calls.length)} ms</span>
+          <span class="route__chev" aria-hidden="true">›</span>
+        </summary><div class="route__calls">${callTable(g.calls, 150)}</div></details>`;
+      })
+      .join("")}</div>`;
+}
+
+document.addEventListener(
+  "toggle",
+  (e) => {
+    const d = e.target;
+    if (!d.classList?.contains("route")) return;
+    d.open ? openRoutes.add(d.dataset.key) : openRoutes.delete(d.dataset.key);
+  },
+  true,
+);
+
 function showCalls(id, calls) {
   const real = calls.filter((c) => !c.note);
   $(id).innerHTML = `<summary>Show the ${real.length} API call${real.length === 1 ? "" : "s"} to your node behind this view</summary>
-    <div class="calltable-card">${callTable(calls, 40)}</div>`;
+    <div class="calltable-card calls-card">${callsByRoute(id, calls)}</div>`;
 }
 
 function renderLog() {
-  $("#call-log").innerHTML = state.log.length ? callTable(state.log, 150) : `<p class="empty">Nothing yet.</p>`;
+  $("#call-log").innerHTML = state.log.length ? callsByRoute("#call-log", state.log, { log: true }) : `<p class="empty">Nothing yet.</p>`;
 }
 
 // ----------------------------------------------------------------- status
@@ -274,6 +341,7 @@ function renderInbox(all, left) {
   const el = $("#inbox");
   el.hidden = all.length === 0;
   if (!all.length) return;
+  el.classList.toggle("is-clear", left.length === 0);
   const clearedHere = all.filter(notHidden).length - left.length;
   const midnight = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
   const older = left.filter((c) => c.time < midnight).length;
@@ -336,7 +404,7 @@ function renderFeed() {
   $("#feed-list").innerHTML = shown.length
     ? shown.slice(0, 120).map((c) => castHtml(c, all.indexOf(c))).join("")
     : all.filter(notHidden).length
-      ? `<div class="all-clear glass"><b>All clear.</b><p>You've read everything here. New casts show up when you check again.</p><button type="button" class="glass-btn" data-refresh>↻ Check for new</button></div>`
+      ? `<div class="all-clear"><b>All clear.</b><p>You've read everything here. New casts show up when you check again.</p><button type="button" class="glass-btn" data-refresh>↻ Check for new</button></div>`
       : all.length
       ? empty("Every app in this feed is hidden. Click a chip above to show it again.")
       : `<div class="empty"><p>${state.feed?.following ? "No recent casts from the accounts this feed follows." : "This account doesn't follow anyone yet, so its feed is empty."}</p>
