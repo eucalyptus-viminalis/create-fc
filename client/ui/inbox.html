@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="clearcast-token" content="__CLEARCAST_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>inbox · clearcast</title>
+  <link rel="icon" href="/clearcast.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/inbox.css" />
+</head>
+<body class="ready">
+<div id="app">
+  <header class="ib-top">
+    <h1 id="title">inbox</h1>
+    <span class="dim" id="sub"></span>
+    <span class="legend-new" id="legend"></span>
+    <nav class="views" aria-label="Inbox views">
+      <a href="#casts" data-view="casts">casts</a><a href="#likes" data-view="likes">likes</a><a href="#replies" data-view="replies">replies</a>
+    </nav>
+  </header>
+  <div class="tools" id="tools"></div>
+  <div id="view"><div class="loading">looking<span class="blink">_</span></div></div>
+</div>
+
+<nav class="bar" aria-label="Modes">
+  <div class="in">
+    <a class="mode" href="/"><span class="k">0</span>home</a>
+    <button class="mode" aria-current><span class="k">1</span>inbox</button>
+    <a class="mode" href="/post"><span class="k">2</span>post</a>
+    <span class="hint" id="pad">no controller</span>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<script src="/inbox.js"></script>
+</body>
+</html>

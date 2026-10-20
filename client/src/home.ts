@@ -374,7 +374,13 @@ function summarize(rates: Map<string, number>) {
 
 // When you last looked. A visit lasts until you've been away 30 minutes, so
 // refreshing the page doesn't reset what counts as new.
-async function lastVisit(fid: number): Promise<{ since: number; first: boolean }> {
+// When your previous visit ended, without counting this look as a visit.
+export async function visitSince(fid: number): Promise<number> {
+  const r = (await readJson<Record<string, { prev: number }>>("checkins.json", {}))[fid];
+  return r?.prev ?? Date.now() - 86_400_000;
+}
+
+export async function lastVisit(fid: number): Promise<{ since: number; first: boolean }> {
   const all = await readJson<Record<string, { prev: number; lastActive: number }>>("checkins.json", {});
   const now = Date.now();
   let r = all[fid];

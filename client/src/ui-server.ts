@@ -19,8 +19,9 @@ import { forgetKey, loadKey, revokeKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
 import { changeCleared, clearedFor } from "./cleared.ts";
 import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
-import { companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
+import { companionStatus, conditions, lastVisit, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
+import { castsView, followersView, likesView, repliesView, setCleared, setSaved, waiting, type Kind } from "./inbox.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -60,9 +61,24 @@ type CastView = {
   app?: { fid: number; name: string; pfp?: string };
 };
 
+// Farcaster keeps mentions out of the text: each is a fid and the byte where
+// its name goes. Put "@name" back in at those bytes.
+function withMentions(text: string, fids: number[] = [], at: number[] = [], names: Map<number, Profile>) {
+  if (!fids.length) return text;
+  const bytes = Buffer.from(text, "utf8");
+  const order = fids.map((f, i) => ({ f, at: at[i] ?? 0 })).sort((a, b) => a.at - b.at);
+  let out = "", last = 0;
+  for (const { f, at: pos } of order) {
+    out += bytes.subarray(last, pos).toString("utf8") + `@${names.get(f)?.username ?? `!${f}`}`;
+    last = pos;
+  }
+  return out + bytes.subarray(last).toString("utf8");
+}
+
 async function shape(casts: Message[]): Promise<CastView[]> {
   const apps = await appsFor(casts);
-  const authorFids = [...new Set([...casts.map((c) => c.data.fid), ...[...apps.values()].filter((a): a is number => a !== undefined)])];
+  const mentioned = casts.flatMap((c) => c.data.castAddBody?.mentions ?? []);
+  const authorFids = [...new Set([...casts.map((c) => c.data.fid), ...mentioned, ...[...apps.values()].filter((a): a is number => a !== undefined)])];
   const people = new Map((await Promise.all(authorFids.map(profileOf))).map((p) => [p.fid, p]));
   return casts.map((m) => {
     const b = m.data.castAddBody!;
@@ -72,7 +88,7 @@ async function shape(casts: Message[]): Promise<CastView[]> {
       hash: m.hash,
       fid: m.data.fid,
       author: { username: author.username, display: author.display, pfp: author.pfp },
-      text: b.text,
+      text: withMentions(b.text, b.mentions, b.mentionsPositions, people),
       time: new Date((m.data.timestamp + FARCASTER_EPOCH) * 1000).toISOString(),
       embeds: b.embeds.map((e) => ("url" in e ? e.url : `cast ${e.castId.hash.slice(0, 10)}`)),
       replyTo: b.parentCastId ?? undefined,
@@ -200,6 +216,46 @@ const routes: Record<string, Handler> = {
   "GET /api/since": async () => {
     const fid = await myFid();
     return sinceLastVisit(fid, await feedFor(fid));
+  },
+  // ---- the inbox (inbox.ts): what's waiting for you, and the four views behind it
+  // The home tile. Calling it counts as a visit (a visit ends after 30 minutes away).
+  "GET /api/waiting": async () => {
+    const fid = await myFid();
+    await lastVisit(fid);
+    return waiting(fid, await feedFor(fid), shape, profileOf);
+  },
+  "GET /api/inbox/casts": async (q) => {
+    const fid = await myFid();
+    if (q.get("fresh")) feedCache.delete(fid);
+    return castsView(fid, await feedFor(fid));
+  },
+  "GET /api/inbox/likes": async () => likesView(await myFid(), profileOf),
+  "GET /api/inbox/replies": async () => repliesView(await myFid(), shape),
+  "GET /api/inbox/followers": async () => followersView(await myFid(), profileOf),
+  // Clear (or bring back) items in a view. Kept on this computer.
+  "POST /api/inbox/clear": async (_q, b) => {
+    const kinds = ["casts", "likes", "replies", "followers"];
+    if (!kinds.includes(String(b.kind))) throw new NodeError("kind must be casts, likes, replies or followers");
+    const ids = Array.isArray(b.ids) ? (b.ids as unknown[]).map(String).filter((x) => x.length <= 200).slice(0, 2000) : [];
+    return setCleared(await myFid(), b.kind as Kind, ids, b.on !== false);
+  },
+  // Save a cast to come back to. Keeps a copy, on this computer.
+  "POST /api/inbox/save": async (_q, b) => {
+    const cast = b.cast as { hash?: unknown; fid?: unknown } | undefined;
+    if (!cast || typeof cast.hash !== "string" || !/^0x[0-9a-f]{40}$/i.test(cast.hash) || typeof cast.fid !== "number") throw new NodeError("save needs a cast");
+    return setSaved(await myFid(), cast as { hash: string; fid: number }, b.on !== false);
+  },
+  // Likes, recasts and replies on one cast, for the reading pane.
+  "GET /api/inbox/counts": async (q) => {
+    const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
+    if (!Number.isInteger(fid) || !/^0x[0-9a-f]{40}$/i.test(hash)) throw new NodeError("counts need fid and hash");
+    const count = (path: string, params: Record<string, string | number>) => get<Page>(path, { ...params, pageSize: 1000 }).then((p) => p.messages.length, () => 0);
+    const [likes, recasts, replies] = await Promise.all([
+      count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Like" }),
+      count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Recast" }),
+      count("/v1/castsByParent", { fid, hash }),
+    ]);
+    return { likes, recasts, replies };
   },
   // Who's on this node. Each call is also your heartbeat, so the page calls it every 30 s.
   "GET /api/presence": async () => {
@@ -398,6 +454,7 @@ async function listenOn(port: number): Promise<string> {
       if (path === "/classic" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
       if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
       if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token);
+      if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token);
       if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
       if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));

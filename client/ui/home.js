@@ -174,24 +174,105 @@ const ago = (iso) => {
   const s = (Date.now() - Date.parse(iso)) / 1000;
   return s < 90 ? "just now" : s < 5400 ? `${Math.round(s / 60)} min ago` : s < 129600 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} days ago`;
 };
-async function loadSince() {
+// ------------------------------------------------------------------ waiting for you
+// Counts go down as you clear things in the inbox. Purple marks what arrived
+// since your last visit.
+async function loadWaiting() {
   try {
-    const d = await api("/api/since");
-    $("#since-title").textContent = d.first ? "in the last day" : "since you last checked in";
-    $("#since-ago").textContent = d.first ? "first visit" : ago(d.since);
-    const f = d.followers;
-    $("#since").innerHTML = `<ul class="since">
-        <li><span class="count">${fmt(d.casts)}</span><span>${d.casts === 1 ? "cast" : "casts"} from people you follow</span></li>
-        <li><span class="count">${fmt(d.likes)}</span><span>${d.likes === 1 ? "like" : "likes"} on your casts</span></li>
-        <li><span class="count">${fmt(d.replies)}</span><span>${d.replies === 1 ? "reply" : "replies"} to you</span></li>
-        <li><span class="count">${fmt(f.count)}</span><span>new ${f.count === 1 ? "follower" : "followers"}${f.names.length ? `: ${f.names.map((n) => `<b>@${esc(n)}</b>`).join(", ")}${f.count > f.names.length ? "…" : ""}` : ""}</span></li>
-      </ul>
-      ${d.casts ? `<button class="prompt" data-mode-go="curate"><span class="blink">▶</span><span class="btn">A</span><span>curate the ${fmt(d.casts)}, one at a time</span></button>` : d.following ? `<p class="note">All quiet. Nothing new from the people you follow.</p>` : `<p class="note">You don't follow anyone yet, so there's nothing to catch up on.</p>`}`;
+    const d = await api("/api/waiting");
+    $("#since-title").textContent = "waiting for you";
+    $("#since-ago").textContent = `last visit ${ago(d.since)}`;
+    const row = (view, n, one, many, fresh) =>
+      `<li><button data-open="${view}"><span class="count">${fmt(n)}</span><span>${n === 1 ? one : many}</span><span class="go">${fresh ? `<span class="fresh" title="new since your last visit"></span>${fmt(fresh)} new ` : ""}→</span></button></li>`;
+    $("#since").innerHTML = `<ul class="waits">
+        ${row("casts", d.casts.waiting, "cast from people you follow", "casts from people you follow", d.casts.fresh)}
+        ${row("likes", d.likes.waiting, "like on your casts", "likes on your casts", d.likes.fresh)}
+        ${row("replies", d.replies.waiting, "reply to you", "replies to you", d.replies.fresh)}
+        ${row("followers", d.followers.waiting, "new follower", "new followers", d.followers.fresh)}
+      </ul>${d.following ? "" : `<p class="note">You don't follow anyone yet.</p>`}`;
   } catch (e) {
     $("#since-ago").textContent = "";
-    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what you missed.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
+    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what's waiting.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
   }
 }
+document.addEventListener("click", (e) => {
+  const b = e.target.closest?.("[data-open]");
+  if (!b) return;
+  sfx.open();
+  if (b.dataset.open === "followers") openFollowers();
+  else setTimeout(() => (location.href = `/inbox#${b.dataset.open}`), 150);
+});
+
+// ------------------------------------------------------------------ new followers
+// A window over home: their pictures, a hover card, follow back, and clear.
+const F = { list: [], tab: "new" };
+async function openFollowers() {
+  $("#followers").hidden = false;
+  $("#fol-body").innerHTML = `<span class="dim">looking<span class="blink">_</span></span>`;
+  try { F.list = (await api("/api/inbox/followers")).followers; } catch (e) { $("#fol-body").innerHTML = `<p class="dim">${esc(e.message)}</p>`; return; }
+  paintFollowers();
+}
+function closeFollowers() { $("#followers").hidden = true; loadWaiting(); }
+function paintFollowers() {
+  const shown = F.list.filter((f) => (F.tab === "cleared") === f.cleared);
+  const waitingN = F.list.filter((f) => !f.cleared).length;
+  $("#fol-count").textContent = `${waitingN} waiting`;
+  const toFollow = shown.filter((f) => !f.following).length;
+  $("#fol-body").innerHTML = `
+    <div class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
+      <span class="seg"><button data-ftab="new" aria-pressed="${F.tab === "new"}">waiting ${waitingN}</button><button data-ftab="cleared" aria-pressed="${F.tab === "cleared"}">cleared ${F.list.length - waitingN}</button></span>
+      <span class="dim small" style="margin-left:auto">the last 7 days</span>
+    </div>
+    ${shown.length ? `<div class="fgrid">${shown.map((f) => `
+      <div class="fol">
+        <a class="pick" data-fid="${f.fid}" href="https://farcaster.xyz/${encodeURIComponent(f.username ?? "")}" target="_blank" rel="noopener" aria-label="@${esc(f.username ?? f.fid)} on farcaster.xyz">${f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`}</a>
+        <span class="u">${f.fresh ? `<span class="fresh" title="new since your last visit"></span>` : ""}@${esc(f.username ?? f.fid)}</span>
+        <button class="act ${f.following ? "done" : "ink"}" data-follow="${f.fid}">${f.following ? "following" : "follow back"}</button>
+        <button class="act quiet" data-fclear="${f.fid}">${f.cleared ? "bring back" : "clear"}</button>
+      </div>`).join("")}</div>` : `<p class="dim">${F.tab === "cleared" ? "Nothing cleared yet." : "No one's waiting. All clear."}</p>`}
+    <div style="display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap">
+      ${F.tab === "new" && toFollow > 1 ? `<button class="act ink" style="width:auto;padding:6px 10px 5px" data-follow-all>follow back all ${toFollow}</button>` : ""}
+      ${F.tab === "new" && shown.length > 1 ? `<button class="act quiet" style="width:auto;padding:6px 10px 5px" data-fclear-all>clear all ${shown.length}</button>` : ""}
+      <span class="dim small" style="margin-left:auto"><kbd>esc</kbd> close</span>
+    </div>`;
+}
+async function follow(f, on) {
+  try { await api("/api/follow", { user: String(f.fid), on }); f.following = on; sfx.toggle(); toast(on ? `Following @${f.username}.` : `Unfollowed @${f.username}.`); }
+  catch (e) { toast(e.message); }
+}
+async function clearFollowers(fids, on) {
+  await api("/api/inbox/clear", { kind: "followers", ids: fids.map(String), on }).catch((e) => toast(e.message));
+  F.list.forEach((f) => { if (fids.includes(f.fid)) f.cleared = on; });
+  sfx.back();
+}
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest?.("button");
+  if (!t || !t.closest("#followers")) return;
+  if (t.dataset.ftab) F.tab = t.dataset.ftab;
+  else if (t.dataset.follow) { const f = F.list.find((x) => x.fid === +t.dataset.follow); t.disabled = true; await follow(f, !f.following); }
+  else if (t.dataset.fclear) { const f = F.list.find((x) => x.fid === +t.dataset.fclear); await clearFollowers([f.fid], !f.cleared); }
+  else if (t.hasAttribute("data-follow-all")) { for (const f of F.list.filter((x) => !x.cleared && !x.following)) await follow(f, true); }
+  else if (t.hasAttribute("data-fclear-all")) await clearFollowers(F.list.filter((x) => !x.cleared).map((x) => x.fid), true);
+  else if (t.id === "fol-close") return closeFollowers();
+  else return;
+  paintFollowers();
+});
+document.addEventListener("click", (e) => { if (e.target.id === "followers") closeFollowers(); });
+// The hover card: who they are, placed beside their picture and kept on screen.
+function hoverCard(pick) {
+  const f = F.list.find((x) => x.fid === +pick.dataset.fid), hc = $("#fol-hc");
+  if (!f) return;
+  hc.innerHTML = `<b>@${esc(f.username ?? `!${f.fid}`)}</b><span class="dim small">fid ${f.fid}${f.display ? ` · ${esc(f.display)}` : ""}</span>${f.bio ? `<p>${esc(f.bio)}</p>` : ""}<p class="dim small">click: their profile on farcaster.xyz ↗</p>`;
+  hc.classList.add("on");
+  const r = pick.getBoundingClientRect(), w = hc.offsetWidth, h = hc.offsetHeight;
+  const left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+  const top = r.bottom + 8 + h > innerHeight - 8 ? r.top - h - 8 : r.bottom + 8;
+  hc.style.left = left + "px"; hc.style.top = Math.max(8, top) + "px";
+}
+document.addEventListener("pointerover", (e) => { const p = e.target.closest?.("#followers .pick"); if (p) hoverCard(p); });
+document.addEventListener("pointerout", (e) => { if (e.target.closest?.("#followers .pick")) $("#fol-hc").classList.remove("on"); });
+document.addEventListener("focusin", (e) => { const p = e.target.closest?.("#followers .pick"); if (p) hoverCard(p); });
+document.addEventListener("focusout", (e) => { if (e.target.closest?.("#followers .pick")) $("#fol-hc").classList.remove("on"); });
 
 // ------------------------------------------------------------------ node
 function since(iso) {
@@ -294,6 +375,7 @@ addEventListener("keydown", (e) => {
   if (["arrowleft", "arrowup", "h", "k"].includes(k)) { select(S.sel - 1); e.preventDefault(); }
   else if (["arrowright", "arrowdown", "l", "j"].includes(k)) { select(S.sel + 1); e.preventDefault(); }
   else if (k === "enter" || k === " " || k === "a") { open(); e.preventDefault(); }
+  else if (k === "escape" && !$("#followers").hidden) closeFollowers();
   else if (k === "escape" || k === "b") back();
   else if (k === "o") togglePresence();
   else if (k === "m") { S.sound = !S.sound; store.set("cc-sound", S.sound ? "on" : "off"); $("#snd").textContent = S.sound ? "on" : "off"; }
@@ -340,7 +422,7 @@ async function refreshConditions() {
   const home = await boot();
   S.home = home; paintNode(home);
   refreshLive().catch(() => {});
-  loadSince(); loadPresence();
+  loadWaiting(); loadPresence();
   (async () => { while (await refreshConditions().catch(() => false)) await wait(3000); every(10 * 60_000, refreshConditions); })();
   every(10_000, refreshHome);
   every(20_000, refreshLive);

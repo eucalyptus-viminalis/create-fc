@@ -50,7 +50,7 @@
 
 <nav class="bar" aria-label="Modes" data-reveal style="--i:5">
   <div class="in">
-    <button class="mode" data-mode="curate"><span class="k">1</span>curate<span class="soon">soon</span></button>
+    <button class="mode" data-mode="inbox" data-href="/inbox"><span class="k">1</span>inbox</button>
     <button class="mode" data-mode="post" data-href="/post"><span class="k">2</span>post</button>
     <button class="mode" data-mode="create"><span class="k">3</span>create<span class="soon">soon</span></button>
     <button class="mode" data-mode="read" data-href="/classic"><span class="k">4</span>read</button>
@@ -59,6 +59,13 @@
   </div>
 </nav>
 
+<div class="scrim" id="followers" hidden>
+  <section class="tile modal" role="dialog" aria-modal="true" aria-label="New followers">
+    <h2><span>new followers</span><span><span id="fol-count"></span> · <button id="fol-close" style="all:unset;cursor:pointer">close ×</button></span></h2>
+    <div class="inner" id="fol-body"></div>
+  </section>
+  <div class="hc" id="fol-hc" role="tooltip"></div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 <script src="/home.js"></script>
 </body>
