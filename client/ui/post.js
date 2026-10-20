@@ -300,7 +300,7 @@ let linkT, linkRun = 0;
 function scheduleLink() { clearTimeout(linkT); linkT = setTimeout(findLink, 600); }
 function findLink() {
   const url = [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => !S.dismissed.has(u) && !S.atts.some((a) => a.url === u));
-  if (!url) { if (S.link) { S.link = null; renderLink(); paint(); } return; }
+  if (!url) { if (S.link) { S.link = null; paint(); } renderLink(); return; }
   if (S.link?.url === url) return;
   if (S.atts.length >= MAX_EMBEDS) { S.link = null; renderLink(); paint(); return; } // no slot: it stays text
   startLink(url);
@@ -336,7 +336,11 @@ function card(l, mini = false) {
   return `<div class="lcard${mini ? " mini" : ""}">${img}${bar}<div class="lmeta">${text}</div>${mini ? "" : `<button class="x" id="link-x" aria-label="Remove the link card">x</button>`}</div>`;
 }
 function renderLink() {
-  $("#linkcard").innerHTML = S.link ? card(S.link) : "";
+  // A removed card can come back while its link is still in the text.
+  const back = !S.link && S.atts.length < MAX_EMBEDS ? [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => S.dismissed.has(u)) : null;
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
+  $("#linkcard").innerHTML = S.link ? card(S.link) : back ? `<button class="tool" id="link-back" data-url="${esc(back)}">+ card for ${esc(host(back))}</button>` : "";
+  $("#link-back")?.addEventListener("click", (e) => { S.dismissed.delete(e.currentTarget.dataset.url); sfx.add(); saveDraft(); findLink(); });
   $("#link-x")?.addEventListener("click", () => {
     S.dismissed.add(S.link.url); S.link = null; linkRun++;
     renderLink(); paint(); toast("Card removed. The link stays as text.");
