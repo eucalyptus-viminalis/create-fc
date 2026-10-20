@@ -89,3 +89,20 @@
   .post-top h1 { font-size: 32px; }
   .counter { margin-left: 0; width: 100%; justify-content: space-between; }
 }
+
+/* link cards */
+#linkcard:not(:empty) { margin-top: 12px; }
+#pv-link:not(:empty) { margin-top: 8px; }
+.lcard { position: relative; border: var(--b) solid var(--g3); background: var(--g0); }
+.lcard .limg { display: block; width: 100%; aspect-ratio: 1.91 / 1; max-height: 200px; object-fit: cover; border-bottom: 2px solid var(--g3); background: var(--g1); }
+.lcard .limg.wait { animation: beat 1s steps(2, jump-none) infinite; }
+.lcard .lmeta { padding: 8px 10px 10px; }
+.lcard .lsite { color: var(--g2); font-size: 16px; }
+.lcard .ltitle { font-size: 20px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lcard .ldesc { color: var(--g2); font-size: 16px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lcard .x { all: unset; cursor: pointer; position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; text-align: center; background: var(--g3); color: var(--g0); font: 16px/24px var(--px); -webkit-font-smoothing: none; z-index: 2; }
+.lcard .lbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; height: 8px; padding: 6px 10px 0; }
+.lcard .lbar i { background: var(--g1); opacity: .5; }
+.lcard .lbar i.on { background: var(--g3); opacity: 1; }
+.lcard .lbar i.now { background: var(--g3); animation: beat .6s steps(2, jump-none) infinite; }
+.lcard.mini .limg { aspect-ratio: 2 / 1; max-height: 160px; }

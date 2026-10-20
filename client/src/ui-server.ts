@@ -21,6 +21,7 @@ import { changeCleared, clearedFor } from "./cleared.ts";
 import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { companionStatus, conditions, lastVisit, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
+import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, setCleared, setSaved, waiting, type Kind } from "./inbox.ts";
 import type { Hex } from "viem";
 
@@ -354,6 +355,8 @@ const routes: Record<string, Handler> = {
     const replyTo = b.replyTo as { fid: number; hash: Hex } | undefined;
     return cast(text, { replyTo, embeds });
   },
+  // A link's preview card: title, description, image, site (unfurl.ts).
+  "GET /api/unfurl": async (q) => unfurl(String(q.get("url") ?? "")),
   // People to @mention: those you follow whose name starts with q, plus an exact username.
   "GET /api/mentions": async (q) => mentionSuggestions(await myFid(), q.get("q") ?? ""),
   // Image space on your node (images.ts). Uploads come in as raw bytes; see the server below.

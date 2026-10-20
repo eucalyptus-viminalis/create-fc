@@ -52,6 +52,8 @@ const ta = $("#text");
 const S = {
   me: null,
   atts: [], // { id, preview, name?, url?, size, progress (0-10), error? }
+  link: null, // the first link in the text: { url, stage (1 reach, 2 read, 3 image), card?, error? }
+  dismissed: new Set(), // links whose card you removed: they stay text only
   verified: new Map(), // username -> profile; these mentions are free
   usage: null,
   menu: { open: false, items: [], sel: 0, start: 0, q: "" },
@@ -80,25 +82,27 @@ function paint() {
   $("#left").title = over ? "Cut some words to cast." : `${left} bytes left`;
 
   const ready = S.atts.filter((a) => a.url);
+  const used = S.atts.length + (S.link ? 1 : 0);
   const busy = S.atts.some((a) => !a.url && !a.error);
   const empty = !t.trim() && !ready.length;
   const block = over ? "Cut some words first." : empty ? "Write something first." : busy ? "Wait for images to upload." : "";
   $("#cast").setAttribute("aria-disabled", String(Boolean(block)));
   $("#cast").title = block;
-  $("#slots").textContent = `${S.atts.length} of ${MAX_EMBEDS} attachments`;
+  $("#slots").textContent = `${used} of ${MAX_EMBEDS} attachments`;
   const noHosting = S.usage && !S.usage.hosting;
-  $("#add-image").setAttribute("aria-disabled", String(S.atts.length >= MAX_EMBEDS || Boolean(noHosting)));
+  $("#add-image").setAttribute("aria-disabled", String(used >= MAX_EMBEDS || Boolean(noHosting)));
 
   $("#pv-text").innerHTML = t.trim()
     ? esc(t).replace(MENTION, (m, pre, u) => (S.verified.has(u.toLowerCase()) ? `${pre}<span class="m">@${u}</span>` : m))
     : `<span class="dim">Your cast shows up here.</span>`;
   $("#pv-pics").innerHTML = S.atts.map((a) => `<img src="${esc(a.url ?? a.preview)}" alt="">`).join("");
+  $("#pv-link").innerHTML = S.link?.card ? card(S.link, true) : "";
   $("#counts").innerHTML = `
     <tr><td>letters typed</td><td>${m.letters}</td></tr>
     <tr><td>bytes sent</td><td>${m.bytes} of ${LIMIT}</td></tr>
     <tr><td>mentions, free</td><td>${m.mentions}</td></tr>
     <tr><td>emoji, 3 or 4 bytes each</td><td>${m.emoji}</td></tr>
-    <tr><td>attachments</td><td>${S.atts.length} of ${MAX_EMBEDS}</td></tr>`;
+    <tr><td>attachments${S.link ? ", 1 link" : ""}</td><td>${S.atts.length + (S.link ? 1 : 0)} of ${MAX_EMBEDS}</td></tr>`;
   saveDraft();
 }
 
@@ -109,7 +113,7 @@ function saveDraft() {
   saveT = setTimeout(() => {
     const att = S.atts.filter((a) => a.url).map(({ url, name, size }) => ({ url, name, size }));
     if (!ta.value && !att.length) { store.del(DRAFT); $("#saved").textContent = ""; return; }
-    store.set(DRAFT, { text: ta.value, atts: att, mentions: [...S.verified.values()] });
+    store.set(DRAFT, { text: ta.value, atts: att, mentions: [...S.verified.values()], dismissed: [...S.dismissed] });
     $("#saved").textContent = "draft saved";
   }, 300);
 }
@@ -182,7 +186,7 @@ function checkTypedMentions() {
   }, 600);
 }
 
-ta.addEventListener("input", () => { paint(); updateMenu(); checkTypedMentions(); });
+ta.addEventListener("input", () => { paint(); updateMenu(); checkTypedMentions(); scheduleLink(); });
 ta.addEventListener("click", updateMenu);
 ta.addEventListener("blur", () => setTimeout(closeMenu, 150));
 ta.addEventListener("keydown", (e) => {
@@ -239,7 +243,7 @@ function upload(blob, att) {
 async function addFiles(files) {
   for (const f of files) {
     if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) { toast("Only PNG, JPEG, GIF or WebP."); continue; }
-    if (S.atts.length >= MAX_EMBEDS) { sfx.over(); toast("Two attachments max. Remove one first."); break; }
+    if (S.atts.length + (S.link ? 1 : 0) >= MAX_EMBEDS) { sfx.over(); toast(S.link ? "Two attachments max. Remove the link card or an image." : "Two attachments max. Remove one first."); break; }
     if (S.usage && !S.usage.hosting) { toast("This node doesn't host images yet."); break; }
     const att = { id: Math.random().toString(36).slice(2), preview: URL.createObjectURL(f), size: f.size, progress: 0 };
     S.atts.push(att); sfx.add(); renderAtts(); paint();
@@ -286,6 +290,60 @@ box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add(
 box.addEventListener("dragleave", () => box.classList.remove("drop"));
 box.addEventListener("drop", (e) => { e.preventDefault(); box.classList.remove("drop"); addFiles([...e.dataTransfer.files]); });
 
+// ------------------------------------------------------------------ link cards
+// The first link in the text gets a card, like other Farcaster apps show, and
+// rides along as an attachment so they show it too. Three steps you can watch:
+// reach the site, read its preview tags, load its image. (A page's size isn't
+// known ahead, so the steps are what's measurable, not bytes.)
+const LINK = /https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]}]/gi;
+let linkT, linkRun = 0;
+function scheduleLink() { clearTimeout(linkT); linkT = setTimeout(findLink, 600); }
+function findLink() {
+  const url = [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => !S.dismissed.has(u) && !S.atts.some((a) => a.url === u));
+  if (!url) { if (S.link) { S.link = null; renderLink(); paint(); } return; }
+  if (S.link?.url === url) return;
+  if (S.atts.length >= MAX_EMBEDS) { S.link = null; renderLink(); paint(); return; } // no slot: it stays text
+  startLink(url);
+}
+async function startLink(url) {
+  const run = ++linkRun;
+  S.link = { url, stage: 1 };
+  renderLink(); paint();
+  let card;
+  try { card = await api(`/api/unfurl?url=${encodeURIComponent(url)}`); }
+  catch (e) { if (run === linkRun) { S.link = { url, stage: 3, error: e.message }; renderLink(); paint(); } return; }
+  if (run !== linkRun) return;
+  S.link = { url, stage: 2, card };
+  sfx.add(); renderLink(); paint();
+  if (!card.image) { S.link.stage = 3; renderLink(); return; }
+  const img = new Image();
+  img.referrerPolicy = "no-referrer";
+  img.onload = () => { if (run === linkRun) { S.link.stage = 3; renderLink(); paint(); } };
+  img.onerror = () => { if (run === linkRun) { S.link.card = { ...card, image: undefined }; S.link.stage = 3; renderLink(); paint(); } };
+  img.src = card.image;
+}
+const STAGES = ["reaching", "reading", "loading image"];
+function card(l, mini = false) {
+  const c = l.card ?? {}, host = (() => { try { return new URL(l.url).hostname.replace(/^www\./, ""); } catch { return l.url; } })();
+  const loading = l.stage < 3;
+  const bar = loading ? `<div class="lbar" title="${STAGES[l.stage - 1]} ${esc(host)}">${[1, 2, 3].map((i) => `<i class="${i < l.stage ? "on" : i === l.stage ? "now" : ""}"></i>`).join("")}</div>` : "";
+  const img = c.image && l.stage === 3 ? `<img class="limg" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">` : c.image ? `<div class="limg wait"></div>` : "";
+  const text = l.error
+    ? `<div class="lsite">${esc(host)}</div><div class="ldesc">No preview for this link. It still gets attached.</div>`
+    : c.title || c.description
+      ? `<div class="lsite">${esc(c.site ?? host)}</div>${c.title ? `<div class="ltitle">${esc(c.title)}</div>` : ""}${c.description && !mini ? `<div class="ldesc">${esc(c.description)}</div>` : ""}`
+      : `<div class="lsite">${esc(host)}</div><div class="ldesc">${loading ? `${STAGES[l.stage - 1]}…` : "No preview for this link. It still gets attached."}</div>`;
+  return `<div class="lcard${mini ? " mini" : ""}">${img}${bar}<div class="lmeta">${text}</div>${mini ? "" : `<button class="x" id="link-x" aria-label="Remove the link card">x</button>`}</div>`;
+}
+function renderLink() {
+  $("#linkcard").innerHTML = S.link ? card(S.link) : "";
+  $("#link-x")?.addEventListener("click", () => {
+    S.dismissed.add(S.link.url); S.link = null; linkRun++;
+    renderLink(); paint(); toast("Card removed. The link stays as text.");
+    findLink();
+  });
+}
+
 // ------------------------------------------------------------------ image space
 const fmtMB = (b) => (!b ? "0 MB" : b >= 1024 * MB ? `${(b / 1024 / MB).toFixed(1)} GB` : b >= MB ? `${(b / MB).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 function paintSpace() {
@@ -323,7 +381,7 @@ async function cast() {
   const tick = setInterval(() => { if (at < 2) { at++; sfx.step(); $("#ov").innerHTML = drawSteps(at); } }, 700);
   let r;
   try {
-    r = await api("/api/cast", { text: ta.value, embeds: S.atts.filter((a) => a.url).map((a) => a.url) });
+    r = await api("/api/cast", { text: ta.value, embeds: [...S.atts.filter((a) => a.url).map((a) => a.url), ...(S.link ? [S.link.url] : [])].slice(0, MAX_EMBEDS) });
   } catch (e) {
     clearInterval(tick); sfx.over();
     $("#ov-r").textContent = "didn't send";
@@ -340,7 +398,7 @@ async function cast() {
     <p class="dim">${r.landed ? "Every node has it now." : "It usually lands within a minute."}</p>
     <div class="row"><button class="cast-btn" id="again" style="margin-left:0">write another <kbd>A</kbd></button>${link ? `<a class="tool" href="${esc(link)}" target="_blank" rel="noopener">see it</a>` : ""}<a class="tool" href="/">home</a></div>`;
   // The images now belong to a cast, so clearing the draft keeps them.
-  ta.value = ""; S.atts = []; S.verified.clear(); store.del(DRAFT); renderAtts(); paint();
+  ta.value = ""; S.atts = []; S.link = null; S.dismissed.clear(); S.verified.clear(); store.del(DRAFT); renderAtts(); renderLink(); paint();
   $("#again").addEventListener("click", () => { ov.classList.remove("open"); ta.focus(); });
 }
 $("#cast").addEventListener("click", cast);
@@ -371,7 +429,9 @@ addEventListener("keydown", (e) => {
     ta.value = d.text ?? "";
     for (const p of d.mentions ?? []) if (p.username) S.verified.set(p.username.toLowerCase(), p);
     S.atts = (d.atts ?? []).map((a) => ({ id: Math.random().toString(36).slice(2), url: a.url, name: a.name, size: a.size, progress: 10 }));
+    for (const u of d.dismissed ?? []) S.dismissed.add(u);
     renderAtts();
+    findLink();
   }
   paint();
   ta.focus();
