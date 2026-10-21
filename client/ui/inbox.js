@@ -3,29 +3,11 @@
 // Save casts to come back to. Cleared and saved stay on this computer.
 // Purple marks what arrived since your last visit.
 
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
+const { $, esc, api, tone, toast, SignedOut } = kit;
 const enc = new TextEncoder();
 
-class SignedOut extends Error {}
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (res.status === 401) throw new SignedOut(json.error);
-  if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
-  return json.data;
-}
 
 // ------------------------------------------------------------------ sound, toast
-let ac = null;
-const soundOn = () => { try { return localStorage.getItem("cc-sound") !== "off"; } catch { return true; } };
-function unlock() { if (!ac) try { ac = new AudioContext(); } catch { return; } if (ac.state === "suspended") ac.resume(); }
-function tone(f, at, dur, vol = 0.03) { if (!ac || !soundOn() || ac.state !== "running") return; const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain(); o.type = "square"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
 const sfx = {
   move: () => tone(880, 0, 0.02, 0.02),
   tick: () => tone(660, 0, 0.03),
@@ -34,10 +16,6 @@ const sfx = {
   save: () => { tone(988, 0, 0.05); tone(1319, 0.05, 0.08); },
   win: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.06, 0.1, 0.035)),
 };
-addEventListener("pointerdown", unlock);
-addEventListener("keydown", unlock);
-let toastT;
-function toast(msg, ms = 2000) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
 
 // ------------------------------------------------------------------ pieces
 function ago(iso) {

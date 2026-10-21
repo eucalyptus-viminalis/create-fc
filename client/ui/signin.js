@@ -6,34 +6,11 @@
 //   - a terminal, and making an account: only on your own computer
 // Copy rule: active voice, max 7 words a sentence.
 
-const $ = (s) => document.querySelector(s);
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
+const { $, wait, esc, api, tone, toast } = kit;
 const DOCS = "https://eucalyptus-viminalis.github.io/create-fc/docs";
 
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
-  return json.data;
-}
 
 // ------------------------------------------------------------------ sound
-let ac = null;
-const soundOn = () => { try { return localStorage.getItem("cc-sound") !== "off"; } catch { return true; } };
-function unlock() { if (!ac) try { ac = new AudioContext(); } catch { return; } if (ac.state === "suspended") ac.resume(); }
-function tone(f, at, dur, vol = 0.035) {
-  if (!ac || !soundOn() || ac.state !== "running") return;
-  const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
-  o.type = "square"; o.frequency.setValueAtTime(f, t);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
-}
 const sfx = {
   move: () => tone(880, 0, 0.025, 0.025),
   open: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.04, 0.07)),
@@ -43,8 +20,6 @@ const sfx = {
   win: () => [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.07, 0.12, 0.04)),
 };
 
-let toastT;
-function toast(msg, ms = 1800) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
 
 // ------------------------------------------------------------------ pieces
 const head = (sub) => `<div class="title"><h1>sign in</h1><span class="dim">${sub ?? ""}</span></div>`;
@@ -332,9 +307,8 @@ async function done(already = false) {
 
 // ------------------------------------------------------------------ input
 const backKeys = (k) => { if (k === "escape") { sfx.back(); choose(); return true; } };
-addEventListener("pointerdown", unlock);
 addEventListener("keydown", (e) => {
-  unlock();
+  kit.unlock();
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const typing = e.target.tagName === "INPUT";
   const k = e.key.toLowerCase();

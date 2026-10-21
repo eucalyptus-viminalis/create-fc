@@ -112,7 +112,11 @@ body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-i
 .mode { all: unset; cursor: pointer; font-family: var(--px); font-size: 16px; line-height: 1; padding: 10px 14px 9px; border: var(--b) solid var(--g3); display: flex; gap: 8px; align-items: center; flex: none; }
 .mode .k { font: 16px var(--vt); color: var(--g2); -webkit-font-smoothing: antialiased; }
 .mode .soon { font: 16px var(--vt); color: var(--g2); -webkit-font-smoothing: antialiased; }
+a.mode { text-decoration: none; color: inherit; }
 .mode[aria-current] { background: var(--g3); color: var(--g0); box-shadow: 3px 3px 0 var(--g2); }
+/* home's cursor: where the arrow keys or a controller will take you */
+.mode.cursor:not([aria-current]) { box-shadow: 3px 3px 0 var(--g3); transform: translate(-2px, -2px); }
+.mode[aria-disabled="true"] { cursor: default; color: var(--g2); }
 .mode[aria-current] .k, .mode[aria-current] .soon { color: var(--g1); }
 .bar .hint { margin-left: auto; color: var(--g2); font-size: 16px; white-space: nowrap; }
 .bar .hint kbd { font: inherit; color: var(--g3); border: 2px solid var(--g1); padding: 0 4px; }

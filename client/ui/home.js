@@ -3,46 +3,14 @@
 // fc-companion on the same server. Nothing here is made up: when something
 // isn't known yet, the tile says so.
 
-const $ = (s) => document.querySelector(s);
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const { $, wait, esc, api, tone, toast, SignedOut } = kit;
 const fmt = (n) => Number(n).toLocaleString("en-US");
-const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
 
-class SignedOut extends Error {}
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (res.status === 401) throw new SignedOut(json.error);
-  if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
-  return json.data;
-}
 
-const store = {
-  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
-};
-const S = { sound: store.get("cc-sound") !== "off", sel: 0, presence: "online", node: null, live: null, cond: null, lastHeights: {} };
+const S = { sound: kit.soundOn(), sel: 0, presence: "online", node: null, live: null, cond: null, lastHeights: {} };
 
 // ------------------------------------------------------------------ sound
 // Square-wave blips. Browsers allow sound only after the first click or key.
-let ac = null;
-function unlock() {
-  if (!ac) try { ac = new AudioContext(); } catch { return; }
-  if (ac.state === "suspended") ac.resume();
-}
-function tone(f, at, dur, { vol = 0.05, to } = {}) {
-  if (!ac || !S.sound || ac.state !== "running") return;
-  const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
-  o.type = "square"; o.frequency.setValueAtTime(f, t);
-  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
-}
 const STEPS = [0, 2, 4, 7, 9, 12, 14, 16];
 const sfx = {
   blink: () => tone(196, 0, 0.03, { vol: 0.02 }),
@@ -345,31 +313,32 @@ function togglePresence() {
 
 // ------------------------------------------------------------------ modes + input
 const modes = [...document.querySelectorAll(".mode")];
+// The bar is the same on every page (kit.modes): the solid highlight says
+// where you are. Here on home, a cursor (the lifted button) picks where to go
+// with the arrow keys, a controller or the mouse.
 function select(i, sound = true) {
   const next = (i + modes.length) % modes.length;
   if (next !== S.sel && sound) sfx.move();
   S.sel = next;
-  modes.forEach((m, j) => m.toggleAttribute("aria-current", j === S.sel));
+  modes.forEach((m, j) => m.classList.toggle("cursor", j === S.sel));
 }
-let toastT;
-function toast(msg, ms = 1600) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
 function open() {
-  const m = modes[S.sel];
+  const m = modes[S.sel], href = m.getAttribute("href");
+  if (m.getAttribute("aria-disabled") === "true") { sfx.back(); return; } // kit says "coming soon"
+  if (m.dataset.mode === "home") { sfx.move(); return; }
   sfx.open();
-  if (m.dataset.href) setTimeout(() => (location.href = m.dataset.href), 220);
-  else toast(`${m.dataset.mode} is coming next`);
+  if (href) setTimeout(() => (location.href = href), 220);
 }
 const back = () => { sfx.back(); $("#toast").classList.remove("show"); };
-modes.forEach((m, j) => { m.addEventListener("mouseenter", () => select(j)); m.addEventListener("click", () => { select(j, false); open(); }); });
+modes.forEach((m, j) => { m.addEventListener("mouseenter", () => select(j)); m.addEventListener("click", (e) => { e.preventDefault(); select(j, false); open(); }); });
 document.addEventListener("click", (e) => {
   const go = e.target.closest?.("[data-mode-go]");
   if (go) { select(modes.findIndex((m) => m.dataset.mode === go.dataset.modeGo), false); open(); }
 });
 
 const ready = () => document.body.classList.contains("ready");
-addEventListener("pointerdown", unlock);
 addEventListener("keydown", (e) => {
-  unlock();
+  kit.unlock();
   if (!ready() || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
   if (["arrowleft", "arrowup", "h", "k"].includes(k)) { select(S.sel - 1); e.preventDefault(); }
@@ -378,8 +347,8 @@ addEventListener("keydown", (e) => {
   else if (k === "escape" && !$("#followers").hidden) closeFollowers();
   else if (k === "escape" || k === "b") back();
   else if (k === "o") togglePresence();
-  else if (k === "m") { S.sound = !S.sound; store.set("cc-sound", S.sound ? "on" : "off"); $("#snd").textContent = S.sound ? "on" : "off"; }
-  else if (/^[1-5]$/.test(k)) { select(+k - 1); open(); }
+  else if (k === "m") { S.sound = !S.sound; kit.setSound(S.sound); $("#snd").textContent = S.sound ? "on" : "off"; }
+  else if (/^[1-4]$/.test(k)) { select(+k - 1); open(); }
 });
 
 // Game controllers: d-pad or left stick to choose, A to go, B to go back.

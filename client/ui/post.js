@@ -3,37 +3,14 @@
 // The counter counts bytes, the way Farcaster does: mentions are cut out of
 // the text before it's sent, so they're free.
 
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
+const { $, esc, api, store, tone, toast, SignedOut } = kit;
 const LIMIT = 320, MAX_EMBEDS = 2, MB = 1024 * 1024;
 const enc = new TextEncoder();
 // A name can hold dots (vitalik.eth) but never ends in one, so "@alice." is @alice.
 const MENTION = /(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi;
 
-class SignedOut extends Error {}
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (res.status === 401) throw new SignedOut(json.error);
-  if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
-  return json.data;
-}
-const store = {
-  get: (k) => { try { return JSON.parse(localStorage.getItem(k) ?? "null"); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-  del: (k) => { try { localStorage.removeItem(k); } catch {} },
-};
 
 // ------------------------------------------------------------------ sound
-let ac = null;
-const soundOn = () => { try { return localStorage.getItem("cc-sound") !== "off"; } catch { return true; } };
-function unlock() { if (!ac) try { ac = new AudioContext(); } catch { return; } if (ac.state === "suspended") ac.resume(); }
-function tone(f, at, dur, vol = 0.03) { if (!ac || !soundOn() || ac.state !== "running") return; const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain(); o.type = "square"; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
 const sfx = {
   move: () => tone(880, 0, 0.025, 0.02),
   pick: () => { tone(660, 0, 0.04); tone(990, 0.04, 0.05); },
@@ -42,10 +19,6 @@ const sfx = {
   step: () => tone(783.99, 0, 0.05),
   win: () => [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tone(f, i * 0.07, 0.12, 0.04)),
 };
-addEventListener("pointerdown", unlock);
-addEventListener("keydown", unlock);
-let toastT;
-function toast(msg, ms = 2200) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms); }
 
 // ------------------------------------------------------------------ state
 const ta = $("#text");
@@ -227,7 +200,7 @@ function upload(blob, att) {
   return new Promise((resolve, reject) => {
     const x = new XMLHttpRequest();
     x.open("POST", "/api/images");
-    x.setRequestHeader("x-clearcast-token", TOKEN);
+    x.setRequestHeader("x-clearcast-token", kit.TOKEN);
     x.setRequestHeader("content-type", "application/octet-stream");
     x.upload.onprogress = (e) => { if (e.lengthComputable) { att.progress = Math.min(9, Math.floor((e.loaded / e.total) * 10)); renderAtts(); } };
     x.onload = () => {
