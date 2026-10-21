@@ -277,15 +277,37 @@ async function shardSpan(shard: number) {
   return { firstBlock: a.blockNumber, firstMs: unixMs(a.blockConfirmedBody.timestamp), lastBlock: b.blockNumber, lastMs: unixMs(b.blockConfirmedBody.timestamp) };
 }
 type Span = Awaited<ReturnType<typeof shardSpan>>;
+
+// A shard's span, sturdy against a node that's restarting or busy: ask up to
+// three times, and keep the last good answer in ~/.fc-client/network-spans.json.
+// If the node still can't say, use that saved span, with its newer end
+// replaced by the node's current height (blocks keep a steady pace, so the
+// estimate holds). undefined only when there has never been a good answer.
+async function spanFor(shard: number, height: number): Promise<Span | undefined> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const span = await shardSpan(shard);
+      const saved = await readJson<Record<string, Span>>("network-spans.json", {});
+      saved[shard] = span;
+      await writeJson("network-spans.json", saved);
+      return span;
+    } catch {
+      await new Promise((r) => setTimeout(r, [2_000, 5_000, 0][attempt]));
+    }
+  }
+  const saved = (await readJson<Record<string, Span>>("network-spans.json", {}))[shard];
+  return saved ? { ...saved, lastBlock: height, lastMs: Date.now() } : undefined;
+}
 const blockAt = (s: Span, ms: number) => Math.round(s.firstBlock + ((ms - s.firstMs) * (s.lastBlock - s.firstBlock)) / (s.lastMs - s.firstMs));
 
 // One hour's rate, from a ~4 minute sample in the middle of it. Past hours
 // never change, so they're kept in ~/.fc-client/network-hours.json.
 const SAMPLE_BLOCKS = 240;
 type HourCache = Record<string, number>; // "<shard>:<hour start, unix ms>" -> messages a minute
-async function hourRate(shard: number, span: Span, hourStart: number, cache: HourCache): Promise<number | undefined> {
+async function hourRate(shard: number, span: Span | undefined, hourStart: number, cache: HourCache): Promise<number | undefined> {
   const k = `${shard}:${hourStart}`;
   if (k in cache) return cache[k];
+  if (!span) return undefined; // no history from the node: only what's cached
   const at = hourStart + 25 * 60_000;
   if (at < span.firstMs || at + 5 * 60_000 > span.lastMs) return undefined; // outside what the node keeps
   const w = await countBlocks(shard, blockAt(span, at), SAMPLE_BLOCKS);
@@ -308,9 +330,12 @@ export type Conditions = {
 // has, up to 3. Measuring takes a minute the first time, so it runs in the
 // background and the page asks for progress.
 let job: { started: number; result: Conditions } | undefined;
+const RETRY_MS = 60_000;
 
 export function conditions(node: NodeOverview): Conditions {
-  const stale = job && job.result.state !== "measuring" && Date.now() - job.started > 10 * 60_000;
+  // Fresh measurements every 10 minutes; after a failure, try again in one.
+  const age = job ? Date.now() - job.started : 0;
+  const stale = job && job.result.state !== "measuring" && age > (job.result.state === "failed" ? RETRY_MS : 10 * 60_000);
   if (!job || stale) {
     const result: Conditions = { state: "measuring", done: 0, total: 0, hours: [], historyDays: 0 };
     const started = Date.now();
@@ -318,7 +343,7 @@ export function conditions(node: NodeOverview): Conditions {
     measure(node, result).catch((e) => {
       result.state = "failed";
       result.error = e instanceof Error ? e.message : String(e);
-      result.retryAt = new Date(started + 10 * 60_000).toISOString();
+      result.retryAt = new Date(started + RETRY_MS).toISOString();
     });
   }
   return job.result;
@@ -326,14 +351,17 @@ export function conditions(node: NodeOverview): Conditions {
 
 async function measure(node: NodeOverview, out: Conditions) {
   const shards = dataShards(node).map((s) => s.id);
-  const spans = new Map(await Promise.all(shards.map(async (id) => [id, await shardSpan(id)] as const)));
-  const oldest = Math.max(...[...spans.values()].map((s) => s.firstMs));
+  const spans = new Map(await Promise.all(dataShards(node).map(async (s) => [s.id, await spanFor(s.id, s.height)] as const)));
+  const known = [...spans.values()].filter((x): x is Span => x !== undefined);
+  const cache = await readJson<HourCache>("network-hours.json", {});
+  // With no history from the node and nothing cached, there's nothing to compare against.
+  if (!known.length && !Object.keys(cache).length) throw new NodeError("this node isn't sharing its event history yet");
+  const oldest = known.length ? Math.max(...known.map((x) => x.firstMs)) : Date.now() - 3.5 * 86_400_000;
   out.historyDays = Math.round(((Date.now() - oldest) / 86_400_000) * 10) / 10;
 
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const nowHour = new Date().getHours();
-  const cache = await readJson<HourCache>("network-hours.json", {});
   const hourStart = (daysAgo: number, h: number) => {
     const d = new Date(midnight);
     d.setDate(d.getDate() - daysAgo);
@@ -349,7 +377,7 @@ async function measure(node: NodeOverview, out: Conditions) {
 
   const rates = new Map<string, number>(); // "<daysAgo>:<hour>" -> messages a minute, all shards
   await pool(jobs, 6, async (j) => {
-    const parts = await Promise.all(shards.map((id) => hourRate(id, spans.get(id)!, hourStart(j.daysAgo, j.hour), cache)));
+    const parts = await Promise.all(shards.map((id) => hourRate(id, spans.get(id), hourStart(j.daysAgo, j.hour), cache).catch(() => undefined)));
     if (parts.every((p) => p !== undefined)) rates.set(`${j.daysAgo}:${j.hour}`, parts.reduce((a, b) => a + b!, 0));
     out.done++;
     out.hours = summarize(rates);
