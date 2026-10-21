@@ -41,18 +41,12 @@
 
 /* toolbar and counter */
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-.tool { all: unset; cursor: pointer; font: 16px/1 var(--px); -webkit-font-smoothing: none; border: 2px solid var(--g3); padding: 6px 8px 5px; display: inline-flex; gap: 6px; align-items: center; }
-.tool kbd { font: 16px var(--vt); color: var(--g2); -webkit-font-smoothing: antialiased; }
-.tool[aria-disabled="true"] { opacity: .4; cursor: default; }
 .counter { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .cells { display: grid; grid-template-columns: repeat(32, 4px); gap: 2px; height: 16px; }
 .cells i { background: var(--g1); opacity: .45; } .cells i.on { background: var(--g3); opacity: 1; }
 .cells.over i.on { animation: beat .5s steps(2, jump-none) infinite; }
 .left { font: 16px/1 var(--px); -webkit-font-smoothing: none; min-width: 64px; text-align: right; }
 .left.over { background: var(--g3); color: var(--g0); padding: 3px 5px 2px; }
-.cast-btn { all: unset; cursor: pointer; margin-left: auto; font: 16px/1 var(--px); -webkit-font-smoothing: none; border: var(--b) solid var(--g3); padding: 10px 14px 9px; display: inline-flex; gap: 8px; align-items: center; background: var(--g3); color: var(--g0); box-shadow: 3px 3px 0 var(--g2); white-space: nowrap; }
-.cast-btn kbd { font: 16px var(--vt); opacity: .7; -webkit-font-smoothing: antialiased; }
-.cast-btn[aria-disabled="true"] { opacity: .35; cursor: default; }
 
 /* preview */
 .cast { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }

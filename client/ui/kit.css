@@ -8,3 +8,36 @@
 .ext-arrow { display: inline-block; width: 0.5em; height: 0.5em; margin-left: 0.18em; vertical-align: 0.42em; fill: currentColor; }
 .ext:hover .ext-arrow, .ext:focus-visible .ext-arrow { transform: translate(1px, -1px); }
 .ext:has(img) { text-decoration: none; }
+
+/* kit.button: one button for everything. Two sizes (default small, .lg),
+   three looks (default outline, .primary ink, .quiet dashed), and the same
+   states everywhere: lift on hover, press on click, stay pressed when on
+   (aria-pressed), fade when off (aria-disabled), blink when busy (aria-busy). */
+.k-btn { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+  font: 16px/1 var(--px); -webkit-font-smoothing: none; color: var(--g3); background: var(--g0); text-decoration: none;
+  border: 2px solid var(--g3); padding: 6px 9px 5px; box-shadow: 2px 2px 0 var(--g3); transition: transform .06s steps(1), box-shadow .06s steps(1); }
+.k-btn kbd { font: 16px var(--vt); opacity: .65; -webkit-font-smoothing: antialiased; }
+.k-btn.lg { border-width: var(--b); padding: 10px 14px 9px; box-shadow: 3px 3px 0 var(--g3); }
+.k-btn.primary { background: var(--g3); color: var(--g0); box-shadow: 2px 2px 0 var(--g2); }
+.k-btn.lg.primary { box-shadow: 3px 3px 0 var(--g2); }
+.k-btn.quiet { border-style: dashed; border-color: var(--g2); color: var(--g2); box-shadow: none; }
+.k-btn:hover, .k-btn:focus-visible { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--g3); }
+.k-btn.lg:hover, .k-btn.lg:focus-visible { box-shadow: 4px 4px 0 var(--g3); }
+.k-btn.primary:hover, .k-btn.primary:focus-visible { box-shadow: 3px 3px 0 var(--g2); }
+.k-btn.quiet:hover, .k-btn.quiet:focus-visible { transform: none; box-shadow: none; color: var(--g3); border-color: var(--g3); }
+.k-btn:focus-visible { outline: 2px dotted var(--g3); outline-offset: 3px; }
+.k-btn:active { transform: translate(2px, 2px); box-shadow: none !important; }
+.k-btn[aria-pressed="true"] { background: var(--g3); color: var(--g0); box-shadow: none; transform: translate(2px, 2px); }
+.k-btn[aria-disabled="true"], .k-btn:disabled { opacity: .35; cursor: default; transform: none; box-shadow: none; }
+.k-btn[aria-busy="true"] { cursor: progress; }
+.k-btn[aria-busy="true"] .k-lbl::after { content: "_"; animation: beat .6s steps(2, jump-none) infinite; }
+.k-btn.fixed { min-width: 168px; }
+.k-btn.full { width: 100%; }
+.k-btn.push { margin-left: auto; }
+
+/* kit.seg: a group of choices, one on (the waiting / cleared / saved tabs). */
+.k-seg { display: inline-flex; border: 2px solid var(--g3); box-shadow: 2px 2px 0 var(--g3); }
+.k-seg button { all: unset; cursor: pointer; font: 16px/1 var(--px); -webkit-font-smoothing: none; padding: 7px 11px 6px; border-left: 2px solid var(--g3); }
+.k-seg button:first-child { border-left: 0; }
+.k-seg button[aria-pressed="true"] { background: var(--g3); color: var(--g0); }
+.k-seg button:hover:not([aria-pressed="true"]), .k-seg button:focus-visible { background: var(--g1); }

@@ -314,7 +314,7 @@ function renderLink() {
   // A removed card can come back while its link is still in the text.
   const back = !S.link && S.atts.length < MAX_EMBEDS ? [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => S.dismissed.has(u)) : null;
   const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
-  $("#linkcard").innerHTML = S.link ? card(S.link) : back ? `<button class="tool" id="link-back" data-url="${esc(back)}">+ card for ${esc(host(back))}</button>` : "";
+  $("#linkcard").innerHTML = S.link ? card(S.link) : back ? kit.button(`+ card for ${esc(host(back))}`, { attrs: `id="link-back" data-url="${esc(back)}"` }) : "";
   $("#link-back")?.addEventListener("click", (e) => { S.dismissed.delete(e.currentTarget.dataset.url); sfx.add(); saveDraft(); findLink(); });
   $("#link-x")?.addEventListener("click", () => {
     S.dismissed.add(S.link.url); S.link = null; linkRun++;
@@ -364,7 +364,7 @@ async function cast() {
   } catch (e) {
     clearInterval(tick); sfx.over();
     $("#ov-r").textContent = "didn't send";
-    $("#ov").innerHTML = `<div class="err"><p>${esc(e.message)}</p></div><div class="row"><button class="cast-btn" id="ov-back" style="margin-left:0">back <kbd>esc</kbd></button></div>`;
+    $("#ov").innerHTML = `<div class="err"><p>${esc(e.message)}</p></div><div class="row">${kit.button("back", { size: "lg", key: "esc", attrs: 'id="ov-back"' })}</div>`;
     $("#ov-back").addEventListener("click", () => ov.classList.remove("open"));
     return;
   }
@@ -375,7 +375,7 @@ async function cast() {
   $("#ov").innerHTML = `<p class="count" style="margin:6px 0 10px">${r.landed ? "cast!" : "sent"}</p>
     <p>${r.landed ? "Your cast is on Farcaster." : "This node hasn't seen it yet."}</p>
     <p class="dim">${r.landed ? "Every node has it now." : "It usually lands within a minute."}</p>
-    <div class="row"><button class="cast-btn" id="again" style="margin-left:0">write another <kbd>A</kbd></button>${link ? kit.ext(link, "see it", { cls: "tool" }) : ""}<a class="tool" href="/">home</a></div>`;
+    <div class="row">${kit.button("write another", { size: "lg", look: "primary", key: "A", attrs: 'id="again"' })}${link ? kit.ext(link, "see it", { cls: "k-btn lg" }) : ""}<a class="k-btn lg" href="/">home</a></div>`;
   // The images now belong to a cast, so clearing the draft keeps them.
   ta.value = ""; S.atts = []; S.link = null; S.dismissed.clear(); S.verified.clear(); store.del(DRAFT); renderAtts(); renderLink(); paint();
   $("#again").addEventListener("click", () => { ov.classList.remove("open"); ta.focus(); });

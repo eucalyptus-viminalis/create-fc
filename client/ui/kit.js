@@ -114,5 +114,18 @@
     inner.addEventListener("click", (e) => { const b = e.target.closest?.('.mode[aria-disabled="true"]'); if (b) toast(`${b.dataset.mode} is coming soon`); });
   }
 
-  window.kit = { $, wait, esc, ext, arrow, TOKEN, SignedOut, api, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
+  // ---------------------------------------------------------------- buttons
+  // kit.button(label, { size: "lg", look: "primary" | "quiet", key: "⌘↵",
+  //   pressed, disabled, busy, fixed, push, attrs }). label is HTML: escape text.
+  function button(label, o = {}) {
+    const cls = ["k-btn", o.size === "lg" && "lg", o.look, o.fixed && "fixed", o.push && "push", o.cls].filter(Boolean).join(" ");
+    const state = [o.pressed !== undefined && `aria-pressed="${Boolean(o.pressed)}"`, o.disabled && `aria-disabled="true"`, o.busy && `aria-busy="true"`].filter(Boolean).join(" ");
+    const type = /\btype=/.test(o.attrs ?? "") ? "" : ' type="button"'; // a form's submit button passes its own
+    return `<button${type} class="${cls}"${state ? ` ${state}` : ""}${o.attrs ? ` ${o.attrs}` : ""}><span class="k-lbl">${label}</span>${o.key ? ` <kbd>${esc(o.key)}</kbd>` : ""}</button>`;
+  }
+  // kit.seg([[id, label], ...], current, attr = "data-tab"): one choice on.
+  const seg = (choices, current, attr = "data-tab") =>
+    `<span class="k-seg" role="group">${choices.map(([id, label]) => `<button type="button" ${attr}="${esc(id)}" aria-pressed="${current === id}">${label}</button>`).join("")}</span>`;
+
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
 })();

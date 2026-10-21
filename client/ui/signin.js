@@ -24,8 +24,8 @@ const sfx = {
 // ------------------------------------------------------------------ pieces
 const head = (sub) => `<div class="title"><h1>sign in</h1><span class="dim">${sub ?? ""}</span></div>`;
 const tile = (title, right, body) => `<section class="tile"><h2><span>${title}</span><span>${right ?? ""}</span></h2><div class="body">${body}</div></section>`;
-const go = (label, key, attrs = "") => `<button class="go" ${attrs}>${label} <kbd>${key}</kbd></button>`;
-const copyable = (cmd) => `<div class="cmd"><code>${esc(cmd)}</code><button class="go plain" data-copy="${esc(cmd)}">copy</button></div>`;
+const go = (label, key, attrs = "") => kit.button(label, { size: "lg", look: "primary", key, attrs });
+const copyable = (cmd) => `<div class="cmd"><code>${esc(cmd)}</code>${kit.button("copy", { attrs: `data-copy="${esc(cmd)}"` })}</div>`;
 const steps = (names, at, notes = {}) =>
   `<ul class="steps">${names
     .map((s, i) => `<li class="${i < at ? "" : i === at ? "now" : "todo"}"><span class="mark">${i < at ? "■" : i === at ? '<span class="blink">▶</span>' : "□"}</span><span>${s}${notes[i] ? ` <span class="dim">· ${esc(notes[i])}</span>` : ""}</span></li>`)

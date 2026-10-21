@@ -165,7 +165,7 @@ async function loadWaiting() {
       </ul>${d.following ? "" : `<p class="note">You don't follow anyone yet.</p>`}`;
   } catch (e) {
     $("#since-ago").textContent = "";
-    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what's waiting.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
+    $("#since").innerHTML = e instanceof SignedOut ? `<p>Sign in to see what's waiting.</p><a class="k-btn primary" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
   }
 }
 document.addEventListener("click", (e) => {
@@ -193,19 +193,19 @@ function paintFollowers() {
   const toFollow = shown.filter((f) => !f.following).length;
   $("#fol-body").innerHTML = `
     <div class="row" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
-      <span class="seg"><button data-ftab="new" aria-pressed="${F.tab === "new"}">waiting ${waitingN}</button><button data-ftab="cleared" aria-pressed="${F.tab === "cleared"}">cleared ${F.list.length - waitingN}</button></span>
+      ${kit.seg([["new", `waiting ${waitingN}`], ["cleared", `cleared ${F.list.length - waitingN}`]], F.tab, "data-ftab")}
       <span class="dim small" style="margin-left:auto">the last 7 days</span>
     </div>
     ${shown.length ? `<div class="fgrid">${shown.map((f) => `
       <div class="fol">
         ${kit.ext(`https://farcaster.xyz/${encodeURIComponent(f.username ?? "")}`, f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`, { cls: "pick", arrow: false, attrs: `data-fid="${f.fid}" aria-label="@${esc(f.username ?? f.fid)} on farcaster.xyz"` })}
         <span class="u">${f.fresh ? `<span class="fresh" title="new since your last visit"></span>` : ""}@${esc(f.username ?? f.fid)}</span>
-        <button class="act ${f.following ? "done" : "ink"}" data-follow="${f.fid}">${f.following ? "following" : "follow back"}</button>
-        <button class="act quiet" data-fclear="${f.fid}">${f.cleared ? "bring back" : "clear"}</button>
+        ${kit.button(f.following ? "following" : "follow back", { look: f.following ? undefined : "primary", pressed: f.following, cls: "act", attrs: `data-follow="${f.fid}"` })}
+        ${kit.button(f.cleared ? "bring back" : "clear", { look: "quiet", cls: "act", attrs: `data-fclear="${f.fid}"` })}
       </div>`).join("")}</div>` : `<p class="dim">${F.tab === "cleared" ? "Nothing cleared yet." : "No one's waiting. All clear."}</p>`}
     <div style="display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap">
-      ${F.tab === "new" && toFollow > 1 ? `<button class="act ink" style="width:auto;padding:6px 10px 5px" data-follow-all>follow back all ${toFollow}</button>` : ""}
-      ${F.tab === "new" && shown.length > 1 ? `<button class="act quiet" style="width:auto;padding:6px 10px 5px" data-fclear-all>clear all ${shown.length}</button>` : ""}
+      ${F.tab === "new" && toFollow > 1 ? kit.button(`follow back all ${toFollow}`, { look: "primary", attrs: "data-follow-all" }) : ""}
+      ${F.tab === "new" && shown.length > 1 ? kit.button(`clear all ${shown.length}`, { look: "quiet", attrs: "data-fclear-all" }) : ""}
       <span class="dim small" style="margin-left:auto"><kbd>esc</kbd> close</span>
     </div>`;
 }
@@ -308,7 +308,7 @@ async function loadPresence(setTo) {
     paintPresence(await api("/api/presence", setTo ? { status: setTo } : undefined));
   } catch (e) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = e instanceof SignedOut ? `<p>Sign in to show up here.</p><a class="btn" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
+    $("#presence").innerHTML = e instanceof SignedOut ? `<p>Sign in to show up here.</p><a class="k-btn primary" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
   }
 }
 function togglePresence() {

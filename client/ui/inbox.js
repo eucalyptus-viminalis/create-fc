@@ -38,13 +38,13 @@ function embeds(list) {
   return (imgs.length ? `<div class="pics">${imgs.map((u) => kit.ext(u, `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`, { arrow: false })).join("")}</div>` : "") +
     (links.length ? `<div class="links">${links.map((u) => kit.ext(u, esc(u))).join("")}</div>` : "");
 }
-const fixed = (label, n, attrs) => `<button class="b fixed" ${attrs} aria-disabled="${!n}">${label}${n ? ` ${n}` : ""}</button>`;
-const seg = (tabs, cur) => `<span class="seg" role="group" aria-label="Show">${tabs.map(([id, label]) => `<button data-tab="${id}" aria-pressed="${cur === id}">${label}</button>`).join("")}</span>`;
+const fixed = (label, n, attrs) => kit.button(`${label}${n ? ` ${n}` : ""}`, { fixed: true, disabled: !n, attrs });
+const seg = (tabs, cur) => kit.seg(tabs, cur);
 
 // Reply in place: a small composer under whatever you're answering.
 function replyBox(to) {
   return `<div class="inline" data-reply-box="${esc(to.hash)}"><textarea placeholder="Reply to @${esc(to.username ?? to.fid)}" aria-label="Reply"></textarea>
-    <div class="row"><span class="dim small">replying to @${esc(to.username ?? to.fid)}</span><span class="left">320</span><button class="b ink" data-send>cast <kbd>⌘↵</kbd></button></div></div>`;
+    <div class="row"><span class="dim small">replying to @${esc(to.username ?? to.fid)}</span><span class="left">320</span>${kit.button("cast", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div></div>`;
 }
 function wireReplyBox(to, done) {
   const box = document.querySelector(`[data-reply-box="${to.hash}"]`);
@@ -127,18 +127,18 @@ function readPane(c) {
   const counts = C.counts.get(c.hash);
   const u = c.author?.username;
   return `
-    <button class="b mobile-back" data-back style="display:none;margin-bottom:12px">← list</button>
+    ${kit.button("← list", { cls: "mobile-back", attrs: 'data-back style="display:none;margin-bottom:12px"' })}
     <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via ${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta">${counts ? `<span>↩ ${counts.replies}</span><span>⟲ ${counts.recasts}</span><span>♥ ${counts.likes + (C.liked.has(c.hash) ? 1 : 0)}</span>` : `<span>counting<span class="blink">_</span></span>`}
       ${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "open on Farcaster", { attrs: 'style="margin-left:auto"' }) : ""}</div>
     <div class="acts">
-      <button class="b${C.liked.has(c.hash) ? " ink" : ""}" data-act="like">♥ ${C.liked.has(c.hash) ? "liked" : "like"} <kbd>l</kbd></button>
-      <button class="b" data-act="recast">⟲ recast</button>
-      <button class="b${C.reply === c.hash ? " ink" : ""}" data-act="reply">↩ reply <kbd>r</kbd></button>
-      <button class="b${saved ? " ink" : ""}" data-act="save">${saved ? "★ saved" : "☆ save"} <kbd>s</kbd></button>
-      ${C.tab === "saved" ? "" : cleared ? `<button class="b" data-act="unclear">bring back <kbd>e</kbd></button>` : `<button class="b" data-act="clear">clear <kbd>e</kbd></button>`}
+      ${kit.button(C.liked.has(c.hash) ? "♥ liked" : "♥ like", { key: "l", pressed: C.liked.has(c.hash), attrs: 'data-act="like"' })}
+      ${kit.button("⟲ recast", { attrs: 'data-act="recast"' })}
+      ${kit.button("↩ reply", { look: "primary", key: "r", pressed: C.reply === c.hash, attrs: 'data-act="reply"' })}
+      ${kit.button(saved ? "★ saved" : "☆ save", { key: "s", pressed: saved, attrs: 'data-act="save"' })}
+      ${C.tab === "saved" ? "" : kit.button(cleared ? "bring back" : "clear", { look: "quiet", key: "e", attrs: `data-act="${cleared ? "unclear" : "clear"}"` })}
     </div>
     ${C.reply === c.hash ? replyBox({ hash: c.hash, fid: c.fid, username: u }) : ""}
     <p class="dim small" style="margin-top:14px">Cleared and saved stay on this computer. Likes go to Farcaster.</p>`;
@@ -203,7 +203,7 @@ function renderLikes() {
   header("likes", "on your casts · last 7 days", all.filter((l) => l.fresh && !l.cleared).length);
   const shown = likeGroups(), n = L.checked.size;
   $("#tools").innerHTML = `${seg([["new", `waiting ${waitingN}`], ["cleared", `cleared ${all.length - waitingN}`]], L.tab)}
-    <button class="b fixed" data-all aria-disabled="${!shown.length}">${shown.length && n === shown.length ? "select none" : "select all"}</button>
+    ${kit.button(shown.length && n === shown.length ? "select none" : "select all", { fixed: true, disabled: !shown.length, attrs: "data-all" })}
     ${fixed(L.tab === "cleared" ? "bring back" : "clear", n, `data-bulk="${L.tab === "cleared" ? "unclear" : "clear"}"`)}
     <span class="hint">click a card to select it · <kbd>e</kbd> clear</span>`;
   const me = S.me?.username;
@@ -255,7 +255,7 @@ function renderReplies() {
               <div class="rh">${freshMark(r.fresh && R.tab === "new")}${kit.ext(profileUrl(r.author?.username ?? ""), `<b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b>`)}<span class="t dim small" style="margin-left:auto">${ago(r.time)}</span></div>
               <div class="rt">${rich(r.text)}</div>
               ${embeds(r.embeds)}
-              <div class="line"><button class="b${R.reply === r.hash ? "" : " ink"}" data-rreply>↩ reply</button><button class="b" data-rlike>♥ like</button><button class="b" data-rclear>${r.cleared ? "bring back" : "clear"}</button></div>
+              <div class="line">${kit.button("↩ reply", { look: "primary", pressed: R.reply === r.hash, attrs: "data-rreply" })}${kit.button("♥ like", { attrs: "data-rlike" })}${kit.button(r.cleared ? "bring back" : "clear", { look: "quiet", attrs: "data-rclear" })}</div>
               ${R.reply === r.hash ? replyBox({ hash: r.hash, fid: r.fid, username: r.author?.username }) : ""}
             </div>
           </div>`).join("")}

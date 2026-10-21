@@ -24,10 +24,6 @@ main.signin { max-width: 760px; margin: 0 auto; padding: 48px 16px 120px; }
 .signin code { font: 20px var(--vt); background: var(--g1); color: var(--g3); padding: 0 4px; }
 .opt[aria-current] code { background: var(--g2); color: var(--g0); }
 
-.go { all: unset; cursor: pointer; font: 16px/1 var(--px); -webkit-font-smoothing: none; border: var(--b) solid var(--g3); padding: 10px 14px 9px; display: inline-flex; gap: 8px; align-items: center; background: var(--g3); color: var(--g0); box-shadow: 3px 3px 0 var(--g2); white-space: nowrap; }
-.go.plain { background: none; color: var(--g3); box-shadow: none; }
-.go kbd { font: 16px var(--vt); opacity: .7; -webkit-font-smoothing: antialiased; }
-.go:disabled, .go[aria-disabled="true"] { opacity: .4; cursor: default; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .cmd { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
