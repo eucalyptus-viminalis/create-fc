@@ -107,6 +107,9 @@ function renderCasts() {
     ${fixed("★ save", n, 'data-bulk="save"')}
     <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
   const c = shown.find((x) => x.hash === C.focus);
+  // Keep the list where it was: re-rendering would otherwise jump it to the top.
+  const oldList = $("#view .mail .list"), keep = oldList && C.listTab === C.tab ? oldList.scrollTop : 0;
+  C.listTab = C.tab;
   $("#view").innerHTML = `<div class="mail${C.reading ? " reading" : ""}">
     <section class="tile list" aria-label="Casts">
       <div class="lhead"><span class="ck${n && n === shown.length ? " on" : ""}" data-all title="Select all"></span><span>${shown.length} ${C.tab === "saved" ? "saved" : C.tab === "cleared" ? "cleared" : "waiting"}</span><span style="margin-left:auto">shift-click: a range</span></div>
@@ -120,6 +123,7 @@ function renderCasts() {
     </section>
     <section class="tile read" aria-live="polite">${c ? readPane(c) : `<div class="empty">Pick a cast on the left.</div>`}</section>
   </div>`;
+  $("#view .mail .list").scrollTop = keep;
   wireCasts(shown, c);
 }
 function readPane(c) {
