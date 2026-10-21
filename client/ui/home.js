@@ -225,7 +225,7 @@ function paintFollowers() {
     </div>
     ${shown.length ? `<div class="fgrid">${shown.map((f) => `
       <div class="fol">
-        <a class="pick" data-fid="${f.fid}" href="https://farcaster.xyz/${encodeURIComponent(f.username ?? "")}" target="_blank" rel="noopener" aria-label="@${esc(f.username ?? f.fid)} on farcaster.xyz">${f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`}</a>
+        ${kit.ext(`https://farcaster.xyz/${encodeURIComponent(f.username ?? "")}`, f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`, { cls: "pick", arrow: false, attrs: `data-fid="${f.fid}" aria-label="@${esc(f.username ?? f.fid)} on farcaster.xyz"` })}
         <span class="u">${f.fresh ? `<span class="fresh" title="new since your last visit"></span>` : ""}@${esc(f.username ?? f.fid)}</span>
         <button class="act ${f.following ? "done" : "ink"}" data-follow="${f.fid}">${f.following ? "following" : "follow back"}</button>
         <button class="act quiet" data-fclear="${f.fid}">${f.cleared ? "bring back" : "clear"}</button>

@@ -329,7 +329,7 @@ function card(l, mini = false) {
   const loading = l.stage < 3;
   const bar = loading ? `<div class="lbar" title="${STAGES[l.stage - 1]} ${esc(host)}">${[1, 2, 3].map((i) => `<i class="${i < l.stage ? "on" : i === l.stage ? "now" : ""}"></i>`).join("")}</div>` : "";
   const img = c.image && l.stage === 3 ? `<img class="limg" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">` : c.image ? `<div class="limg wait"></div>` : "";
-  const none = `No <a href="https://ogp.me" target="_blank" rel="noopener" title="Open Graph, the tags pages use for link cards">OG</a> metadata found.`;
+  const none = `No ${kit.ext("https://ogp.me", "OG", { title: "Open Graph, the tags pages use for link cards" })} metadata found.`;
   const text = l.error
     ? `<div class="lsite">${esc(host)}</div><div class="ldesc">${none}</div>`
     : c.title || c.description
@@ -402,7 +402,7 @@ async function cast() {
   $("#ov").innerHTML = `<p class="count" style="margin:6px 0 10px">${r.landed ? "cast!" : "sent"}</p>
     <p>${r.landed ? "Your cast is on Farcaster." : "This node hasn't seen it yet."}</p>
     <p class="dim">${r.landed ? "Every node has it now." : "It usually lands within a minute."}</p>
-    <div class="row"><button class="cast-btn" id="again" style="margin-left:0">write another <kbd>A</kbd></button>${link ? `<a class="tool" href="${esc(link)}" target="_blank" rel="noopener">see it</a>` : ""}<a class="tool" href="/">home</a></div>`;
+    <div class="row"><button class="cast-btn" id="again" style="margin-left:0">write another <kbd>A</kbd></button>${link ? kit.ext(link, "see it", { cls: "tool" }) : ""}<a class="tool" href="/">home</a></div>`;
   // The images now belong to a cast, so clearing the draft keeps them.
   ta.value = ""; S.atts = []; S.link = null; S.dismissed.clear(); S.verified.clear(); store.del(DRAFT); renderAtts(); renderLink(); paint();
   $("#again").addEventListener("click", () => { ov.classList.remove("open"); ta.focus(); });

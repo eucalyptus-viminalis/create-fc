@@ -50,15 +50,15 @@ const freshMark = (on) => (on ? `<span class="fresh" title="new since your last 
 // Cast text with links: @names go to their Farcaster profile, URLs open in a new tab.
 function rich(text) {
   return esc(text)
-    .replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u.length > 60 ? u.slice(0, 57) + "…" : u}</a>`)
-    .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}<a href="${profileUrl(u)}" target="_blank" rel="noopener">@${u}</a>`);
+    .replace(/https?:\/\/[^\s<]+/g, (u) => kit.ext(u.replace(/&amp;/g, "&"), u.length > 60 ? u.slice(0, 57) + "…" : u))
+    .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}${kit.ext(profileUrl(u), `@${u}`)}`);
 }
 const isImage = (u) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /imagedelivery\.net|i\.imgur\.com|\.sslip\.io\/img\//.test(u);
 function embeds(list) {
   const urls = (list ?? []).filter((u) => /^https?:\/\//.test(u));
   const imgs = urls.filter(isImage), links = urls.filter((u) => !isImage(u));
-  return (imgs.length ? `<div class="pics">${imgs.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>`).join("")}</div>` : "") +
-    (links.length ? `<div class="links">${links.map((u) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">↗ ${esc(u)}</a>`).join("")}</div>` : "");
+  return (imgs.length ? `<div class="pics">${imgs.map((u) => kit.ext(u, `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`, { arrow: false })).join("")}</div>` : "") +
+    (links.length ? `<div class="links">${links.map((u) => kit.ext(u, esc(u))).join("")}</div>` : "");
 }
 const fixed = (label, n, attrs) => `<button class="b fixed" ${attrs} aria-disabled="${!n}">${label}${n ? ` ${n}` : ""}</button>`;
 const seg = (tabs, cur) => `<span class="seg" role="group" aria-label="Show">${tabs.map(([id, label]) => `<button data-tab="${id}" aria-pressed="${cur === id}">${label}</button>`).join("")}</span>`;
@@ -150,11 +150,11 @@ function readPane(c) {
   const u = c.author?.username;
   return `
     <button class="b mobile-back" data-back style="display:none;margin-bottom:12px">← list</button>
-    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? `<a href="${profileUrl(u)}" target="_blank" rel="noopener">@${esc(u)} ↗</a>` : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via ${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
+    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via ${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta">${counts ? `<span>↩ ${counts.replies}</span><span>⟲ ${counts.recasts}</span><span>♥ ${counts.likes + (C.liked.has(c.hash) ? 1 : 0)}</span>` : `<span>counting<span class="blink">_</span></span>`}
-      ${u ? `<a style="margin-left:auto" href="${profileUrl(u)}/${c.hash.slice(0, 10)}" target="_blank" rel="noopener">open on Farcaster ↗</a>` : ""}</div>
+      ${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "open on Farcaster", { attrs: 'style="margin-left:auto"' }) : ""}</div>
     <div class="acts">
       <button class="b${C.liked.has(c.hash) ? " ink" : ""}" data-act="like">♥ ${C.liked.has(c.hash) ? "liked" : "like"} <kbd>l</kbd></button>
       <button class="b" data-act="recast">⟲ recast</button>
@@ -230,12 +230,12 @@ function renderLikes() {
     <span class="hint">click a card to select it · <kbd>e</kbd> clear</span>`;
   const me = S.me?.username;
   $("#view").innerHTML = `<div class="notes">${shown.length ? shown.map((g) => {
-    const names = g.likes.map((l) => `<a href="${profileUrl(l.username ?? "")}" target="_blank" rel="noopener"><b>@${esc(l.username ?? l.fid)}</b></a>`);
+    const names = g.likes.map((l) => kit.ext(profileUrl(l.username ?? ""), `<b>@${esc(l.username ?? l.fid)}</b>`));
     const who = names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
     return `<article class="note${L.checked.has(g.cast.hash) ? " checked" : ""}" data-hash="${g.cast.hash}">
       <span class="ck"></span>
       <div>
-        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[embed]")}</a>` : esc(g.cast.text)}</div>
+        <div class="yours">your cast · ${me ? kit.ext(`${profileUrl(me)}/${g.cast.hash.slice(0, 10)}`, esc(g.cast.text || "[embed]")) : esc(g.cast.text)}</div>
         <div class="line"><span class="heart">♥ ${g.likes.length}</span><span class="stack">${g.likes.slice(0, 6).map((l) => pic(l.pfp, "")).join("")}</span><span>${who} liked this</span>
           <span class="t">${freshMark(g.likes.some((l) => l.fresh) && L.tab === "new")}${ago(g.likes[0].time)}</span></div>
       </div></article>`;
@@ -269,12 +269,12 @@ function renderReplies() {
   $("#view").innerHTML = `<div class="notes">${shown.length ? shown.map((g) => `
     <article class="note" style="grid-template-columns:1fr">
       <div>
-        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[embed]")}</a>` : esc(g.cast.text)}</div>
+        <div class="yours">your cast · ${me ? kit.ext(`${profileUrl(me)}/${g.cast.hash.slice(0, 10)}`, esc(g.cast.text || "[embed]")) : esc(g.cast.text)}</div>
         ${g.replies.map((r) => `
           <div class="reply${R.checked.has(r.hash) ? " checked" : ""}" data-hash="${r.hash}">
             <span class="ck" data-rck></span>${pic(r.author?.pfp)}
             <div>
-              <div class="rh">${freshMark(r.fresh && R.tab === "new")}<a href="${profileUrl(r.author?.username ?? "")}" target="_blank" rel="noopener"><b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b></a><span class="t dim small" style="margin-left:auto">${ago(r.time)}</span></div>
+              <div class="rh">${freshMark(r.fresh && R.tab === "new")}${kit.ext(profileUrl(r.author?.username ?? ""), `<b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b>`)}<span class="t dim small" style="margin-left:auto">${ago(r.time)}</span></div>
               <div class="rt">${rich(r.text)}</div>
               ${embeds(r.embeds)}
               <div class="line"><button class="b${R.reply === r.hash ? "" : " ink"}" data-rreply>↩ reply</button><button class="b" data-rlike>♥ like</button><button class="b" data-rclear>${r.cleared ? "bring back" : "clear"}</button></div>

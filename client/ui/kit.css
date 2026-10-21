@@ -1,0 +1,10 @@
+/* clearcast's UI kit: styles for the components in kit.js. */
+
+/* Text only screen readers hear. */
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* kit.ext: a link that leaves clearcast, with a pixel arrow after it. */
+.ext { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.ext-arrow { display: inline-block; width: 0.5em; height: 0.5em; margin-left: 0.18em; vertical-align: 0.42em; fill: currentColor; }
+.ext:hover .ext-arrow, .ext:focus-visible .ext-arrow { transform: translate(1px, -1px); }
+.ext:has(img) { text-decoration: none; }

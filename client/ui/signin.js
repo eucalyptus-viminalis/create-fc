@@ -145,7 +145,7 @@ function invite(error) {
     head("approve on your phone") +
       tile("invite code", "from a friend", `
         <p>Got a code from a friend? Pop it in.</p>
-        <p class="dim">Codes keep this node for friends only. <a href="${DOCS}/guide/share-your-node#why-codes" target="_blank" rel="noopener">Why?</a></p>
+        <p class="dim">Codes keep this node for friends only. ${kit.ext(`${DOCS}/guide/share-your-node#why-codes`, "Why?")}</p>
         <form class="field" id="invite-form" autocomplete="off">
           <input id="invite-input" autofocus value="${esc(S.typedInvite ?? S.opts.node?.invite ?? "")}" placeholder="K7Q2-X9MP" spellcheck="false" aria-label="Invite code">
           ${go("next", "↵", 'type="submit"')}
@@ -321,7 +321,7 @@ async function done(already = false) {
     `<section class="tile" style="margin-top:40px"><h2><span>signed in</span><span>${me ? `fid ${me.fid}` : ""}</span></h2><div class="done">
       ${me?.pfp ? `<img class="avatar" src="${esc(me.pfp)}" alt="" referrerpolicy="no-referrer">` : `<span class="avatar"></span>`}
       <h2>${already ? "already in" : "you're in"}</h2><p>${already ? `You're signed in as ${name}.` : `Welcome, ${name}.`}</p>
-      <p class="dim">Your <a href="${DOCS}/guide/app-key" target="_blank" rel="noopener">app key</a> has been saved on this computer.</p>
+      <p class="dim">Your ${kit.ext(`${DOCS}/guide/app-key`, "app key")} has been saved on this computer.</p>
       <p class="dim">You can now start interacting with Farcaster on this device.</p>
       <div class="row">${go("start", "A", 'id="start"')}</div></div></section>`,
     `<span><kbd>A</kbd>/<kbd>↵</kbd> start</span>`,
