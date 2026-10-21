@@ -329,7 +329,7 @@ function card(l, mini = false) {
   const loading = l.stage < 3;
   const bar = loading ? `<div class="lbar" title="${STAGES[l.stage - 1]} ${esc(host)}">${[1, 2, 3].map((i) => `<i class="${i < l.stage ? "on" : i === l.stage ? "now" : ""}"></i>`).join("")}</div>` : "";
   const img = c.image && l.stage === 3 ? `<img class="limg" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">` : c.image ? `<div class="limg wait"></div>` : "";
-  const none = `No preview found. <a href="https://ogp.me" target="_blank" rel="noopener">Open Graph ↗</a>`;
+  const none = `No <a href="https://ogp.me" target="_blank" rel="noopener" title="Open Graph, the tags pages use for link cards">OG</a> metadata found.`;
   const text = l.error
     ? `<div class="lsite">${esc(host)}</div><div class="ldesc">${none}</div>`
     : c.title || c.description
