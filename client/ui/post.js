@@ -88,7 +88,7 @@ function paint() {
   const block = over ? "Cut some words first." : empty ? "Write something first." : busy ? "Wait for images to upload." : "";
   $("#cast").setAttribute("aria-disabled", String(Boolean(block)));
   $("#cast").title = block;
-  $("#slots").textContent = `${used} of ${MAX_EMBEDS} attachments`;
+  $("#slots").textContent = `${used} of ${MAX_EMBEDS} embeds`;
   const noHosting = S.usage && !S.usage.hosting;
   $("#add-image").setAttribute("aria-disabled", String(used >= MAX_EMBEDS || Boolean(noHosting)));
 
@@ -102,7 +102,7 @@ function paint() {
     <tr><td>bytes sent</td><td>${m.bytes} of ${LIMIT}</td></tr>
     <tr><td>mentions, free</td><td>${m.mentions}</td></tr>
     <tr><td>emoji, 3 or 4 bytes each</td><td>${m.emoji}</td></tr>
-    <tr><td>attachments${S.link ? ", 1 link" : ""}</td><td>${S.atts.length + (S.link ? 1 : 0)} of ${MAX_EMBEDS}</td></tr>`;
+    <tr><td>embeds${S.link ? ", 1 link" : ""}</td><td>${S.atts.length + (S.link ? 1 : 0)} of ${MAX_EMBEDS}</td></tr>`;
   saveDraft();
 }
 
@@ -243,7 +243,7 @@ function upload(blob, att) {
 async function addFiles(files) {
   for (const f of files) {
     if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) { toast("Only PNG, JPEG, GIF or WebP."); continue; }
-    if (S.atts.length + (S.link ? 1 : 0) >= MAX_EMBEDS) { sfx.over(); toast(S.link ? "Two attachments max. Remove the link card or an image." : "Two attachments max. Remove one first."); break; }
+    if (S.atts.length + (S.link ? 1 : 0) >= MAX_EMBEDS) { sfx.over(); toast(S.link ? "Two embeds max. Remove the link card or an image." : "Two embeds max. Remove one first."); break; }
     if (S.usage && !S.usage.hosting) { toast("This node doesn't host images yet."); break; }
     const att = { id: Math.random().toString(36).slice(2), preview: URL.createObjectURL(f), size: f.size, progress: 0 };
     S.atts.push(att); sfx.add(); renderAtts(); paint();
@@ -292,7 +292,8 @@ box.addEventListener("drop", (e) => { e.preventDefault(); box.classList.remove("
 
 // ------------------------------------------------------------------ link cards
 // The first link in the text gets a card, like other Farcaster apps show, and
-// rides along as an attachment so they show it too. Three steps you can watch:
+// rides along as an embed so they show it too. Cards come from the page's
+// Open Graph tags (https://ogp.me), with X's twitter: tags as a fallback. Three steps you can watch:
 // reach the site, read its preview tags, load its image. (A page's size isn't
 // known ahead, so the steps are what's measurable, not bytes.)
 const LINK = /https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]}]/gi;
@@ -328,11 +329,12 @@ function card(l, mini = false) {
   const loading = l.stage < 3;
   const bar = loading ? `<div class="lbar" title="${STAGES[l.stage - 1]} ${esc(host)}">${[1, 2, 3].map((i) => `<i class="${i < l.stage ? "on" : i === l.stage ? "now" : ""}"></i>`).join("")}</div>` : "";
   const img = c.image && l.stage === 3 ? `<img class="limg" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">` : c.image ? `<div class="limg wait"></div>` : "";
+  const none = `No preview found. <a href="https://ogp.me" target="_blank" rel="noopener">Open Graph ↗</a>`;
   const text = l.error
-    ? `<div class="lsite">${esc(host)}</div><div class="ldesc">No preview for this link. It still gets attached.</div>`
+    ? `<div class="lsite">${esc(host)}</div><div class="ldesc">${none}</div>`
     : c.title || c.description
       ? `<div class="lsite">${esc(c.site ?? host)}</div>${c.title ? `<div class="ltitle">${esc(c.title)}</div>` : ""}${c.description && !mini ? `<div class="ldesc">${esc(c.description)}</div>` : ""}`
-      : `<div class="lsite">${esc(host)}</div><div class="ldesc">${loading ? `${STAGES[l.stage - 1]}…` : "No preview for this link. It still gets attached."}</div>`;
+      : `<div class="lsite">${esc(host)}</div><div class="ldesc">${loading ? `${STAGES[l.stage - 1]}…` : none}</div>`;
   return `<div class="lcard${mini ? " mini" : ""}">${img}${bar}<div class="lmeta">${text}</div>${mini ? "" : `<button class="x" id="link-x" aria-label="Remove the link card">x</button>`}</div>`;
 }
 function renderLink() {

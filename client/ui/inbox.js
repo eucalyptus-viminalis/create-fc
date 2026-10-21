@@ -136,7 +136,7 @@ function renderCasts() {
         <div class="item${x.hash === C.focus ? " focus" : ""}${C.checked.has(x.hash) ? " checked" : ""}" data-hash="${x.hash}">
           <span class="ck" data-ck></span>${pic(x.author?.pfp)}
           <div class="who">${freshMark(x.fresh && C.tab === "new")}<b>@${esc(x.author?.username ?? x.fid)}</b><span class="t">${ago(x.time)}</span></div>
-          <div class="snip">${esc(x.text || (x.embeds?.length ? "[attachment]" : ""))}</div>${x.saved || d.saved.some((s) => s.hash === x.hash) ? `<span class="star" title="saved">★</span>` : ""}
+          <div class="snip">${esc(x.text || (x.embeds?.length ? "[embed]" : ""))}</div>${x.saved || d.saved.some((s) => s.hash === x.hash) ? `<span class="star" title="saved">★</span>` : ""}
         </div>`).join("") : `<div class="empty">${C.tab === "new" ? "All clear. Nothing's waiting for you." : C.tab === "saved" ? "Nothing saved yet. Press s on a cast." : "Nothing cleared yet."}</div>`}
       ${C.tab === "new" && d.casts.length >= 390 ? `<p class="dim small" style="padding:10px">Showing the newest 400. Six per person you follow.</p>` : ""}
     </section>
@@ -235,7 +235,7 @@ function renderLikes() {
     return `<article class="note${L.checked.has(g.cast.hash) ? " checked" : ""}" data-hash="${g.cast.hash}">
       <span class="ck"></span>
       <div>
-        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[attachment]")}</a>` : esc(g.cast.text)}</div>
+        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[embed]")}</a>` : esc(g.cast.text)}</div>
         <div class="line"><span class="heart">♥ ${g.likes.length}</span><span class="stack">${g.likes.slice(0, 6).map((l) => pic(l.pfp, "")).join("")}</span><span>${who} liked this</span>
           <span class="t">${freshMark(g.likes.some((l) => l.fresh) && L.tab === "new")}${ago(g.likes[0].time)}</span></div>
       </div></article>`;
@@ -269,7 +269,7 @@ function renderReplies() {
   $("#view").innerHTML = `<div class="notes">${shown.length ? shown.map((g) => `
     <article class="note" style="grid-template-columns:1fr">
       <div>
-        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[attachment]")}</a>` : esc(g.cast.text)}</div>
+        <div class="yours">your cast · ${me ? `<a href="${profileUrl(me)}/${g.cast.hash.slice(0, 10)}" target="_blank" rel="noopener">${esc(g.cast.text || "[embed]")}</a>` : esc(g.cast.text)}</div>
         ${g.replies.map((r) => `
           <div class="reply${R.checked.has(r.hash) ? " checked" : ""}" data-hash="${r.hash}">
             <span class="ck" data-rck></span>${pic(r.author?.pfp)}
