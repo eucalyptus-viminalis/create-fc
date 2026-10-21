@@ -267,11 +267,12 @@ export async function live(node: NodeOverview) {
 
 // Where a shard's history starts and ends, to turn a time into a block number.
 async function shardSpan(shard: number) {
+  // Not every event carries a block timestamp, so look past the first few at each end.
   const ends = await Promise.all([
-    get<{ events: Ev[] }>("/v1/events", { from_event_id: 0, shard_index: shard, page_size: 1 }),
-    get<{ events: Ev[] }>("/v1/events", { shard_index: shard, page_size: 1, reverse: true }),
+    get<{ events: Ev[] }>("/v1/events", { from_event_id: 0, shard_index: shard, page_size: 1000 }),
+    get<{ events: Ev[] }>("/v1/events", { shard_index: shard, page_size: 1000, reverse: true }),
   ]);
-  const [a, b] = ends.map((r) => r.events[0]);
+  const [a, b] = ends.map((r) => r.events.find((e) => e.blockConfirmedBody));
   if (!a?.blockConfirmedBody || !b?.blockConfirmedBody) throw new NodeError(`shard ${shard} has no event history`);
   return { firstBlock: a.blockNumber, firstMs: unixMs(a.blockConfirmedBody.timestamp), lastBlock: b.blockNumber, lastMs: unixMs(b.blockConfirmedBody.timestamp) };
 }
@@ -296,6 +297,7 @@ export type Conditions = {
   done: number;
   total: number;
   error?: string;
+  retryAt?: string; // when a failed measurement is tried again
   hours: { hour: number; today?: number; usual?: number }[]; // messages a minute, local hours 0-23
   historyDays: number; // how far back the node's events go
   updatedAt?: string;
@@ -311,10 +313,12 @@ export function conditions(node: NodeOverview): Conditions {
   const stale = job && job.result.state !== "measuring" && Date.now() - job.started > 10 * 60_000;
   if (!job || stale) {
     const result: Conditions = { state: "measuring", done: 0, total: 0, hours: [], historyDays: 0 };
-    job = { started: Date.now(), result };
+    const started = Date.now();
+    job = { started, result };
     measure(node, result).catch((e) => {
       result.state = "failed";
       result.error = e instanceof Error ? e.message : String(e);
+      result.retryAt = new Date(started + 10 * 60_000).toISOString();
     });
   }
   return job.result;

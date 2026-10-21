@@ -87,6 +87,7 @@ const ICONS = {
   mild: ["................", ".......#........", "...#.......#....", "................", ".....#####......", "....#.....#.....", ".#..#.....#..#..", "....#.....#.....", ".....#####......", "................", "...#.......#....", ".......#........", "................", "...++++++++++...", "................", "................"],
   brisk: ["................", "..........##....", ".........#..#...", "............#...", "###########.#...", "................", ".......+++++++..", "................", "##############..", "...............#", "..............#.", "..........###...", "................", "....+++++++.....", "................", "................"],
   stormy: ["................", ".....####.......", "...##....##.....", "..#........###..", ".#...........#..", ".#............#.", "..############..", ".......##.......", "......##........", ".....######.....", ".......##.......", "......##........", ".....#..........", "..+.......+.....", ".+.......+......", "................"],
+  unknown: ["................", "................", ".....######.....", "....##....##....", "....##....##....", "..........##....", ".........##.....", "........##......", ".......##.......", ".......##.......", "................", "................", ".......##.......", ".......##.......", "................", "................"],
   measuring: ["................", "................", "................", "................", "................", "................", "................", "..##..##..##....", "..##..##..##....", "................", "................", "................", "................", "................", "................", "................"],
 };
 const icon = (name) => `<svg class="icon" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${ICONS[name].flatMap((row, y) => [...row].map((c, x) => (c === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${c === "#" ? "var(--g3)" : "var(--g1)"}"/>`))).join("")}</svg>`;
@@ -106,12 +107,15 @@ function weather(now, usual) {
 function paintConditions() {
   const c = S.cond, now = S.live?.perMinute, h = new Date().getHours();
   const usualNow = c?.hours?.[h]?.usual;
-  const word = weather(now, usualNow);
+  // A failed history run can't say what's usual, so it isn't "measuring" any more.
+  const word = c?.state === "failed" ? "unknown" : weather(now, usualNow);
   const rate = now == null ? "" : `<b>${fmt(now)} messages a minute</b>`;
   const why =
-    word === "measuring"
-      ? now == null ? "Listening to this node…" : `${rate} right now. Working out what's usual for this time of day.`
-      : `${WORDS[word]} ${rate}, usually ${fmt(usualNow)}.`;
+    word === "unknown"
+      ? `${now == null ? "Couldn't" : `${rate} right now. Can't tell if that's usual: couldn't`} read the past days (${esc(c.error)}).`
+      : word === "measuring"
+        ? now == null ? "Listening to this node…" : `${rate} right now. Working out what's usual for this time of day.`
+        : `${WORDS[word]} ${rate}, usually ${fmt(usualNow)}.`;
 
   let chart;
   if (!c || c.state === "measuring") {
@@ -120,7 +124,8 @@ function paintConditions() {
       <div class="progress">${Array.from({ length: 30 }, (_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}</div>
       <span class="small">first time only: past hours are kept on this computer</span></div>`;
   } else if (c.state === "failed") {
-    chart = `<div class="measuring"><span>couldn't measure the past days: ${esc(c.error)}</span></div>`;
+    const mins = Math.max(1, Math.ceil((Date.parse(c.retryAt) - Date.now()) / 60_000));
+    chart = `<div class="measuring"><span>${Number.isFinite(mins) ? `trying again in ${mins} min` : "trying again soon"}</span></div>`;
   } else {
     const vals = c.hours.map((x, i) => (i < h ? x.today : i === h ? now : x.usual) ?? 0);
     const max = Math.max(1, ...vals, ...c.hours.map((x) => x.usual ?? 0));
@@ -379,7 +384,14 @@ async function refreshLive() { S.live = await api("/api/live"); paintConditions(
 async function refreshConditions() {
   S.cond = await api("/api/conditions");
   paintConditions();
-  return S.cond.state === "measuring";
+}
+// Poll fast while measuring, come back when a failed run is due to retry, else every 10 minutes.
+async function conditionsLoop() {
+  for (;;) {
+    await refreshConditions().catch(() => {});
+    const c = S.cond;
+    await wait(c?.state === "measuring" ? 3000 : c?.state === "failed" && c.retryAt ? Math.max(3000, Date.parse(c.retryAt) - Date.now() + 1000) : 10 * 60_000);
+  }
 }
 
 (async () => {
@@ -392,7 +404,7 @@ async function refreshConditions() {
   S.home = home; paintNode(home);
   refreshLive().catch(() => {});
   loadWaiting(); loadPresence();
-  (async () => { while (await refreshConditions().catch(() => false)) await wait(3000); every(10 * 60_000, refreshConditions); })();
+  conditionsLoop();
   every(10_000, refreshHome);
   every(20_000, refreshLive);
   every(30_000, () => loadPresence());
