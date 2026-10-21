@@ -141,7 +141,7 @@ setup started as a background job.</span>
           <li>The <code>hcloud</code> CLI, logged in: <code>brew install hcloud</code>, then <code>hcloud context create fc-node</code></li>
           <li>An SSH key in <code>~/.ssh</code> (<code>ssh-keygen -t ed25519</code> if you don't have one)</li>
           <li>Node.js 22.18 or newer, and git</li>
-          <li>To post: a Farcaster account that already has storage. Use one made for this, not your main one; see <a class="tg-text-link" href="#safety">seed phrases</a></li>
+          <li>To post: a Farcaster account that already has storage. Read <a class="tg-text-link" href="#safety">seed phrases</a> before you type one</li>
         </ul>
       </div>
 
@@ -386,9 +386,9 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
         <p class="tg-body fc-split-text">A seed phrase is the master key to an account. Whoever has it can post as you, move your FID to themselves, and take any funds at the custody address. Like <code>rm -rf</code>, it's a normal tool that's unforgiving when used carelessly.</p>
       </div>
       <div class="fc-points">
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">Use an account made for this</h3><p class="tg-point__text">Not your main one. <code>clearcast new-account</code> registers a fresh, real account for about $0.20 of ETH on Optimism, and shows its phrase once. Add <code>--recovery</code> with an address you control for one you'll keep, like an app account.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">No account yet?</h3><p class="tg-point__text"><code>clearcast new-account</code> registers a real account for about $0.20 of ETH on Optimism, and shows its phrase once. Add <code>--recovery</code> with an address you control.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="document"></span><h3 class="tg-point__title">Read before you paste</h3><p class="tg-point__text">Only give a seed phrase to software from developers you trust, after reading what it does with it. For this client that's <code>client/src/keys.ts</code>: in memory, one signature, never written or sent.</p></article>
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet or the Farcaster app approves the key, and the phrase never leaves it. In clearcast that's <b>Approve in the Farcaster app</b>. Type a phrase only for an account made for it, on your own computer.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet or the Farcaster app approves the key, and the phrase never leaves it. In clearcast that's <b>approve on your phone</b>. If you type a phrase, do it on your own computer.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="terminal"></span><h3 class="tg-point__title">Not through an AI's shell</h3><p class="tg-point__text">We learned this one live: run through a coding assistant's shell, the account script's output, phrase included, landed in the chat transcript. Run phrase commands in your own terminal.</p></article>
       </div>
     </section>

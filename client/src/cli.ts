@@ -299,8 +299,8 @@ account. Whoever has it can post as you, transfer your FID to themselves,
 and take any funds held at the custody address. It's the rm -rf of this
 tutorial: powerful, legitimate, and unforgiving.
 
-  - Use an account made for this, not your main one: clearcast new-account
-    makes a fresh one.
+  - Type it only in your own terminal, on your own computer. Never through
+    an AI assistant's shell: its transcript keeps whatever this prints.
   - Only paste a seed phrase into software whose source you've read, or from
     developers you trust. That includes this one: see client/src/keys.ts.
   - Prefer signing in through an app that asks your wallet to approve a key
