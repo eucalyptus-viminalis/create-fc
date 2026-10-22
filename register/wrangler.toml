@@ -1,0 +1,21 @@
+# The Network Decentralization Authority's register. See README.md for setup.
+name = "nda-register"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+# Font files are bundled as raw bytes; resvg's .wasm is compiled by wrangler.
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+[vars]
+# Pages allowed to send NDA Form 1. Add the local dev server you use for the microsite.
+ALLOWED_ORIGINS = "https://eucalyptus-viminalis.github.io,http://localhost:5173,http://127.0.0.1:5173"
+SITE_URL = "https://eucalyptus-viminalis.github.io/create-fc/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nda-register"
+# Replace with the id that `pnpm wrangler d1 create nda-register` prints. Local dev doesn't need it.
+database_id = "00000000-0000-0000-0000-000000000000"

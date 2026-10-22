@@ -12,3 +12,6 @@ mockups/
 site/docs/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+# Cloudflare Workers local state (register/)
+.wrangler/
