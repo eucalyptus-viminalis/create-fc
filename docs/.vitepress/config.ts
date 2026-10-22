@@ -7,7 +7,7 @@ const REPO = "https://github.com/eucalyptus-viminalis/create-fc";
 
 export default defineConfig({
   title: "create-fc docs",
-  description: "Run your own Farcaster: a Snapchain node and the clearcast client, explained.",
+  description: "Run your own Farcaster: a Snapchain node and the fameboy client, explained.",
   base: "/create-fc/docs/",
   outDir: "../site/docs",
   cleanUrls: true,

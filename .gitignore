@@ -4,7 +4,7 @@ node_modules/
 .env
 *.key
 *appkey*.json
-.fc-client/
+.fameboy/
 .DS_Store
 mockups/
 

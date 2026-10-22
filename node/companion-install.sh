@@ -15,12 +15,12 @@
 #                                                 with a certificate it gets itself
 #                                                 (needs ports 80 and 443 open). It also
 #                                                 serves any site in caddy-sites/, which is
-#                                                 how `fc-node client` hosts clearcast
+#                                                 how `fc-node client` hosts fameboy
 set -euo pipefail
 
 LIB=/usr/local/lib/fc-companion
 STATE=/var/lib/fc-companion
-for f in companion.mjs app-account.mjs colorcast.mjs package.json pnpm-lock.yaml; do
+for f in companion.mjs app-account.mjs fameboy-name.mjs package.json pnpm-lock.yaml; do
   [ -f "$LIB/$f" ] || { echo "fc-companion: $f is missing; re-run command 1"; exit 1; }
 done
 mkdir -p "$STATE"
@@ -29,7 +29,7 @@ mkdir -p "$STATE"
 # Images people upload for their casts, and who uploaded what.
 mkdir -p "$STATE/images" "$STATE/ledger" "$STATE/caddy" "$STATE/caddy-sites"
 # Caddy's import needs at least one file to match.
-[ -f "$STATE/caddy-sites/00-none.caddy" ] || echo "# Sites added by fc-node client (client-install.sh) go next to this file." > "$STATE/caddy-sites/00-none.caddy"
+[ -f "$STATE/caddy-sites/00-none.caddy" ] || echo "# Sites added by fc-node client (fameboy-install.sh) go next to this file." > "$STATE/caddy-sites/00-none.caddy"
 chown 1000:1000 "$STATE/images" "$STATE/ledger"
 touch "$STATE/invites"
 chown 1000:1000 "$STATE/invites"; chmod 600 "$STATE/invites"
@@ -97,7 +97,7 @@ docker run -d --name fc-companion --restart unless-stopped --network host \
   node:22-alpine node /app/companion.mjs >/dev/null
 
 # Caddy serves /img/* from the images folder over HTTPS, plus any site in
-# caddy-sites/ (hosted clearcast, from fc-node client).
+# caddy-sites/ (hosted fameboy, from fc-node client).
 cat > "$STATE/Caddyfile" <<CADDY
 import /etc/caddy/sites/*.caddy
 
@@ -109,7 +109,7 @@ $host {
 		header X-Content-Type-Options nosniff
 	}
 	handle {
-		respond "clearcast images live under /img/" 404
+		respond "fameboy images live under /img/" 404
 	}
 }
 CADDY

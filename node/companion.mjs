@@ -1,11 +1,11 @@
 // fc-companion: a small service next to your Snapchain node, on port 3390.
 //
 // Snapchain's API can't say how long the node has been running or who is
-// using it, so this answers those two questions for clearcast:
+// using it, so this answers those two questions for fameboy:
 //
 //   GET  /v1/companion   when Snapchain started, and how many devices are online
 //   GET  /v1/presence    who is online on this node right now (signed, members only)
-//   POST /v1/presence    "I'm here" from a clearcast, every ~30 s (signed)
+//   POST /v1/presence    "I'm here" from a fameboy, every ~30 s (signed)
 //   GET  /v1/signin      can people sign in here by approving on their phone?
 //   POST /v1/signin      start a phone sign-in for a key (an invite code, if the node asks for one)
 //   POST /v1/images      upload an image for a cast (signed, people on this node)
@@ -24,10 +24,10 @@
 // node's owner sets one up with `fc-node app-account`; this signs requests as
 // that account, so friends on the node need no setup of their own. Their new
 // key is made on their own computer or in their browser: only its public half
-// comes here. Sign-in is open by default, so a hosted clearcast lets anyone in
+// comes here. Sign-in is open by default, so a hosted fameboy lets anyone in
 // (ADR 003); `fc-node signin invite` makes each request need an invite code
 // from `fc-node invite`. Each address gets 20 tries an hour. A hosted
-// clearcast on this server names its visitor in x-clearcast-client, which is
+// fameboy on this server names its visitor in x-clearcast-client, which is
 // only believed from this machine.
 //
 // Images: a cast can only link to an image, so the node hosts them. Files go
@@ -221,7 +221,7 @@ async function stillOwns(app) {
   return ok;
 }
 
-// The same EIP-712 request clearcast signs for a local app account (client/src/signin.ts).
+// The same EIP-712 request fameboy signs for a local app account (client/src/signin.ts).
 const DOMAIN = { name: "Farcaster SignedKeyRequestValidator", version: "1", chainId: 10, verifyingContract: "0x00000000fc700472606ed4fa22623acf62c60553" };
 const TYPES = { SignedKeyRequest: [{ name: "requestFid", type: "uint256" }, { name: "key", type: "bytes" }, { name: "deadline", type: "uint256" }] };
 
@@ -391,7 +391,7 @@ async function readBody(req) {
   return JSON.parse(raw || "{}");
 }
 
-// Who's asking. A hosted clearcast on this same machine passes its visitor's
+// Who's asking. A hosted fameboy on this same machine passes its visitor's
 // address on; from anywhere else the header is ignored.
 const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 function clientOf(req) {

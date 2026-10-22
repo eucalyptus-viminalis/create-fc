@@ -1,6 +1,6 @@
 // Setting up an app account: the account people see on their phone when they
 // approve signing in ("@name wants to post on your behalf"). Used by
-// clearcast app-account and the last step of clearcast new-account.
+// fameboy app-account and the last step of fameboy new-account.
 
 import { NodeError } from "./node.ts";
 import { registerAppKey, type Custody } from "./keys.ts";
@@ -8,10 +8,10 @@ import { loadAppAccount, saveAppAccount } from "./signin.ts";
 import { profile } from "./read.ts";
 import { checkProfile, setProfile, type ProfileFields } from "./profile.ts";
 import { setUsername } from "./username.ts";
-import { nameHolder, pickColorcast } from "../../node/colorcast.mjs";
+import { colorOf, nameHolder, pickFameboyName } from "../../node/fameboy-name.mjs";
 
-export const DEFAULT_PFP = "https://eucalyptus-viminalis.github.io/create-fc/img/clearcast-avatar.png";
-export const DEFAULT_BIO = "it's so clear to me now";
+export const DEFAULT_PFP = "https://eucalyptus-viminalis.github.io/create-fc/img/fameboy-avatar.png";
+export const DEFAULT_BIO = "a pocket Farcaster, on its own node";
 
 type Ask = (question: string) => Promise<string>;
 
@@ -24,7 +24,7 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
   const p = await profile(custody.fid);
   log(`App account: @${p.username ?? "?"}${p.display ? ` ("${p.display}")` : ""} (fid ${custody.fid}). Saved its custody key to ${file} (mode 600).`);
 
-  // No username yet: suggest @<color>cast, with a random color that's still free.
+  // No username yet: suggest @fameboy<color>, with a random color that's still free.
   if (!p.username) {
     const name = await chooseUsername(custody.fid, o);
     if (name) {
@@ -32,13 +32,15 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
         await setUsername(name, custody, { log });
         p.username = name;
       } catch (e) {
-        log(`couldn't set @${name}: ${e instanceof Error ? e.message : e}. Try again later: clearcast username ${name}`);
+        log(`couldn't set @${name}: ${e instanceof Error ? e.message : e}. Try again later: fameboy username ${name}`);
       }
     }
   }
 
   // What people will see. Suggest a name and picture when they're missing.
-  const suggestDisplay = "clearcast";
+  // "fameboy teal" for @fameboyteal; plain "fameboy" for any other name.
+  const c = colorOf(p.username);
+  const suggestDisplay = c ? `fameboy ${c.color}` : "fameboy";
   const want = async (label: string, current: string | undefined, suggestion: string): Promise<string | undefined> => {
     if (!o.ask) return current ? undefined : suggestion;
     const answer = (await o.ask(`${label} [${current ?? suggestion}]: `)).trim();
@@ -66,22 +68,22 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
     await setProfile(key, fields, log);
   }
 
-  if (!/clearcast/i.test(fields.display ?? p.display ?? ""))
+  if (!/fameboy/i.test(fields.display ?? p.display ?? ""))
     log(`
-\x1b[1mHeads up: this account's display name doesn't mention clearcast.\x1b[0m People signing in will see
-"@${p.username ?? custody.fid} wants to post on your behalf". A display name like "clearcast" tells them
-which app is asking. Run clearcast app-account again to change it.`);
-  if (!p.username) log("It has no username yet, so the approval screen shows its number. Claim one with clearcast username <name>.");
+\x1b[1mHeads up: this account's display name doesn't mention fameboy.\x1b[0m People signing in will see
+"@${p.username ?? custody.fid} wants to post on your behalf". A display name like "fameboy" tells them
+which app is asking. Run fameboy app-account again to change it.`);
+  if (!p.username) log("It has no username yet, so the approval screen shows its number. Claim one with fameboy username <name>.");
 }
 
-// Suggest @<color>cast and let the person keep it or type their own. Without a
+// Suggest @fameboy<color> and let the person keep it or type their own. Without a
 // terminal, only print the suggestion. Returns the name to claim, or undefined.
 async function chooseUsername(fid: number, o: { ask?: Ask; log: (s: string) => void }): Promise<string | undefined> {
   const { log } = o;
-  log("\nThis account has no username yet. Picking a free @<color>cast name for it...");
-  const suggestion = await pickColorcast({ fid, log });
+  log("\nThis account has no username yet. Picking a free @fameboy<color> name for it...");
+  const suggestion = await pickFameboyName({ fid, log });
   if (!o.ask) {
-    if (suggestion) log(`@${suggestion} is free. Claim it with: clearcast username ${suggestion}`);
+    if (suggestion) log(`@${suggestion} is free. Claim it with: fameboy username ${suggestion}`);
     return undefined;
   }
   if (suggestion) log(`@${suggestion} is free.`);

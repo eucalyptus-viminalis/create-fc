@@ -1,6 +1,6 @@
 # Share your node with friends
 
-One node can serve more than you. Friends point clearcast at your node, sign in by approving on their phone, and show up under **on this node** on each other's home screens.
+One node can serve more than you. Friends point fameboy at your node, sign in by approving on their phone, and show up under **on this node** on each other's home screens.
 
 This page covers the one-time setup on your server, what it puts at risk, and what your friends do.
 
@@ -8,7 +8,7 @@ This page covers the one-time setup on your server, what it puts at risk, and wh
 
 - A node from [commands 0 and 1](https://eucalyptus-viminalis.github.io/create-fc/#quickstart), in sync.
 - Its companion running. `ssh root@<ip> fc-node status` should end with `companion: running on port 3390`. If it doesn't, run command 1 again.
-- A Farcaster account to be your node's **app account** (below). If you don't have a spare one, `clearcast new-account` registers one for about $0.20 of ETH on Optimism.
+- A Farcaster account to be your node's **app account** (below). If you don't have a spare one, `fameboy new-account` registers one for about $0.20 of ETH on Optimism.
 
 ## 1. Choose an app account
 
@@ -18,13 +18,13 @@ On your node, that account is the app account. Here's what it can and can't do:
 
 | Can the app account… | |
 | --- | --- |
-| Ask people to approve a key for clearcast | Yes. They still approve on their own phone. |
+| Ask people to approve a key for fameboy | Yes. They still approve on their own phone. |
 | Post as anyone who signs in, or touch their account | No. Their key is made and kept on their own computer. |
 | Survive your server being broken into | No. Its custody key lives on the server, so an intruder would control the app account itself: post as it, or transfer it away. |
 
 So pick an account you'd be fine losing:
 
-- **Good:** an account made for this, with a `@<color>cast` username, like `@tealcast`, and "clearcast" as its display name. `fc-node app-account` suggests a free one with a random color if the account has no username yet; keep it or pick your own.
+- **Good:** an account made for this, with a `@fameboy<color>` username, like `@fameboyteal`, and "fameboy" as its display name. `fc-node app-account` suggests a free one with a random color if the account has no username yet; keep it or pick your own.
 - **Not good:** your main account, or a brand account with followers you care about.
 
 ## 2. Save it on your server
@@ -49,7 +49,7 @@ Never paste a seed phrase into a chat, an issue, or an AI assistant. Type it onl
 ssh root@<ip> fc-node invite alice
 ```
 
-That prints a code like `K7Q2-X9MP`. Send it to Alice. She types it once when she signs in, and clearcast remembers it.
+That prints a code like `K7Q2-X9MP`. Send it to Alice. She types it once when she signs in, and fameboy remembers it.
 
 - `fc-node invite list` shows every code, when you made it and the note.
 - `fc-node invite revoke K7Q2-X9MP` stops a code working. Anyone who already signed in with it stays signed in.
@@ -61,7 +61,7 @@ The companion listens on port 3390, which is open to the internet. Without codes
 - **It can't cost you anything.** If approving costs a fee, each person pays their own.
 - **It can't touch anyone's account.** Each person approves on their own phone, for their own account.
 - **It doesn't open your node any further.** Port 3381 is already public, so anyone can read from your node either way.
-- **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. clearcast's "apps in your feed" shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
+- **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. fameboy's "apps in your feed" shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
 
 Codes keep that to people you chose. On top of that, each internet address gets 20 sign-in tries an hour, which also stops anyone guessing codes.
 
@@ -69,11 +69,11 @@ Codes keep that to people you chose. On top of that, each internet address gets 
 
 On their own computer:
 
-1. Install clearcast pointed at your node:
+1. Install fameboy pointed at your node:
    ```bash
    curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
    ```
-2. Run `clearcast ui`. The sign-in page opens.
+2. Run `fameboy ui`. The sign-in page opens.
 3. Choose **approve on your phone** and type the invite code.
 4. Scan the code with their phone and approve in the Farcaster app. It may ask them to pay a small onchain fee.
 
@@ -88,7 +88,7 @@ Their new key is made on their computer. Only its public half goes to your serve
 
 Sharing your node means friends rely on it:
 
-- **Their reads.** clearcast reads everything from your node. If it's down or behind, so is their feed.
+- **Their reads.** fameboy reads everything from your node. If it's down or behind, so is their feed.
 - **When they're online.** The companion sees each device's internet address and when it checks in. It keeps that in memory only, and forgets a device 90 seconds after it leaves.
 - **Not their account.** You can't post as them, and neither could anyone who broke into your server. Their key never leaves their computer.
 - **Their images.** Images they attach to casts live on your node, up to 500 MB each. If you delete the server, those images stop loading in their casts too. See [Images in your casts](./images).

@@ -1,8 +1,8 @@
 // Personal state from before it moved to the browser (ADR 003): cleared and
 // saved casts, last visit, presence. Older versions kept these in files in
-// ~/.fc-client. The page asks for them once per account and keeps them in the
+// ~/.fameboy. The page asks for them once per account and keeps them in the
 // browser from then on; the files are left as they are.
-// Local mode only: a hosted clearcast never had these files.
+// Local mode only: a hosted fameboy never had these files.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

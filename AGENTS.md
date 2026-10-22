@@ -1,6 +1,6 @@
 # Instructions for AI agents setting up create-fc
 
-You're helping a person run their own Farcaster: a Snapchain read node on a Hetzner Cloud server, and the clearcast client on their own computer. Follow these steps in order. Each command is safe to re-run.
+You're helping a person run their own Farcaster: a Snapchain read node on a Hetzner Cloud server, and the fameboy client on their own computer. Follow these steps in order. Each command is safe to re-run.
 
 ## Rules
 
@@ -67,21 +67,21 @@ This works as soon as the node is catching up; it doesn't need to wait for "in s
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-Then tell the person to run `clearcast ui`, which opens the client in their browser. If `clearcast` isn't found, they should open a new terminal tab, or add `~/.local/bin` to `PATH`.
+Then tell the person to run `fameboy ui`, which opens the client in their browser. If `fameboy` isn't found, they should open a new terminal tab, or add `~/.local/bin` to `PATH`.
 
 ## Posting: the person does this themselves
 
-The client shows the person's own feed, so it needs them signed in: an app key, and creating one needs the account's seed phrase. Until then `clearcast ui` shows a sign-in page. Tell the person:
+The client shows the person's own feed, so it needs them signed in: an app key, and creating one needs the account's seed phrase. Until then `fameboy ui` shows a sign-in page. Tell the person:
 
-> Sign in on the page `clearcast ui` opened: approve in the Farcaster app, or use your seed phrase there (it stays on your computer). Or run `clearcast login` in your own terminal, not through me. Read the warning it prints. No account yet? `clearcast new-account` registers one for about $0.20 of ETH on Optimism.
+> Sign in on the page `fameboy ui` opened: approve in the Farcaster app, or use your seed phrase there (it stays on your computer). Or run `fameboy login` in your own terminal, not through me. Read the warning it prints. No account yet? `fameboy new-account` registers one for about $0.20 of ETH on Optimism.
 
-For the Farcaster-app option, the node needs an app account: an account made for it. People approving see its name, so setup suggests a free `@<color>cast` username with a random color (e.g. `@tealcast`, checking the fname server and trying another color when one is taken), which they can keep or replace with their own. The person sets it up once on the server, in their own SSH session, so everyone using the node can approve on their phone:
+For the Farcaster-app option, the node needs an app account: an account made for it. People approving see its name, so setup suggests a free `@fameboy<color>` username with a random color (e.g. `@fameboyteal`, checking the fname server and trying another color when one is taken), which they can keep or replace with their own. The person sets it up once on the server, in their own SSH session, so everyone using the node can approve on their phone:
 
 > `ssh -t root@<ip> fc-node app-account`
 
-Then `ssh root@<ip> fc-node invite <friend's name>` makes an invite code for each friend who shares the node; they type it on the sign-in page. (`clearcast app-account` on their own computer still works for that computer alone.)
+Then `ssh root@<ip> fc-node invite <friend's name>` makes an invite code for each friend who shares the node; they type it on the sign-in page. (`fameboy app-account` on their own computer still works for that computer alone.)
 
-Don't run `clearcast login`, `clearcast app-account`, `fc-node app-account`, `clearcast username` or `clearcast new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
+Don't run `fameboy login`, `fameboy app-account`, `fc-node app-account`, `fameboy username` or `fameboy new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
 
 ## When they're done
 
@@ -91,7 +91,7 @@ Offer to stop the billing, and run it only after they say yes. It lists what it 
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash -s -- --yes
 ```
 
-Their app key in `~/.fc-client` survives. A new node takes 6–8 hours to sync again.
+Their app key in `~/.fameboy` survives. A new node takes 6–8 hours to sync again.
 
 ## More
 

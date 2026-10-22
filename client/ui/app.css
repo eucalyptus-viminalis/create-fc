@@ -1,4 +1,4 @@
-/* clearcast GUI: clear layers.
+/* fameboy GUI: clear layers.
    The page is a light, grainy ground. Every surface on it is a sheet of
    frosted white that only adds opacity: a card is one sheet, a button on a
    card is a second sheet on top. Clear every cast and the sheets go too,
@@ -101,9 +101,9 @@ code, kbd { font-family: var(--mono); font-size: 0.86em; padding: 1px 6px; borde
 /* ---------- header ---------- */
 .tg-header { position: sticky; top: 12px; z-index: 20; display: flex; align-items: center; gap: 12px; width: min(980px, calc(100% - 24px)); margin: 12px auto 0; padding: 8px 10px 8px 16px; border-radius: var(--r-pill); }
 .tg-wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-size: 19px; font-weight: 600; letter-spacing: -0.03em; text-decoration: none; }
-/* clearcast's own mark: the glass sphere from client/logo */
+/* fameboy's own mark: the glass sphere from client/logo */
 .tg-mark { position: relative; width: 28px; height: 28px; }
-/* clearcast-small.svg is the sphere tuned for 28px; the hairline and soft
+/* fameboy-small.svg is the sphere tuned for 28px; the hairline and soft
    shadow sit it on the header instead of reading as a hole in it. */
 .tg-mark--img img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 0.5px rgb(23 21 31 / 0.35)) drop-shadow(0 1px 2px rgb(23 21 31 / 0.16)); }
 .me-chip { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; padding: 3px 12px 3px 3px; border-radius: var(--r-pill); font-size: 12px; white-space: nowrap; }

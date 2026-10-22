@@ -52,5 +52,5 @@ exists firewall "$fw" && hcloud firewall delete "$fw" >/dev/null && echo "delete
 exists ssh-key "$key" && hcloud ssh-key delete "$key" >/dev/null && echo "deleted ssh key $key"
 
 echo "done. Nothing from create-fc is billing in this project now."
-echo "Your client's app key in ~/.fc-client still works with any node: point it at a new one with"
+echo "Your client's app key in ~/.fameboy still works with any node: point it at a new one with"
 echo "  curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<new ip>:3381"

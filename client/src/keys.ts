@@ -30,7 +30,7 @@ import {
 } from "@farcaster/core";
 import { NODE, get, post, submitUntil, NodeError } from "./node.ts";
 
-export const KEY_DIR = process.env.FC_HOME ?? join(homedir(), ".fc-client");
+export const KEY_DIR = process.env.FC_HOME ?? join(homedir(), ".fameboy");
 export const KEY_FILE = join(KEY_DIR, "appkey.json");
 
 // The message types our app key may sign. The node rejects anything else
@@ -270,7 +270,7 @@ export async function registerAppKey(custody: Custody, opts: { dryRun?: boolean;
   log("sending to your node, which relays it to the validators. Waiting for it to land...");
   const seen = () => get("/v1/signer", { fid: key.fid, signer: key.publicKey }).then(() => true, () => false);
   if (!(await submitUntil(bytes, seen, 90_000))) {
-    throw new NodeError("the key didn't appear within 90 s, even after resending. Check clearcast status (is your node in sync and connected?), then try again.");
+    throw new NodeError("the key didn't appear within 90 s, even after resending. Check fameboy status (is your node in sync and connected?), then try again.");
   }
   if (opts.save === false) {
     log("done. App key registered.");
@@ -288,7 +288,7 @@ export type Revoked = { state: "revoked" | "already gone" | "dry run ok" | "dry 
 // Revoke an app key using the key itself: a gasless key may sign its own
 // KEY_REMOVE, so no seed phrase is needed. The node checks that the message's
 // signer is the key being removed. The nonce comes from the app that asked for
-// the key (requestFid; for keys clearcast login made, that's your own fid).
+// the key (requestFid; for keys fameboy login made, that's your own fid).
 // Keys approved in the Farcaster app are onchain, and only an onchain
 // transaction removes those.
 export async function revokeKey(key: AppKey, opts: { dryRun?: boolean; log: (s: string) => void }): Promise<Revoked> {
@@ -346,16 +346,16 @@ export async function revokeKey(key: AppKey, opts: { dryRun?: boolean; log: (s: 
 // ---------------------------------------------------------- the key file
 
 export async function saveKey(key: AppKey): Promise<void> {
-  if (!serverKey) throw new NoServerKey("this clearcast is hosted, so it never saves a key on the server");
+  if (!serverKey) throw new NoServerKey("this fameboy is hosted, so it never saves a key on the server");
   await mkdir(KEY_DIR, { recursive: true, mode: 0o700 });
   await chmod(KEY_DIR, 0o700);
   await writeFile(KEY_FILE, JSON.stringify(key, null, 2) + "\n", { mode: 0o600 });
   await chmod(KEY_FILE, 0o600);
 }
 
-// A hosted clearcast (ADR 003) never signs with a key file: every person's
+// A hosted fameboy (ADR 003) never signs with a key file: every person's
 // key is in their own browser. hostedMode() turns this server's key off for
-// good, so a key left in ~/.fc-client can't post for anyone.
+// good, so a key left in ~/.fameboy can't post for anyone.
 let serverKey = true;
 export function hostedMode() {
   serverKey = false;
@@ -363,19 +363,19 @@ export function hostedMode() {
 export class NoServerKey extends NodeError {}
 
 export async function loadKey(): Promise<AppKey> {
-  if (!serverKey) throw new NoServerKey("this clearcast is hosted, so it never uses a key on the server. Your key is in your browser.");
+  if (!serverKey) throw new NoServerKey("this fameboy is hosted, so it never uses a key on the server. Your key is in your browser.");
   let raw: string;
   try {
     raw = await readFile(KEY_FILE, "utf8");
   } catch {
-    throw new NodeError(`no app key at ${KEY_FILE}. Run: clearcast login`);
+    throw new NodeError(`no app key at ${KEY_FILE}. Run: fameboy login`);
   }
   return JSON.parse(raw) as AppKey;
 }
 
 // Sign out: delete the app key from this computer. The key stays registered
 // on the network until it expires, but nobody else holds a copy. Signing in
-// again means running clearcast login with the seed phrase.
+// again means running fameboy login with the seed phrase.
 export async function forgetKey(): Promise<boolean> {
   try {
     await unlink(KEY_FILE);
@@ -389,7 +389,7 @@ export async function forgetKey(): Promise<boolean> {
 export const appSigner = (key: AppKey) => new NobleEd25519Signer(hexToBytes(key.privateKey));
 
 // Who signs a write: an fid, its app key's public half, and a way to sign.
-// Locally that's the key file (fileAuthor). On a hosted clearcast it's the
+// Locally that's the key file (fileAuthor). On a hosted fameboy it's the
 // person's browser, asked over HTTP mid-request (ui-server.ts), so sign() may
 // wait for them. Everything that writes or signs for the companion takes one.
 export type Author = { fid: number; publicKey: Hex; sign(bytes: Uint8Array): Promise<Hex> };

@@ -1,4 +1,4 @@
-// Which of the node's HTTP routes does clearcast use, and which not yet?
+// Which of the node's HTTP routes does fameboy use, and which not yet?
 //
 //   pnpm coverage            the table
 //   pnpm coverage --upstream also fetch Snapchain's route list for the

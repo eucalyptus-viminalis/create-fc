@@ -1,7 +1,7 @@
-// clearcast in the browser. Talks only to the local clearcast server (which talks only
+// fameboy in the browser. Talks only to the local fameboy server (which talks only
 // to your node). Everything from the network is escaped before it's shown.
 
-const TOKEN = document.querySelector('meta[name="clearcast-token"]').content;
+const TOKEN = document.querySelector('meta[name="fameboy-token"]').content;
 const FARCASTER_APP = 9152; // the Farcaster app's FID (still named @warpcast)
 const $ = (sel) => document.querySelector(sel);
 
@@ -65,7 +65,7 @@ const empty = (msg) => `<div class="empty"><p>${esc(msg)}</p></div>`;
 async function api(path, body) {
   const res = await fetch(path, {
     method: body ? "POST" : "GET",
-    headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
+    headers: { "x-fameboy-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   let json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
@@ -353,7 +353,7 @@ function renderInbox(all, left) {
       <button type="button" class="glass-btn glass-btn--quiet" data-refresh title="Ask your node again for the newest casts">↻ Check for new</button>
       ${clearedHere ? `<button type="button" class="link-btn" data-show-cleared aria-pressed="${state.showCleared}">${state.showCleared ? "Hide" : "Show"} ${clearedHere} cleared</button>` : ""}
     </div>`;
-  document.title = left.length ? `(${left.length}) clearcast` : "clearcast";
+  document.title = left.length ? `(${left.length}) fameboy` : "fameboy";
 }
 
 function castHtml(c, i) {
@@ -531,7 +531,7 @@ function showSignedOut() {
   $("#signin").hidden = false;
   $("#me-chip").hidden = true;
   $("#signout-btn").hidden = true;
-  document.title = "clearcast";
+  document.title = "fameboy";
   $("#app-body").innerHTML = `<button type="button" class="tg-btn tg-btn--ink tg-btn--sm" id="app-start">Show the code</button>`;
   loadSignInOptions();
   clearInterval(showSignedOut.poll);
@@ -579,7 +579,7 @@ async function loadSignInOptions() {
   const { data } = await api("/api/signin/options").catch(() => ({ data: { app: null, phrase: false } }));
   $("#way-phrase").hidden = !data.phrase;
   if (!data.app)
-    $("#app-body").innerHTML = `<p class="signin__off">Not set up here yet. Whoever runs this clearcast sets it up once, in a terminal: <code>clearcast app-account</code></p>`;
+    $("#app-body").innerHTML = `<p class="signin__off">Not set up here yet. Whoever runs this fameboy sets it up once, in a terminal: <code>fameboy app-account</code></p>`;
   else signInApp.app = data.app;
 }
 
@@ -599,7 +599,7 @@ async function signInApp() {
   body.innerHTML = `<div class="signin__qr">${req.qr}</div>
     <div class="signin__steps">
       <p>Scan with your phone's camera and approve in the Farcaster app. On a phone? <a href="${esc(req.url)}">Open the Farcaster app</a>.</p>
-      <p class="signin__fine">It will say <b>@${esc(app?.username ?? app?.fid)}</b>${app?.display ? ` (${esc(app.display)})` : ""} is asking to post on your behalf: that's the account whoever runs this clearcast set up to ask. Approving adds the key on chain${req.sponsored ? ", and the fee is covered" : "; the app may ask you to cover a small fee"}.</p>
+      <p class="signin__fine">It will say <b>@${esc(app?.username ?? app?.fid)}</b>${app?.display ? ` (${esc(app.display)})` : ""} is asking to post on your behalf: that's the account whoever runs this fameboy set up to ask. Approving adds the key on chain${req.sponsored ? ", and the fee is covered" : "; the app may ask you to cover a small fee"}.</p>
       <p class="signin__status" id="app-status"><span class="tg-spinner" aria-hidden="true"></span> Waiting for you to approve…</p>
     </div>`;
   const labels = { pending: "Waiting for you to approve…", approved: "Approved. Adding the key on chain…", completed: "On chain. Waiting for your node to see it…", syncing: "On chain. Waiting for your node to see it…" };
@@ -622,7 +622,7 @@ async function signInApp() {
   }, 2000);
 }
 
-// 2. Seed phrase, this computer only: the same steps as clearcast login.
+// 2. Seed phrase, this computer only: the same steps as fameboy login.
 $("#phrase-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const input = $("#phrase-input");

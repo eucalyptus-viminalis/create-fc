@@ -1,4 +1,4 @@
-// Sessions for a hosted clearcast (ADR 003). Each person's app key lives in
+// Sessions for a hosted fameboy (ADR 003). Each person's app key lives in
 // their browser; this server never sees it. To sign in, the browser signs a
 // challenge with that key, the server checks the key is active for that fid
 // on the node, and sets a session cookie naming the fid and key.
@@ -40,8 +40,8 @@ function challengeOk(nonce: string): boolean {
 }
 
 // The exact bytes the browser signs (ui/mine.js). The origin stops a
-// signature made for one clearcast being replayed on another.
-export const sessionPayload = (origin: string, fid: number, key: string, nonce: string) => `clearcast-session:v1:${origin}:${fid}:${key.toLowerCase()}:${nonce}`;
+// signature made for one fameboy being replayed on another.
+export const sessionPayload = (origin: string, fid: number, key: string, nonce: string) => `fameboy-session:v1:${origin}:${fid}:${key.toLowerCase()}:${nonce}`;
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex");
 export const signatureOk = (key: string, sig: string, payload: string) => signatureOkBytes(key, sig, Buffer.from(payload));

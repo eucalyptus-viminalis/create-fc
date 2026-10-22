@@ -1,6 +1,6 @@
 // What's yours alone, kept in this browser (ADR 003): cleared and saved casts,
 // when your last visit ended, whether you appear online, and this browser's
-// device id. The server never stores any of it, so a hosted clearcast holds
+// device id. The server never stores any of it, so a hosted fameboy holds
 // nothing about the people who use it. Nothing here is published.
 //
 // Everything is per account (fid): one browser can sign in as more than one.
@@ -19,7 +19,7 @@
 //   mine.feedCleared(fid)                the classic feed's { before, hashes, today }
 //   mine.changeFeedCleared(fid, change)  { add, remove, before, counted }, like the old /api/cleared
 //
-// On a hosted clearcast, your app key lives here too:
+// On a hosted fameboy, your app key lives here too:
 //   mine.key.supported()   can this browser make Ed25519 keys?
 //   mine.key.create()      make a key for a sign-in; returns its public half (hex)
 //   mine.key.confirm(fid)  the sign-in was approved: keep that key as yours
@@ -31,7 +31,7 @@
 //   mine.key.forget()      sign out: delete it from this browser
 
 (() => {
-  const TOKEN = document.querySelector('meta[name="clearcast-token"]')?.content ?? "";
+  const TOKEN = document.querySelector('meta[name="fameboy-token"]')?.content ?? "";
   const DAY = 86_400_000, WEEK = 7 * DAY;
 
   // ------------------------------------------------------------ storage
@@ -42,7 +42,7 @@
   const db = () =>
     (dbp ??= new Promise((resolve) => {
       try {
-        const r = indexedDB.open("clearcast", 1);
+        const r = indexedDB.open("fameboy", 1);
         r.onupgradeneeded = () => r.result.createObjectStore("mine");
         r.onsuccess = () => resolve(r.result);
         r.onerror = r.onblocked = () => resolve(null);
@@ -86,7 +86,7 @@
   }
 
   // ------------------------------------------------- what older versions kept
-  // Before ADR 003 the local server kept these in ~/.fc-client. Take them over
+  // Before ADR 003 the local server kept these in ~/.fameboy. Take them over
   // once per account. A hosted server answers null.
   const imported = new Map();
   function ready(fid) {
@@ -94,7 +94,7 @@
       if (await get(`${fid}/imported`)) return;
       let old = null;
       try {
-        const res = await fetch("/api/legacy", { headers: { "x-clearcast-token": TOKEN } });
+        const res = await fetch("/api/legacy", { headers: { "x-fameboy-token": TOKEN } });
         if (!res.ok) return; // try again next page load
         old = (await res.json()).data;
       } catch {
@@ -237,7 +237,7 @@
         const bytes = new Uint8Array(payload.slice(2).match(/../g)?.map((h) => parseInt(h, 16)) ?? []);
         const res = await fetch("/api/sign", {
           method: "POST",
-          headers: { "x-clearcast-token": TOKEN, "content-type": "application/json" },
+          headers: { "x-fameboy-token": TOKEN, "content-type": "application/json" },
           body: JSON.stringify({ id, sig: await key.sign(bytes) }),
         });
         json = await res.json().catch(() => ({}));
@@ -250,12 +250,12 @@
       const k = await key.get();
       if (!k) return false;
       const call = (path, body) =>
-        fetch(path, { method: body ? "POST" : "GET", headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) }, body: body && JSON.stringify(body) })
+        fetch(path, { method: body ? "POST" : "GET", headers: { "x-fameboy-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) }, body: body && JSON.stringify(body) })
           .then(async (r) => ({ ok: r.ok, json: await r.json().catch(() => ({})) }));
       const ch = await call("/api/session/challenge");
       if (!ch.ok) return false;
       const { nonce, origin } = ch.json.data;
-      const sig = await key.sign(`clearcast-session:v1:${origin}:${k.fid}:${k.publicKey}:${nonce}`);
+      const sig = await key.sign(`fameboy-session:v1:${origin}:${k.fid}:${k.publicKey}:${nonce}`);
       const r = await call("/api/session", { fid: k.fid, key: k.publicKey, nonce, sig });
       if (!r.ok) throw new Error(r.json.error ?? "couldn't open a session");
       return true;

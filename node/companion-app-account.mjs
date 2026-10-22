@@ -1,5 +1,5 @@
 // fc-node app-account: give this node an "app account", so people using it
-// can sign in to clearcast by approving on their phone.
+// can sign in to fameboy by approving on their phone.
 //
 // Farcaster's signer-request service only shows a sign-in request if a
 // Farcaster account vouches for it, by signing it with its custody key. This
@@ -19,7 +19,7 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { mnemonicToAccount } from "viem/accounts";
 import { bytesToHex } from "viem";
 import { createInterface } from "node:readline/promises";
-import { nameHolder, pickColorcast } from "./colorcast.mjs";
+import { nameHolder, pickFameboyName } from "./fameboy-name.mjs";
 
 const SNAPCHAIN = (process.env.SNAPCHAIN ?? "http://127.0.0.1:3381").replace(/\/$/, "");
 const OUT = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
@@ -118,19 +118,19 @@ console.log(`
 Done. fid ${found.fid} now vouches for sign-ins on this node.
 People see this account's name when they approve.`);
 
-// No username yet? Suggest @<color>cast with a random color that's still free.
+// No username yet? Suggest @fameboy<color> with a random color that's still free.
 // Claiming it needs an app key, which this server doesn't keep, so the person
-// claims it with clearcast on their own computer.
+// claims it with fameboy on their own computer.
 const username = await usernameOf(found.fid).catch(() => undefined);
 if (username) console.log(`It's @${username}.`);
 else {
-  console.log("\nIt has no username yet, so the approval screen shows its number. Picking a free @<color>cast name...");
-  const suggestion = await pickColorcast({ fid: found.fid, log: (s) => console.log(s) });
+  console.log("\nIt has no username yet, so the approval screen shows its number. Picking a free @fameboy<color> name...");
+  const suggestion = await pickFameboyName({ fid: found.fid, log: (s) => console.log(s) });
   const name = await chooseName(suggestion, found.fid);
   if (name) console.log(`
 Claim @${name} from your own computer (it asks for this account's seed phrase):
-  clearcast username ${name}`);
-  else console.log("Claim one later from your own computer: clearcast username <name>");
+  fameboy username ${name}`);
+  else console.log("Claim one later from your own computer: fameboy username <name>");
 }
 console.log("\nGive friends an invite code: fc-node invite");
 

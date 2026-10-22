@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync, sign } from "node:crypto";
 import { challenge, readSession, sessionCookie, sessionPayload, startSession } from "../src/session.ts";
 
-const ORIGIN = "https://clearcast.example";
+const ORIGIN = "https://fameboy.example";
 function browserKey() {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
   const raw = publicKey.export({ format: "der", type: "spki" }).subarray(-32);

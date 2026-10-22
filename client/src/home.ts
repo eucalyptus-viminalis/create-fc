@@ -120,9 +120,9 @@ export function checkDevice(d: { id?: unknown; status?: unknown } | undefined): 
   return { id: d.id, status: d.status };
 }
 const os = ({ darwin: "mac", win32: "windows", linux: "linux" } as Record<string, string>)[platform()] ?? platform();
-// What others on the node see next to your name. A hosted clearcast names
+// What others on the node see next to your name. A hosted fameboy names
 // itself instead of the server's OS (setDeviceLabel).
-let label = `clearcast on ${os}`;
+let label = `fameboy on ${os}`;
 export const setDeviceLabel = (l: string) => void (label = l.slice(0, 64));
 
 // Ed25519 over the exact bytes the companion checks (see node/companion.mjs).
@@ -277,7 +277,7 @@ async function shardSpan(shard: number) {
 type Span = Awaited<ReturnType<typeof shardSpan>>;
 
 // A shard's span, sturdy against a node that's restarting or busy: ask up to
-// three times, and keep the last good answer in ~/.fc-client/network-spans.json.
+// three times, and keep the last good answer in ~/.fameboy/network-spans.json.
 // If the node still can't say, use that saved span, with its newer end
 // replaced by the node's current height (blocks keep a steady pace, so the
 // estimate holds). undefined only when there has never been a good answer.
@@ -299,7 +299,7 @@ async function spanFor(shard: number, height: number): Promise<Span | undefined>
 const blockAt = (s: Span, ms: number) => Math.round(s.firstBlock + ((ms - s.firstMs) * (s.lastBlock - s.firstBlock)) / (s.lastMs - s.firstMs));
 
 // One hour's rate, from a ~4 minute sample in the middle of it. Past hours
-// never change, so they're kept in ~/.fc-client/network-hours.json.
+// never change, so they're kept in ~/.fameboy/network-hours.json.
 const SAMPLE_BLOCKS = 240;
 type HourCache = Record<string, number>; // "<shard>:<hour start, unix ms>" -> messages a minute
 async function hourRate(shard: number, span: Span | undefined, hourStart: number, cache: HourCache): Promise<number | undefined> {

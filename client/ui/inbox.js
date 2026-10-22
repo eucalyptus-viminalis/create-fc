@@ -1,4 +1,4 @@
-// clearcast inbox: casts from people you follow, likes on your casts, and
+// fameboy inbox: casts from people you follow, likes on your casts, and
 // replies to you. Clear what you've dealt with; it leaves the "waiting" count.
 // Save casts to come back to. Cleared and saved stay in this browser (mine.js).
 // Purple marks what arrived since your last visit.

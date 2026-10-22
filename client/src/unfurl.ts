@@ -17,7 +17,7 @@ export type Unfurl = {
 
 // A desktop browser's identity, plus our name: some sites (YouTube) send
 // unknown visitors to a mobile page with no preview tags.
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 clearcast/0.1";
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 fameboy/0.1";
 const MAX_BYTES = 768 * 1024; // the tags live in <head>; no need for the whole page
 const cache = new Map<string, Promise<Unfurl>>();
 

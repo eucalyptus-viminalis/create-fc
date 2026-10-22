@@ -1,4 +1,4 @@
-// clearcast home: boot, then four tiles that keep themselves fresh.
+// fameboy home: boot, then four tiles that keep themselves fresh.
 // Every number comes from this node (via the local server's /api) or from
 // fc-companion on the same server. Nothing here is made up: when something
 // isn't known yet, the tile says so.
@@ -296,7 +296,7 @@ function paintNode(home) {
 function paintPresence(p) {
   if (!p.companion) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so clearcast can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
+    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so fameboy can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
     return;
   }
   S.presence = p.status;

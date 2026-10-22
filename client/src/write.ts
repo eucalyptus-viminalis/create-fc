@@ -1,6 +1,6 @@
 // Writes: cast, delete, follow, unfollow, like, recast. Each is a protobuf
 // message signed by your app key (an Author: the key file, or on a hosted
-// clearcast your browser) and POSTed to your own node, which checks it
+// fameboy your browser) and POSTed to your own node, which checks it
 // and relays it to the validators. A read node keeps no mempool, so "accepted"
 // only means "valid and relayed". We confirm every write by reading it back.
 
@@ -30,8 +30,8 @@ const MAX_CAST_BYTES = 320; // 1,024 for Pro accounts
 
 export type CastRef = { fid: number; hash: Hex };
 
-// "dwr/0x35c7b588" -> the full cast id. The short hash is what `clearcast casts` and
-// `clearcast feed` print; we find the full one among that user's recent casts.
+// "dwr/0x35c7b588" -> the full cast id. The short hash is what `fameboy casts` and
+// `fameboy feed` print; we find the full one among that user's recent casts.
 export async function resolveCast(ref: string): Promise<CastRef> {
   const m = ref.match(/^@?([^/]+)\/(0x[0-9a-fA-F]+)$/);
   if (!m) throw new NodeError(`"${ref}" isn't a cast reference. Use user/hash, e.g. dwr/0x35c7b588`);

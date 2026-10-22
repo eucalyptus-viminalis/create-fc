@@ -1,10 +1,10 @@
-// clearcast's UI kit: what every page shares. Components are functions that
+// fameboy's UI kit: what every page shares. Components are functions that
 // return HTML strings (the pages build their views from strings); the rest are
 // small helpers (api, store, sound, toast) and the modes bar.
 // Load it before the page's own script:
 //   <link rel="stylesheet" href="/kit.css"> <script src="/kit.js"></script>
 //
-// kit.ext(href, label, opts)  a link that leaves clearcast. It always opens in
+// kit.ext(href, label, opts)  a link that leaves fameboy. It always opens in
 //                             a new tab, says so to screen readers, and shows
 //                             a small pixel arrow (↗) after text labels.
 //   href    where it goes (escaped here)
@@ -28,18 +28,18 @@
   // ---------------------------------------------------------------- basics
   const $ = (sel) => document.querySelector(sel);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const TOKEN = document.querySelector('meta[name="clearcast-token"]')?.content ?? "";
+  const TOKEN = document.querySelector('meta[name="fameboy-token"]')?.content ?? "";
 
   // The local server's API. Only this page can call it: it sends the token the
   // server embedded in the page. 401 means signed out.
-  // On a hosted clearcast a 401 can just mean the session ended (the server
+  // On a hosted fameboy a 401 can just mean the session ended (the server
   // restarted, say): if this browser has a key, sign a new challenge and retry once.
   class SignedOut extends Error {}
   let reauth;
   async function api(path, body, retried = false) {
     const res = await fetch(path, {
       method: body ? "POST" : "GET",
-      headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
+      headers: { "x-fameboy-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
     const json = await res.json().catch(() => ({}));

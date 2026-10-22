@@ -1,17 +1,17 @@
 {
-  "name": "fc-client",
+  "name": "fameboy",
   "version": "0.1.0",
   "description": "A minimal Farcaster client that reads from and writes to your own Snapchain node",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "clearcast": "./src/cli.ts"
+    "fameboy": "./src/cli.ts"
   },
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
-    "clearcast": "node src/cli.ts",
+    "fameboy": "node src/cli.ts",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\"",
     "coverage": "node scripts/api-coverage.ts"

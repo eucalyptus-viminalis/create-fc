@@ -8,10 +8,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 // Your node's HTTP address: $FC_NODE, else what install.sh saved in
-// ~/.fc-client/config.json, else a node on this machine.
+// ~/.fameboy/config.json, else a node on this machine.
 function configuredNode(): string | undefined {
   try {
-    const dir = process.env.FC_HOME ?? join(homedir(), ".fc-client");
+    const dir = process.env.FC_HOME ?? join(homedir(), ".fameboy");
     return (JSON.parse(readFileSync(join(dir, "config.json"), "utf8")) as { node?: string }).node;
   } catch {
     return undefined;

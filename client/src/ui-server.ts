@@ -188,10 +188,10 @@ const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
 type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<unknown>;
 
 // Two modes (ADR 003):
-//   local   clearcast ui. Only the person at this computer can reach it, so
+//   local   fameboy ui. Only the person at this computer can reach it, so
 //           typing a seed phrase into its page is as safe as a terminal, and
-//           it signs with the key file in ~/.fc-client.
-//   hosted  clearcast serve. Other people use it over the network. Each
+//           it signs with the key file in ~/.fameboy.
+//   hosted  fameboy serve. Other people use it over the network. Each
 //           person's key stays in their browser and a session cookie says who
 //           they are (session.ts). It never accepts a seed phrase or uses a key file.
 let LOCAL_ONLY = true;
@@ -213,12 +213,12 @@ const myFid = async () => {
     return s.fid;
   }
   const key = await loadKey().catch(() => undefined);
-  if (!key) throw new SignedOut("signed out: run clearcast login in a terminal");
+  if (!key) throw new SignedOut("signed out: run fameboy login in a terminal");
   return key.fid;
 };
 
 // Who signs this request's writes: the key file here, or the signed-in
-// person's browser on a hosted clearcast (remote-sign.ts).
+// person's browser on a hosted fameboy (remote-sign.ts).
 async function author(): Promise<Author> {
   await myFid();
   if (LOCAL_ONLY) return localAuthor();
@@ -279,8 +279,8 @@ const routes: Record<string, Handler> = {
   "GET /api/inbox/likes": async (q) => likesView(await myFid(), sinceOf(q), profileOf),
   "GET /api/inbox/replies": async (q) => repliesView(await myFid(), sinceOf(q), shape),
   "GET /api/inbox/followers": async (q) => followersView(await myFid(), sinceOf(q), profileOf),
-  // Personal state older versions kept in ~/.fc-client, for the page to take
-  // over once (legacy.ts). Never on a hosted clearcast.
+  // Personal state older versions kept in ~/.fameboy, for the page to take
+  // over once (legacy.ts). Never on a hosted fameboy.
   "GET /api/legacy": async () => (LOCAL_ONLY ? legacyState(await myFid()) : null),
   // Likes, recasts and replies on one cast, for the reading pane.
   "GET /api/inbox/counts": async (q) => {
@@ -356,21 +356,21 @@ const routes: Record<string, Handler> = {
   },
   // Phone sign-in: this computer's own app account if it has one, else the node's (with an invite code).
   "POST /api/signin/app": async (_q, b) => {
-    if (!LOCAL_ONLY) throw new NodeError("this clearcast is hosted: sign in with a key your browser makes (/api/signin/browser)");
+    if (!LOCAL_ONLY) throw new NodeError("this fameboy is hosted: sign in with a key your browser makes (/api/signin/browser)");
     if (await loadAppAccount()) return startAppSignIn();
     // The companion says whether it needs an invite code.
     return startNodeSignIn(String(b.invite ?? "").trim());
   },
   // Hosted sign-in: the browser made a key and sends its public half.
   "POST /api/signin/browser": async (_q, b) => {
-    if (LOCAL_ONLY) throw new NodeError("this clearcast runs on your computer and keeps its key in ~/.fc-client");
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer and keeps its key in ~/.fameboy");
     return startBrowserSignIn(String(b.key ?? ""), String(b.invite ?? "").trim(), here().client);
   },
   "GET /api/signin/browser": async (q) => browserSignInStatus(q.get("token") ?? ""),
   // A session: sign this challenge with your browser's key, then POST it back.
   "GET /api/session/challenge": async () => ({ nonce: challenge(), origin: ORIGIN }),
   "POST /api/session": async (_q, b) => {
-    if (LOCAL_ONLY) throw new NodeError("this clearcast runs on your computer: it needs no session");
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer: it needs no session");
     const s = await startSession(ORIGIN, b);
     checked.set(`${s.fid}:${s.key}`, Date.now());
     here().cookies.push(sessionCookie(s, SECURE));
@@ -378,7 +378,7 @@ const routes: Record<string, Handler> = {
   },
   "GET /api/signin/app": async (q) => appSignInStatus(q.get("token") ?? ""),
   "POST /api/signin/phrase": async (_q, b) => {
-    if (!LOCAL_ONLY) throw new NodeError("this clearcast is shared over the network, so it never accepts a seed phrase");
+    if (!LOCAL_ONLY) throw new NodeError("this fameboy is shared over the network, so it never accepts a seed phrase");
     return { job: startPhraseSignIn(String(b.phrase ?? "")) };
   },
   "GET /api/signin/phrase": async (q) => phraseSignInStatus(q.get("job") ?? ""),
@@ -477,7 +477,7 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel.endsWith(".html")) data = data.toString().replace("__CLEARCAST_TOKEN__", token);
+    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -492,17 +492,17 @@ export async function startUi(port: number, explicit = false, opts: UiOptions = 
   if (opts.hosted) {
     LOCAL_ONLY = false;
     hostedMode(); // never touch a key file again in this process
-    if (opts.origin) setDeviceLabel(`clearcast at ${new URL(opts.origin).host}`);
+    if (opts.origin) setDeviceLabel(`fameboy at ${new URL(opts.origin).host}`);
   }
   for (let p = port; p < port + (explicit ? 1 : 20); p++) {
     try {
       return await listenOn(p, opts);
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
-      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: clearcast ui --port ${p + 1}`);
+      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: fameboy ui --port ${p + 1}`);
     }
   }
-  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: clearcast ui --port <n>`);
+  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: fameboy ui --port <n>`);
 }
 
 async function listenOn(port: number, opts: UiOptions): Promise<string> {
@@ -532,13 +532,13 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path.startsWith("/api/")) {
         // Only this page may call the API: same origin, and the page's token.
         const from = req.headers.origin;
-        if ((from && from !== origin) || req.headers["x-clearcast-token"] !== token) return send(res, 403, { error: "forbidden" });
+        if ((from && from !== origin) || req.headers["x-fameboy-token"] !== token) return send(res, 403, { error: "forbidden" });
         // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
         // A hosted page's answer to "sign this": carry on the paused request.
         if (req.method === "POST" && path === "/api/sign") return reply(res, c, answer(c.session, await readJson(req)));
         if (req.method === "POST" && path === "/api/images") {
           await myFid();
-          const device = checkDevice({ id: req.headers["x-clearcast-device"], status: req.headers["x-clearcast-status"] });
+          const device = checkDevice({ id: req.headers["x-fameboy-device"], status: req.headers["x-fameboy-status"] });
           const chunks: Buffer[] = [];
           let size = 0;
           for await (const c of req) {

@@ -1,4 +1,4 @@
-// Signing in the browser, mid-request (ADR 003). On a hosted clearcast the
+// Signing in the browser, mid-request (ADR 003). On a hosted fameboy the
 // server builds a write but the person's browser holds the key. So when
 // server code calls author.sign(bytes), the request pauses: the HTTP reply
 // the browser is waiting on becomes "sign this" ({ sign: { id, payload } }).

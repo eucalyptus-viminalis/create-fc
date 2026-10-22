@@ -6,7 +6,7 @@
 //    on chain. Your seed phrase never leaves your phone. The service is free
 //    and needs no API key, but it does need an "app account": a Farcaster
 //    account whose custody key vouches for every key request this server makes.
-//    Whoever runs clearcast sets it up once with `clearcast app-account`.
+//    Whoever runs fameboy sets it up once with `fameboy app-account`.
 //    Docs: https://docs.farcaster.xyz/reference/farcaster/signer-requests
 //
 //    Or the node vouches: when the node's owner ran `fc-node app-account`,
@@ -15,8 +15,8 @@
 //    is still made here; only its public half goes to the companion.
 //
 // 2. Seed phrase in the page (this computer only). The same steps as
-//    `clearcast login`: the phrase goes from your browser to this server on
-//    127.0.0.1, signs one KEY_ADD in memory, and is dropped. A clearcast that
+//    `fameboy login`: the phrase goes from your browser to this server on
+//    127.0.0.1, signs one KEY_ADD in memory, and is dropped. A fameboy that
 //    other people use over the network must never accept a phrase, so this
 //    route only exists while the server listens on this computer alone.
 
@@ -95,7 +95,7 @@ async function farcaster<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function startAppSignIn() {
   const app = await loadAppAccount();
-  if (!app) throw new NoAppAccount("no app account set up: run clearcast app-account once in a terminal");
+  if (!app) throw new NoAppAccount("no app account set up: run fameboy app-account once in a terminal");
   for (const [t, r] of requests) if (r.expires < Date.now()) requests.delete(t);
 
   const privateKey = new Uint8Array(randomBytes(32));
@@ -105,7 +105,7 @@ export async function startAppSignIn() {
   // Farcaster only checks the signature when you approve, so check here that
   // the saved key still owns the app account; otherwise the request would fail late.
   if ((await currentCustody(app.fid)) !== account.address.toLowerCase())
-    throw new NodeError(`the saved app account key doesn't own fid ${app.fid} any more. Run clearcast app-account again.`);
+    throw new NodeError(`the saved app account key doesn't own fid ${app.fid} any more. Run fameboy app-account again.`);
   const signature = await account.signTypedData({
     domain: DOMAIN,
     types: TYPES,
@@ -251,7 +251,7 @@ export async function appSignInStatus(token: string) {
 type Job = { lines: string[]; done: boolean; error?: string; fid?: number };
 const jobs = new Map<string, Job>();
 
-// Starts the same steps as clearcast login and returns a job id to poll. The
+// Starts the same steps as fameboy login and returns a job id to poll. The
 // phrase lives only in this function's scope while it runs.
 export function startPhraseSignIn(raw: string): string {
   const phrase = normalizePhrase(raw);

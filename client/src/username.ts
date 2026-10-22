@@ -85,7 +85,7 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
   // 2. an app key allowed to sign USER_DATA_ADD. Keys from older versions of
   // this client lack that scope, and scopes are fixed at KEY_ADD time, so we
   // add a new key. The old one expires on its own once it stops being used.
-  // For this clearcast's app account, use its own key so this computer's
+  // For this fameboy's app account, use its own key so this computer's
   // sign-in key isn't replaced.
   const app = await loadAppAccount();
   const forApp = app?.fid === custody.fid;
@@ -105,7 +105,7 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     for (;;) {
       const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name }).catch(() => undefined);
       if (proof?.fid === custody.fid) break;
-      if (Date.now() > until) throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run clearcast username ${name} again later; it will skip the claim.`);
+      if (Date.now() > until) throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run fameboy username ${name} again later; it will skip the claim.`);
       await new Promise((r) => setTimeout(r, 5000));
     }
   }
@@ -122,5 +122,5 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     return log(`dry run: USER_DATA_ADD username=${name} ${valid ? "passes" : "FAILS"} your node's stateless checks. Nothing was sent.`);
   }
   if (await submitUntil(bytes, async () => (await profile(custody.fid)).username === name)) return log(`done: fid ${custody.fid} is now @${name}`);
-  throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run clearcast username ${name} again.`);
+  throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run fameboy username ${name} again.`);
 }

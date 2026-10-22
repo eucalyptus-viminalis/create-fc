@@ -1,4 +1,4 @@
-// clearcast's mark: a clear glass sphere lit from the top left (direction A).
+// fameboy's mark: a clear glass sphere lit from the top left (direction A).
 // orb() returns SVG markup on a 512 grid. Ids get a unique prefix so many
 // copies can sit in one page. Loaded by scripts/build-logo.cjs and by the
 // pages in mockups/.
