@@ -13,7 +13,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
+import { NodeError, PUBLIC_NODE, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
 import { fileAuthor, forgetKey, hostedMode, loadKey, localAuthor, revokeKey, type Author } from "./keys.ts";
@@ -269,7 +269,7 @@ const routes: Record<string, Handler> = {
   "GET /api/instance": async () => instance(),
   "GET /api/status": async () => {
     const info = await get<{ version: string; shardInfos: { shardId: number; maxHeight: number; blockDelay: number }[] }>("/v1/info");
-    return { node: NODE, version: info.version, shards: info.shardInfos.sort((a, b) => a.shardId - b.shardId) };
+    return { node: PUBLIC_NODE, version: info.version, shards: info.shardInfos.sort((a, b) => a.shardId - b.shardId) };
   },
   // ---- the home view (see home.ts)
   // Your node, plus uptime and how many devices are online from fc-companion.

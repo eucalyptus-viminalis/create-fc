@@ -9,7 +9,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { platform } from "node:os";
 import { join } from "node:path";
 import { KEY_DIR, type Author } from "./keys.ts";
-import { FARCASTER_EPOCH, NODE, NodeError, get, pool, type Message, type Page } from "./node.ts";
+import { FARCASTER_EPOCH, NODE, NodeError, PUBLIC_NODE, get, pool, type Message, type Page } from "./node.ts";
 import { following, profile } from "./read.ts";
 
 // ------------------------------------------------------------------ files
@@ -58,7 +58,7 @@ export async function nodeOverview(): Promise<NodeOverview> {
   const shards = info.shardInfos.map((s) => ({ id: s.shardId, height: s.maxHeight, behind: s.blockDelay })).sort((a, b) => a.id - b.id);
   const behindSeconds = Math.max(...shards.map((s) => s.behind));
   return {
-    url: NODE,
+    url: PUBLIC_NODE,
     version: info.version,
     peerId: info.peer_id,
     latencyMs,

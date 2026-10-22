@@ -100,6 +100,7 @@ docker rm -f fc-fameboy >/dev/null 2>&1 || true
 docker run -d --name fc-fameboy --restart unless-stopped --network host \
   --read-only --user node --memory 384m \
   -e FC_NODE=http://127.0.0.1:3381 -e FC_COMPANION=http://127.0.0.1:3390 -e FC_HOME=/state \
+  -e FC_PUBLIC_NODE="http://$ip:3381" \
   -v "$LIB:/app:ro" -v "$STATE:/state" \
   node:22-alpine node /app/client/src/cli.ts serve --origin "$origin" --port "$PORT" >/dev/null
 

@@ -18,6 +18,11 @@ function configuredNode(): string | undefined {
   }
 }
 export const NODE = (process.env.FC_NODE ?? configuredNode() ?? "http://localhost:3381").replace(/\/$/, "");
+// The node's address as people outside this server reach it, for showing on
+// pages and in copy-as-curl commands. A hosted fameboy reads its node at
+// 127.0.0.1, which means nothing to a visitor, so fc-node client sets
+// $FC_PUBLIC_NODE to http://<server ip>:3381.
+export const PUBLIC_NODE = (process.env.FC_PUBLIC_NODE ?? NODE).replace(/\/$/, "");
 
 // Farcaster timestamps count seconds from 2021-01-01T00:00:00Z, not 1970.
 export const FARCASTER_EPOCH = 1609459200;
