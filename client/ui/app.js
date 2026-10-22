@@ -62,13 +62,17 @@ const empty = (msg) => `<div class="empty"><p>${esc(msg)}</p></div>`;
 
 // ------------------------------------------------------------------- API
 
-async function api(path, body) {
+async function api(path, body, retried = false) {
   const res = await fetch(path, {
     method: body ? "POST" : "GET",
     headers: { "x-fameboy-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   let json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+  // Hosted: the session may have ended (the server restarted, say). If this
+  // browser holds a key, sign a new challenge and retry once (mine.js).
+  const gone = res.status === 401 || (path === "/api/me" && res.ok && json.data === null && (await mine.key.get()));
+  if (gone && !retried && (await mine.key.session().catch(() => false))) return api(path, body, true);
   if (res.status === 401) showSignedOut(); // the key was removed, e.g. from a terminal
   if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
   if (json.sign) json = await mine.key.answer(json); // hosted: sign in this browser (mine.js)

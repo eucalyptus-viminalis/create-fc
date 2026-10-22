@@ -43,7 +43,10 @@
       body: body ? JSON.stringify(body) : undefined,
     });
     const json = await res.json().catch(() => ({}));
-    if (res.status === 401 && !retried && window.mine) {
+    // "/api/me" answers null rather than 401 when the session is gone, so treat
+    // that the same way when this browser holds a key.
+    const gone = res.status === 401 || (path === "/api/me" && res.ok && json.data === null && (await window.mine?.key.get()));
+    if (gone && !retried && window.mine) {
       reauth ??= mine.key.session().catch(() => false).finally(() => setTimeout(() => (reauth = undefined), 5000));
       if (await reauth) return api(path, body, true);
     }
