@@ -323,8 +323,8 @@ to approve. Its custody key signs each request, so it's saved here
   - Use an account made for this, never your personal one.
     clearcast new-account makes one.
   - People who sign in see this account's name as the app asking for access,
-    and their casts show "via" it. Name it after the client and who runs it,
-    e.g. @yourname-clearcast with display name "clearcast (run by Your Name)".
+    and their casts show "via" it. Without a username, setup suggests a free
+    @<color>cast name, like @tealcast. Keep it or type your own.
     One shared @clearcast can't work: every clearcast would need its key.
 `;
 

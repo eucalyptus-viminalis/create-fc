@@ -18,7 +18,7 @@ set -euo pipefail
 
 LIB=/usr/local/lib/fc-companion
 STATE=/var/lib/fc-companion
-for f in companion.mjs app-account.mjs package.json pnpm-lock.yaml; do
+for f in companion.mjs app-account.mjs colorcast.mjs package.json pnpm-lock.yaml; do
   [ -f "$LIB/$f" ] || { echo "fc-companion: $f is missing; re-run command 1"; exit 1; }
 done
 mkdir -p "$STATE"

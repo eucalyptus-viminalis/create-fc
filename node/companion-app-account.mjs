@@ -18,6 +18,8 @@
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { mnemonicToAccount } from "viem/accounts";
 import { bytesToHex } from "viem";
+import { createInterface } from "node:readline/promises";
+import { nameHolder, pickColorcast } from "./colorcast.mjs";
 
 const SNAPCHAIN = (process.env.SNAPCHAIN ?? "http://127.0.0.1:3381").replace(/\/$/, "");
 const OUT = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
@@ -114,5 +116,46 @@ const privateKey = found.account.getHdKey().privateKey;
 writeFileSync(OUT, JSON.stringify({ fid: found.fid, address: found.account.address, privateKey: bytesToHex(privateKey), savedAt: new Date().toISOString() }, null, 2) + "\n", { mode: 0o600 });
 console.log(`
 Done. fid ${found.fid} now vouches for sign-ins on this node.
-People see this account's name when they approve.
-Give friends an invite code: fc-node invite`);
+People see this account's name when they approve.`);
+
+// No username yet? Suggest @<color>cast with a random color that's still free.
+// Claiming it needs an app key, which this server doesn't keep, so the person
+// claims it with clearcast on their own computer.
+const username = await usernameOf(found.fid).catch(() => undefined);
+if (username) console.log(`It's @${username}.`);
+else {
+  console.log("\nIt has no username yet, so the approval screen shows its number. Picking a free @<color>cast name...");
+  const suggestion = await pickColorcast({ fid: found.fid, log: (s) => console.log(s) });
+  const name = await chooseName(suggestion, found.fid);
+  if (name) console.log(`
+Claim @${name} from your own computer (it asks for this account's seed phrase):
+  clearcast username ${name}`);
+  else console.log("Claim one later from your own computer: clearcast username <name>");
+}
+console.log("\nGive friends an invite code: fc-node invite");
+
+async function usernameOf(fid) {
+  const { messages } = await get("/v1/userDataByFid", { fid, user_data_type: "USER_DATA_TYPE_USERNAME" }, 15_000);
+  return messages?.[0]?.data?.userDataBody?.value || undefined;
+}
+
+// Keep the suggestion or type another name; checks the fname server for each.
+async function chooseName(suggestion, fid) {
+  if (suggestion) console.log(`@${suggestion} is free.`);
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    for (;;) {
+      const answer = (await rl.question(suggestion ? `username [${suggestion}], or type your own (- to skip): ` : "username (- to skip): ")).trim().replace(/^@/, "").toLowerCase();
+      if (answer === "-" || (!answer && !suggestion)) return undefined;
+      if (!answer) return suggestion;
+      try {
+        if ((await nameHolder(answer, fid)) !== "taken") return answer;
+        console.log(`@${answer} is taken. Try another.`);
+      } catch (e) {
+        console.log(e.message);
+      }
+    }
+  } finally {
+    rl.close();
+  }
+}

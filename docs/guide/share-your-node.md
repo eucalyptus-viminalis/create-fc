@@ -24,7 +24,7 @@ On your node, that account is the app account. Here's what it can and can't do:
 
 So pick an account you'd be fine losing:
 
-- **Good:** an account made for this, named so friends recognise it. For example `@yourname-clearcast`, with "clearcast" as its display name.
+- **Good:** an account made for this, with a `@<color>cast` username, like `@tealcast`, and "clearcast" as its display name. `fc-node app-account` suggests a free one with a random color if the account has no username yet; keep it or pick your own.
 - **Not good:** your main account, or a brand account with followers you care about.
 
 ## 2. Save it on your server

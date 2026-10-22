@@ -7,6 +7,8 @@ import { registerAppKey, type Custody } from "./keys.ts";
 import { loadAppAccount, saveAppAccount } from "./signin.ts";
 import { profile } from "./read.ts";
 import { checkProfile, setProfile, type ProfileFields } from "./profile.ts";
+import { setUsername } from "./username.ts";
+import { nameHolder, pickColorcast } from "../../node/colorcast.mjs";
 
 export const DEFAULT_PFP = "https://eucalyptus-viminalis.github.io/create-fc/img/clearcast-avatar.png";
 export const DEFAULT_BIO = "it's so clear to me now";
@@ -22,8 +24,21 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
   const p = await profile(custody.fid);
   log(`App account: @${p.username ?? "?"}${p.display ? ` ("${p.display}")` : ""} (fid ${custody.fid}). Saved its custody key to ${file} (mode 600).`);
 
+  // No username yet: suggest @<color>cast, with a random color that's still free.
+  if (!p.username) {
+    const name = await chooseUsername(custody.fid, o);
+    if (name) {
+      try {
+        await setUsername(name, custody, { log });
+        p.username = name;
+      } catch (e) {
+        log(`couldn't set @${name}: ${e instanceof Error ? e.message : e}. Try again later: clearcast username ${name}`);
+      }
+    }
+  }
+
   // What people will see. Suggest a name and picture when they're missing.
-  const suggestDisplay = p.username === "clearcast" ? "clearcast" : `clearcast (run by ${p.username?.replace(/-?clearcast-?/, "") || "you"})`;
+  const suggestDisplay = "clearcast";
   const want = async (label: string, current: string | undefined, suggestion: string): Promise<string | undefined> => {
     if (!o.ask) return current ? undefined : suggestion;
     const answer = (await o.ask(`${label} [${current ?? suggestion}]: `)).trim();
@@ -51,10 +66,34 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
     await setProfile(key, fields, log);
   }
 
-  if (!/clearcast/i.test(`${p.username ?? ""} ${fields.display ?? p.display ?? ""}`))
+  if (!/clearcast/i.test(fields.display ?? p.display ?? ""))
     log(`
-\x1b[1mHeads up: this account's name doesn't mention clearcast.\x1b[0m People signing in will see
-"@${p.username ?? custody.fid} wants to post on your behalf". Consider a username like
-yourname-clearcast: clearcast username yourname-clearcast (asks for this account's phrase).`);
+\x1b[1mHeads up: this account's display name doesn't mention clearcast.\x1b[0m People signing in will see
+"@${p.username ?? custody.fid} wants to post on your behalf". A display name like "clearcast" tells them
+which app is asking. Run clearcast app-account again to change it.`);
   if (!p.username) log("It has no username yet, so the approval screen shows its number. Claim one with clearcast username <name>.");
+}
+
+// Suggest @<color>cast and let the person keep it or type their own. Without a
+// terminal, only print the suggestion. Returns the name to claim, or undefined.
+async function chooseUsername(fid: number, o: { ask?: Ask; log: (s: string) => void }): Promise<string | undefined> {
+  const { log } = o;
+  log("\nThis account has no username yet. Picking a free @<color>cast name for it...");
+  const suggestion = await pickColorcast({ fid, log });
+  if (!o.ask) {
+    if (suggestion) log(`@${suggestion} is free. Claim it with: clearcast username ${suggestion}`);
+    return undefined;
+  }
+  if (suggestion) log(`@${suggestion} is free.`);
+  for (;;) {
+    const answer = (await o.ask(suggestion ? `username [${suggestion}], or type your own (- to skip): ` : "username (- to skip): ")).trim().replace(/^@/, "").toLowerCase();
+    if (answer === "-" || (!answer && !suggestion)) return undefined;
+    if (!answer) return suggestion;
+    try {
+      if ((await nameHolder(answer, fid)) !== "taken") return answer;
+      log(`@${answer} is taken. Try another.`);
+    } catch (e) {
+      log(e instanceof Error ? e.message : String(e));
+    }
+  }
 }
