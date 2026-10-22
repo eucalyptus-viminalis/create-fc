@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#f4f4f4" />
   <title>create-fc · Run your own Farcaster</title>
   <meta name="description" content="Three commands to a self-hosted Snapchain read node and a Farcaster client that reads from it and posts through it. No API keys." />
+  <link rel="icon" href="favicon.ico" sizes="32x32" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="canonical" href="https://eucalyptus-viminalis.github.io/create-fc/" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://eucalyptus-viminalis.github.io/create-fc/" />
@@ -14,7 +17,7 @@
   <meta property="og:image" content="https://eucalyptus-viminalis.github.io/create-fc/og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="create-fc: Your own Farcaster. Three commands. A read node and a client you run yourself. No API keys." />
+  <meta property="og:image:alt" content="create-fc poster in the style of a 1930s public-works print: the create-fc mark on the horizon sends purple arrows of MESSAGES out to the sky. Network Decentralization Authority." />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -25,7 +28,7 @@
 </head>
 <body>
   <header class="tg-header">
-    <a class="tg-wordmark" href="#top" aria-label="create-fc home"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
+    <a class="tg-wordmark" href="#top"><img class="fc-lockup" src="img/create-fc-lockup.svg" alt="create-fc" /></a>
     <nav class="tg-header__nav" aria-label="Main navigation">
       <a class="tg-quiet-link" href="#quickstart">Quickstart</a>
       <a class="tg-quiet-link" href="#client">Client</a>
@@ -298,7 +301,7 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
         <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a></nav>
         <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>clearcast</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3 id="gui">The browser client</h3>
-        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account, so it opens on a sign-in page. <b>Approve in the Farcaster app</b>: scan a QR code and approve on your phone, so your seed phrase never leaves it. The request comes from an <b>app account</b>, the account the phone shows as "@name wants to post on your behalf". Set it up once on your server with <code>ssh -t root@&lt;ip&gt; fc-node app-account</code>, and everyone using your node can sign in this way; give each friend an invite code with <code>fc-node invite &lt;name&gt;</code> (<a class="tg-text-link" href="docs/guide/share-your-node">sharing your node</a>). Or set one up for this computer alone with <code>clearcast app-account</code>. Name it after the client and yourself, like <code>@yourname-clearcast</code>, so people know what they're approving and who runs it. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number. <b>Use your seed phrase</b>: the same steps as <code>clearcast login</code>, offered only because the server listens on your computer alone. <b>Sign out</b> in the header deletes the app key from this computer.</p>
+        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account, so it opens on a sign-in page. <b>Approve in the Farcaster app</b>: scan a QR code and approve on your phone, so your seed phrase never leaves it. The request comes from an <b>app account</b>, the account the phone shows as "@name wants to post on your behalf". Set it up once on your server with <code>ssh -t root@&lt;ip&gt; fc-node app-account</code>, and everyone using your node can sign in this way; give each friend an invite code with <code>fc-node invite &lt;name&gt;</code> (<a class="tg-text-link" href="docs/guide/share-your-node">sharing your node</a>). Or set one up for this computer alone with <code>clearcast app-account</code>. If it has no username, setup suggests a free <code>@&lt;color&gt;cast</code> with a random color, like <code>@tealcast</code>, trying another color whenever one is taken; keep it or type your own. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number. <b>Use your seed phrase</b>: the same steps as <code>clearcast login</code>, offered only because the server listens on your computer alone. <b>Sign out</b> in the header deletes the app key from this computer.</p>
         <figure class="fc-shot"><img src="img/clearcast-feed.png" width="1100" height="508" loading="lazy" alt="clearcast's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more." /><figcaption><b>Feed.</b> Every cast carries a “via @app” label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or “Hide the Farcaster app” to see everything else.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as you.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. See every app that can post as you.</figcaption></figure>
         <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in your feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
@@ -367,7 +370,7 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
         <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. The account we tested with is 3355372.</dd></div>
         <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>clearcast login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
         <div><dt>App keys (signers)</dt><dd>Ed25519 keys that sign everyday messages for one app. The custody key authorizes each one, naming the app that asked (its <code>requestFid</code>). One account can have many: Farcaster's app, Firefly, this client.</dd></div>
-        <div><dt>App account</dt><dd>The account that asks for an app key: its custody key signs the request, and its name is what you approve on your phone and what your casts show "via". There's no shared @clearcast, since every install would need its key, so each one names its own, like <code>@yourname-clearcast</code>.</dd></div>
+        <div><dt>App account</dt><dd>The account that asks for an app key: its custody key signs the request, and its name is what you approve on your phone and what your casts show "via". There's no shared @clearcast, since every install would need its key, so each one names its own, like <code>@tealcast</code>: setup suggests a free <code>@&lt;color&gt;cast</code>.</dd></div>
         <div><dt>Gasless app keys</dt><dd>App keys used to be registered with an Optimism transaction. Now a <code>KEY_ADD</code> message does it: no transaction, no gas, about a second. Each key lists the message types it may sign (its scopes) and expires after 30–90 days unused.</dd></div>
         <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>clearcast</code>.</dd></div>
         <div><dt>Shards</dt><dd>Snapchain splits users across shards 1 and 2 by a hash of the FID. Shard 0 orders the other two and holds things every shard needs, like app keys. Each shard is its own chain, so their heights differ.</dd></div>
@@ -446,7 +449,7 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
   </main>
 
   <footer class="tg-footer tg-container">
-    <a class="tg-wordmark tg-wordmark--sm" href="#top"><span class="tg-mark" aria-hidden="true"></span>create-fc</a>
+    <a class="tg-wordmark tg-wordmark--sm" href="#top"><img class="fc-lockup" src="img/create-fc-lockup.svg" alt="create-fc" /></a>
     <div class="tg-footer__links">
       <a class="tg-btn tg-btn--pill" href="https://github.com/eucalyptus-viminalis/create-fc">GitHub</a>
       <a class="tg-btn tg-btn--pill" href="docs/Costs">Costs</a>
