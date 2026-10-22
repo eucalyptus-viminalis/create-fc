@@ -117,6 +117,15 @@ export function colorOf(name) {
   return Object.hasOwn(PALETTE, color) ? { color, hex: PALETTE[color] } : undefined;
 }
 
+// The profile picture to suggest for an app account named `name`: the keycap
+// in its colour (built by client/logo/scripts/build-avatars.cjs and published
+// with the site), or the clear one for any other name.
+const SITE = "https://eucalyptus-viminalis.github.io/create-fc";
+export function avatarFor(name) {
+  const c = colorOf(name);
+  return c ? `${SITE}/img/avatars/${PREFIX}${c.color}.jpg` : `${SITE}/img/fameboy-avatar.png`;
+}
+
 const FNAMES = "https://fnames.farcaster.xyz";
 const FNAME = /^[a-z0-9][a-z0-9-]{0,15}$/;
 

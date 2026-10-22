@@ -8,9 +8,9 @@ import { loadAppAccount, saveAppAccount } from "./signin.ts";
 import { profile } from "./read.ts";
 import { checkProfile, setProfile, type ProfileFields } from "./profile.ts";
 import { setUsername } from "./username.ts";
-import { colorOf, nameHolder, pickFameboyName } from "../../node/fameboy-name.mjs";
+import { avatarFor, colorOf, nameHolder, pickFameboyName } from "../../node/fameboy-name.mjs";
 
-export const DEFAULT_PFP = "https://eucalyptus-viminalis.github.io/create-fc/img/fameboy-avatar.png";
+export const DEFAULT_PFP = avatarFor(undefined); // the clear keycap; @fameboy<color> names get their colour (avatarFor)
 export const DEFAULT_BIO = "a pocket Farcaster, on its own node";
 
 type Ask = (question: string) => Promise<string>;
@@ -50,7 +50,7 @@ export async function setUpAppAccount(custody: Custody, o: { sponsor: boolean; a
   log("\nThis is what people see when they approve signing in. Press Enter to keep the value in brackets.");
   const fields: ProfileFields = {
     display: await want("display name", p.display, suggestDisplay),
-    pfp: await want("picture URL", p.pfp, DEFAULT_PFP),
+    pfp: await want("picture URL", p.pfp, avatarFor(p.username)),
     bio: await want("bio", p.bio, DEFAULT_BIO),
   };
   checkProfile(fields);

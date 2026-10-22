@@ -9,6 +9,7 @@
 //   client/ui/fameboy-keycap.js    fameboy.js, so theme.js can draw each copy's coloured favicon
 //   site/img/fameboy.svg           mark on the site's client section
 //   site/img/fameboy-avatar.png    512px pfp, the default pfp for new app accounts
+// Per-colour pfps for @fameboy<color> names: build-avatars.cjs (pnpm avatars:build).
 const fs = require('fs'), path = require('path'), vm = require('vm'), { execFileSync } = require('child_process');
 const logo = path.join(__dirname, '..'), repo = path.join(logo, '..', '..');
 const sandbox = { module: { exports: {} }, globalThis: {} };
