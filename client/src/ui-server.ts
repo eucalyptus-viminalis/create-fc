@@ -513,7 +513,11 @@ export async function startUi(port: number, explicit = false, opts: UiOptions = 
   if (opts.hosted) {
     LOCAL_ONLY = false;
     hostedMode(); // never touch a key file again in this process
-    if (opts.origin) setDeviceLabel(`fameboy at ${new URL(opts.origin).host}`);
+    // "web: fameboyclear" for fameboyclear.<ip>.sslip.io, else the domain.
+    if (opts.origin) {
+      const host = new URL(opts.origin).host;
+      setDeviceLabel(`web: ${host.endsWith(".sslip.io") ? host.split(".")[0] : host}`);
+    }
   }
   for (let p = port; p < port + (explicit ? 1 : 20); p++) {
     try {

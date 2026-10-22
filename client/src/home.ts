@@ -123,7 +123,9 @@ const os = ({ darwin: "mac", win32: "windows", linux: "linux" } as Record<string
 // What others on the node see next to your name. A hosted fameboy names
 // itself instead of the server's OS (setDeviceLabel).
 let label = `fameboy on ${os}`;
-export const setDeviceLabel = (l: string) => void (label = l.slice(0, 64));
+// At most 40 characters: the companion cuts labels there before checking the
+// signature, so a longer one would never verify.
+export const setDeviceLabel = (l: string) => void (label = l.slice(0, 40));
 
 // Ed25519 over the exact bytes the companion checks (see node/companion.mjs).
 export const signWith = (by: Author, payload: string) => by.sign(Buffer.from(payload));
