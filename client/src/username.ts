@@ -74,7 +74,7 @@ async function transfer(custody: Custody, name: string, from: number, to: number
       const last = await fnameGet(`fid=${custody.fid}`).catch(() => undefined);
       const t = (last as (Transfer & { timestamp?: number }) | undefined)?.timestamp;
       const when = t ? ` @${last!.username} was claimed on ${new Date(t * 1000).toLocaleString()}, so the next change works from about ${new Date((t + 28 * 86400) * 1000).toLocaleString()}.` : "";
-      throw new NodeError(`the fname server says this account changed its name too recently: names can change once every 28 days.${when} Nothing was changed.`);
+      throw new NodeError(`the fname server says this account changed its name too recently: names can change once every 28 days.${when}`);
     }
     throw new NodeError(`fname server refused: ${res.status} ${body}`);
   }
@@ -87,7 +87,9 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
 
   // 0. --replace: give the current name back
   if (status === "replace" && current) {
-    await transfer(custody, current, custody.fid, 0, o.dryRun);
+    await transfer(custody, current, custody.fid, 0, o.dryRun).catch((e) => {
+      throw new NodeError(`${e instanceof Error ? e.message : e} Nothing was changed: the account still has @${current}.`);
+    });
     log(o.dryRun ? `dry run: signed giving up @${current}, but didn't send it.` : `gave @${current} back to the fname server`);
   }
 
