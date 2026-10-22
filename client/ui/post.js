@@ -196,11 +196,15 @@ async function shrink(file) {
   return blob && blob.size < file.size ? blob : file;
 }
 
-function upload(blob, att) {
+async function upload(blob, att) {
+  // Uploading needs a presence heartbeat, which names this browser.
+  const device = await mine.device((await kit.me())?.fid);
   return new Promise((resolve, reject) => {
     const x = new XMLHttpRequest();
     x.open("POST", "/api/images");
     x.setRequestHeader("x-clearcast-token", kit.TOKEN);
+    x.setRequestHeader("x-clearcast-device", device.id);
+    x.setRequestHeader("x-clearcast-status", device.status);
     x.setRequestHeader("content-type", "application/octet-stream");
     x.upload.onprogress = (e) => { if (e.lengthComputable) { att.progress = Math.min(9, Math.floor((e.loaded / e.total) * 10)); renderAtts(); } };
     x.onload = () => {

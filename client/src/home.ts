@@ -5,7 +5,7 @@
 // fc-companion (node/companion.mjs), a small service on the same server, on
 // port 3390, because Snapchain doesn't track either.
 
-import { createPrivateKey, randomBytes, sign } from "node:crypto";
+import { createPrivateKey, sign } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { platform } from "node:os";
 import { join } from "node:path";
@@ -110,16 +110,18 @@ export async function companionStatus(): Promise<CompanionStatus> {
 
 export type PresenceStatus = "online" | "invisible";
 
-// This computer's id on the node: random, made once, kept with your key.
-async function device(): Promise<{ id: string; label: string }> {
-  const saved = await readJson<{ id?: string }>("device.json", {});
-  const id = saved.id ?? randomBytes(12).toString("hex");
-  if (!saved.id) await writeJson("device.json", { id });
-  const os = ({ darwin: "mac", win32: "windows", linux: "linux" } as Record<string, string>)[platform()] ?? platform();
-  return { id, label: `clearcast on ${os}` };
+// A device: one browser, named by an id it makes and keeps itself (ui/mine.js).
+// Its status, online or invisible, is kept there too. The server only adds a
+// label saying what it runs on.
+export type Device = { id: string; status: PresenceStatus };
+const DEVICE_ID = /^[0-9a-f]{16,64}$/;
+export function checkDevice(d: { id?: unknown; status?: unknown } | undefined): Device {
+  if (!d || typeof d.id !== "string" || !DEVICE_ID.test(d.id)) throw new NodeError("device id must be 16-64 hex characters");
+  if (d.status !== "online" && d.status !== "invisible") throw new NodeError("status must be online or invisible");
+  return { id: d.id, status: d.status };
 }
-
-export const presenceStatus = async () => (await readJson<{ status?: PresenceStatus }>("presence.json", {})).status ?? "online";
+const os = ({ darwin: "mac", win32: "windows", linux: "linux" } as Record<string, string>)[platform()] ?? platform();
+const label = `clearcast on ${os}`;
 
 // Ed25519 over the exact bytes the companion checks (see node/companion.mjs).
 const PKCS8_ED25519 = Buffer.from("302e020100300506032b657004220420", "hex");
@@ -128,8 +130,8 @@ export function signWith(key: AppKey, payload: string): string {
   return "0x" + sign(null, Buffer.from(payload), pk).toString("hex");
 }
 
-async function heartbeat(key: AppKey, status: PresenceStatus | "offline") {
-  const d = await device();
+async function heartbeat(key: AppKey, device: string, status: PresenceStatus | "offline") {
+  const d = { id: device, label };
   const h = { fid: key.fid, device: d.id, label: d.label, status, ts: Date.now() };
   const sig = signWith(key, `clearcast-presence:v1:${h.fid}:${h.device}:${h.label}:${h.status}:${h.ts}`);
   await companion("/v1/presence", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...h, key: key.publicKey, sig }) });
@@ -137,17 +139,17 @@ async function heartbeat(key: AppKey, status: PresenceStatus | "offline") {
 }
 
 // Say "I'm here" without reading the list: uploads need a recent heartbeat.
-export async function heartbeatNow() {
+export async function heartbeatNow(device: Device) {
   try {
-    await heartbeat(await loadKey(), await presenceStatus());
+    await heartbeat(await loadKey(), device.id, device.status);
   } catch {}
 }
 
 // Tell the companion this device is leaving (on sign out), so it drops off
 // everyone's list now rather than in 90 s. Best effort.
-export async function leaveNode() {
+export async function leaveNode(device: string) {
   try {
-    await heartbeat(await loadKey(), "offline");
+    await heartbeat(await loadKey(), device, "offline");
   } catch {}
 }
 
@@ -170,13 +172,12 @@ export type Presence =
     };
 
 // Say we're here (or invisible), then read who's online, closest first.
-export async function presence(setTo?: PresenceStatus): Promise<Presence> {
+export async function presence(device: Device): Promise<Presence> {
   const key = await loadKey();
-  if (setTo) await writeJson("presence.json", { status: setTo });
-  const status = setTo ?? (await presenceStatus());
+  const status = device.status;
   let me: { id: string; label: string };
   try {
-    me = await heartbeat(key, status);
+    me = await heartbeat(key, device.id, status);
   } catch (e) {
     if (e instanceof NoCompanion) return { companion: false, url: COMPANION };
     throw e;
@@ -404,27 +405,8 @@ function summarize(rates: Map<string, number>) {
 
 // ------------------------------------------------------- since last time
 
-// When you last looked. A visit lasts until you've been away 30 minutes, so
-// refreshing the page doesn't reset what counts as new.
-// When your previous visit ended, without counting this look as a visit.
-export async function visitSince(fid: number): Promise<number> {
-  const r = (await readJson<Record<string, { prev: number }>>("checkins.json", {}))[fid];
-  return r?.prev ?? Date.now() - 86_400_000;
-}
-
-export async function lastVisit(fid: number): Promise<{ since: number; first: boolean }> {
-  const all = await readJson<Record<string, { prev: number; lastActive: number }>>("checkins.json", {});
-  const now = Date.now();
-  let r = all[fid];
-  const first = !r;
-  if (!r) r = { prev: now - 86_400_000, lastActive: now };
-  else if (now - r.lastActive > 30 * 60_000) r = { prev: r.lastActive, lastActive: now };
-  else r.lastActive = now;
-  all[fid] = r;
-  await writeJson("checkins.json", all);
-  return { since: r.prev, first };
-}
-
+// What happened since your last visit. The browser keeps when that was
+// (ui/mine.js) and sends it as `since`.
 export type Since = {
   since: string;
   first: boolean; // no earlier visit on record: "since" is a day ago
@@ -436,9 +418,8 @@ export type Since = {
 };
 
 // `feed` is the one the GUI already builds (people you follow, newest first).
-export async function sinceLastVisit(fid: number, feed: { following: number; casts: { fid: number; time: string }[] }): Promise<Since> {
+export async function sinceLastVisit(fid: number, since: number, first: boolean, feed: { following: number; casts: { fid: number; time: string }[] }): Promise<Since> {
   const feedCasts = feed.casts;
-  const { since, first } = await lastVisit(fid);
   const after = fcSeconds(since);
 
   const casts = feedCasts.filter((c) => c.fid !== fid && Date.parse(c.time) > since).length;

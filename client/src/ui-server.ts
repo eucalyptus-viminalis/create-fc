@@ -17,12 +17,12 @@ import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
 import { forgetKey, loadKey, revokeKey } from "./keys.ts";
 import { cast, follow, react } from "./write.ts";
-import { changeCleared, clearedFor } from "./cleared.ts";
+import { legacyState } from "./legacy.ts";
 import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
-import { companionStatus, conditions, lastVisit, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
+import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
-import { castsView, followersView, likesView, repliesView, setCleared, setSaved, waiting, type Kind } from "./inbox.ts";
+import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
 import type { Hex } from "viem";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
@@ -198,6 +198,13 @@ const myFid = async () => {
   return key.fid;
 };
 
+// When your last visit ended, as the page sends it (ms). The browser keeps it
+// (ui/mine.js); without one, "new" means the last day.
+const sinceOf = (q: URLSearchParams) => {
+  const n = Number(q.get("since"));
+  return Number.isFinite(n) && n > 0 && n <= Date.now() ? n : Date.now() - 86_400_000;
+};
+
 const routes: Record<string, Handler> = {
   "GET /api/status": async () => {
     const info = await get<{ version: string; shardInfos: { shardId: number; maxHeight: number; blockDelay: number }[] }>("/v1/info");
@@ -214,38 +221,27 @@ const routes: Record<string, Handler> = {
   // Today by the hour against a usual day. Measured in the background; poll for progress.
   "GET /api/conditions": async () => conditions(await nodeOverview()),
   // What happened since you last looked.
-  "GET /api/since": async () => {
+  "GET /api/since": async (q) => {
     const fid = await myFid();
-    return sinceLastVisit(fid, await feedFor(fid));
+    return sinceLastVisit(fid, sinceOf(q), q.get("first") === "1", await feedFor(fid));
   },
-  // ---- the inbox (inbox.ts): what's waiting for you, and the four views behind it
-  // The home tile. Calling it counts as a visit (a visit ends after 30 minutes away).
-  "GET /api/waiting": async () => {
+  // ---- the inbox (inbox.ts): what's waiting for you, and the four views behind it.
+  // Every item in each view; the page takes out what it cleared and counts the rest.
+  "GET /api/waiting": async (q) => {
     const fid = await myFid();
-    await lastVisit(fid);
-    return waiting(fid, await feedFor(fid), shape, profileOf);
+    return waiting(fid, sinceOf(q), await feedFor(fid), shape, profileOf);
   },
   "GET /api/inbox/casts": async (q) => {
     const fid = await myFid();
     if (q.get("fresh")) feedCache.delete(fid);
-    return castsView(fid, await feedFor(fid));
+    return castsView(fid, sinceOf(q), await feedFor(fid));
   },
-  "GET /api/inbox/likes": async () => likesView(await myFid(), profileOf),
-  "GET /api/inbox/replies": async () => repliesView(await myFid(), shape),
-  "GET /api/inbox/followers": async () => followersView(await myFid(), profileOf),
-  // Clear (or bring back) items in a view. Kept on this computer.
-  "POST /api/inbox/clear": async (_q, b) => {
-    const kinds = ["casts", "likes", "replies", "followers"];
-    if (!kinds.includes(String(b.kind))) throw new NodeError("kind must be casts, likes, replies or followers");
-    const ids = Array.isArray(b.ids) ? (b.ids as unknown[]).map(String).filter((x) => x.length <= 200).slice(0, 2000) : [];
-    return setCleared(await myFid(), b.kind as Kind, ids, b.on !== false);
-  },
-  // Save a cast to come back to. Keeps a copy, on this computer.
-  "POST /api/inbox/save": async (_q, b) => {
-    const cast = b.cast as { hash?: unknown; fid?: unknown } | undefined;
-    if (!cast || typeof cast.hash !== "string" || !/^0x[0-9a-f]{40}$/i.test(cast.hash) || typeof cast.fid !== "number") throw new NodeError("save needs a cast");
-    return setSaved(await myFid(), cast as { hash: string; fid: number }, b.on !== false);
-  },
+  "GET /api/inbox/likes": async (q) => likesView(await myFid(), sinceOf(q), profileOf),
+  "GET /api/inbox/replies": async (q) => repliesView(await myFid(), sinceOf(q), shape),
+  "GET /api/inbox/followers": async (q) => followersView(await myFid(), sinceOf(q), profileOf),
+  // Personal state older versions kept in ~/.fc-client, for the page to take
+  // over once (legacy.ts). Never on a hosted clearcast.
+  "GET /api/legacy": async () => (LOCAL_ONLY ? legacyState(await myFid()) : null),
   // Likes, recasts and replies on one cast, for the reading pane.
   "GET /api/inbox/counts": async (q) => {
     const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
@@ -258,15 +254,11 @@ const routes: Record<string, Handler> = {
     ]);
     return { likes, recasts, replies };
   },
-  // Who's on this node. Each call is also your heartbeat, so the page calls it every 30 s.
-  "GET /api/presence": async () => {
-    await myFid();
-    return presence();
-  },
+  // Who's on this node. Each call is also your heartbeat, so the page calls it
+  // every 30 s with its device id and status (online or invisible).
   "POST /api/presence": async (_q, b) => {
     await myFid();
-    if (b.status !== "online" && b.status !== "invisible") throw new NodeError("status must be online or invisible");
-    return presence(b.status as PresenceStatus);
+    return presence(checkDevice(b.device as { id?: unknown; status?: unknown }));
   },
   "GET /api/me": async () => {
     const key = await loadKey().catch(() => undefined);
@@ -282,18 +274,6 @@ const routes: Record<string, Handler> = {
     const fid = await myFid();
     if (q.get("fresh")) feedCache.delete(fid);
     return feedFor(fid);
-  },
-  // What you've cleared from your feed. Stored on this computer only.
-  "GET /api/cleared": async () => clearedFor(await myFid()),
-  "POST /api/cleared": async (_q, b) => {
-    const fid = await myFid();
-    const iso = (t: unknown) => (typeof t === "string" && !Number.isNaN(Date.parse(t)) ? new Date(t).toISOString() : undefined);
-    const add = Array.isArray(b.add)
-      ? (b.add as { hash?: unknown; time?: unknown }[]).flatMap((a) => (typeof a.hash === "string" && /^0x[0-9a-f]{40}$/i.test(a.hash) && iso(a.time) ? [{ hash: a.hash, time: iso(a.time)! }] : []))
-      : undefined;
-    const remove = Array.isArray(b.remove) ? (b.remove as unknown[]).filter((h): h is string => typeof h === "string") : undefined;
-    const before = b.before === null ? null : iso(b.before);
-    return changeCleared(fid, { add, remove, before, counted: typeof b.counted === "number" ? b.counted : undefined });
   },
   "GET /api/keys": async () => {
     const keys = await keysOfUser(await myFid());
@@ -334,12 +314,12 @@ const routes: Record<string, Handler> = {
   // Sign out: revoke the app key on Farcaster when it can revoke itself (keys
   // from a seed phrase sign-in can; keys approved in the Farcaster app can't),
   // then delete it from this computer either way.
-  "POST /api/signout": async () => {
+  "POST /api/signout": async (_q, b) => {
     const key = await loadKey().catch(() => undefined);
     let revoked: string = "no key";
     if (key) {
       feedCache.delete(key.fid);
-      await leaveNode();
+      if (typeof b.device === "string") await leaveNode(b.device);
       revoked = await revokeKey(key, { log: () => {} }).then(
         (r) => r.state,
         (e) => `not revoked: ${e instanceof Error ? e.message : String(e)}`,
@@ -436,6 +416,7 @@ async function listenOn(port: number): Promise<string> {
         // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
         if (req.method === "POST" && path === "/api/images") {
           await myFid();
+          const device = checkDevice({ id: req.headers["x-clearcast-device"], status: req.headers["x-clearcast-status"] });
           const chunks: Buffer[] = [];
           let size = 0;
           for await (const c of req) {
@@ -443,7 +424,7 @@ async function listenOn(port: number): Promise<string> {
             if (size > 6 * 1024 * 1024) throw new NodeError("images max out at 5 MB");
             chunks.push(c as Buffer);
           }
-          const { result, calls } = await recordCalls(() => uploadImage(Buffer.concat(chunks)));
+          const { result, calls } = await recordCalls(() => uploadImage(Buffer.concat(chunks), device));
           return send(res, 200, { data: result, calls });
         }
         const handler = routes[`${req.method} ${path}`];

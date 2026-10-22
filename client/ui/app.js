@@ -258,7 +258,7 @@ async function loadFeed() {
   try {
     const fresh = loadFeed.fresh ? "?fresh=1" : "";
     loadFeed.fresh = false;
-    const [{ data }, { data: cleared }] = await Promise.all([api(`/api/feed${fresh}`), api("/api/cleared")]);
+    const [{ data }, cleared] = await Promise.all([api(`/api/feed${fresh}`), mine.feedCleared(state.viewAs.fid)]);
     setCleared(cleared);
     const calls = data.calls;
     const age = Math.round((Date.now() - data.builtAt) / 1000);
@@ -282,7 +282,7 @@ async function loadFeed() {
 
 // ------------------------------------------------------------------ clear
 // Clearing a cast is like archiving an email: it leaves your feed, privately,
-// on this computer. The server keeps the list in ~/.fc-client/cleared.json.
+// in this browser (mine.js). The server never sees the list.
 
 function setCleared(c) {
   state.cleared = { before: c.before ?? null, hashes: new Set(Object.keys(c.hashes)), today: c.today.n };
@@ -293,8 +293,7 @@ const notHidden = (c) => !state.hidden.has(c.app ? c.app.fid : "?");
 
 async function changeCleared(change, inverse, message) {
   try {
-    const { data } = await api("/api/cleared", change);
-    setCleared(data);
+    setCleared(await mine.changeFeedCleared(state.viewAs.fid, change));
     if (inverse) {
       state.undo.push(inverse);
       toast(message, true);
@@ -670,7 +669,7 @@ $("#signout-btn").addEventListener("click", () => {
 $("#signout-dialog").addEventListener("close", async () => {
   if ($("#signout-dialog").returnValue !== "signout") return;
   try {
-    await api("/api/signout", {});
+    await api("/api/signout", { device: (await mine.device()).id });
     toast("Signed out. The app key is gone from this computer.");
   } catch (e) {
     return toast(e.message);

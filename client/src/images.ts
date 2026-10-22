@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { loadKey } from "./keys.ts";
 import { NodeError } from "./node.ts";
-import { COMPANION, heartbeatNow, signWith } from "./home.ts";
+import { COMPANION, heartbeatNow, signWith, type Device } from "./home.ts";
 
 export type ImageUsage = { hosting: boolean; used: number; files: number; cap: number; nodeUsed: number; nodeCap: number; fileCap: number };
 
@@ -22,9 +22,9 @@ async function companionCall<T>(path: string, init: RequestInit): Promise<T> {
   return body;
 }
 
-export async function uploadImage(bytes: Buffer) {
+export async function uploadImage(bytes: Buffer, device: Device) {
   const key = await loadKey();
-  await heartbeatNow(); // only people using the node may upload
+  await heartbeatNow(device); // only people using the node may upload
   const hash = createHash("sha256").update(bytes).digest("hex");
   const ts = Date.now();
   return companionCall<{ url: string; name: string; size: number; type: string; usage: ImageUsage }>("/v1/images", {

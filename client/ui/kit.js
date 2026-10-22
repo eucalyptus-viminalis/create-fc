@@ -45,6 +45,10 @@
     return json.data;
   }
 
+  // Who's signed in ({ fid, username, pfp, ... }) or null. Asked once per page.
+  let meP;
+  const me = () => (meP ??= api("/api/me").catch(() => null));
+
   // This browser's storage, as JSON. It can be missing (private windows), so
   // every call is wrapped.
   const store = {
@@ -127,5 +131,5 @@
   const seg = (choices, current, attr = "data-tab") =>
     `<span class="k-seg" role="group">${choices.map(([id, label]) => `<button type="button" ${attr}="${esc(id)}" aria-pressed="${current === id}">${label}</button>`).join("")}</span>`;
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
 })();
