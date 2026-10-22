@@ -25,6 +25,8 @@
 //   mine.key.confirm(fid)  the sign-in was approved: keep that key as yours
 //   mine.key.get()         { fid, publicKey } or null
 //   mine.key.sign(text)    sign with it; returns the signature (hex)
+//   mine.key.answer(json)  a reply saying { sign: { id, payload } }: sign and
+//                          send it until the request finishes; returns the final reply
 //   mine.key.session()     sign the server's challenge to open a session
 //   mine.key.forget()      sign out: delete it from this browser
 
@@ -220,10 +222,28 @@
       const k = await get("key");
       return k?.privateKey ? { fid: k.fid, publicKey: k.publicKey } : null;
     },
-    async sign(text) {
+    async sign(data) {
       const k = await get("key");
       if (!k?.privateKey) throw new Error("no key in this browser: sign in first");
-      return hex(await crypto.subtle.sign({ name: "Ed25519" }, k.privateKey, new TextEncoder().encode(text)));
+      const bytes = typeof data === "string" ? new TextEncoder().encode(data) : data;
+      return hex(await crypto.subtle.sign({ name: "Ed25519" }, k.privateKey, bytes));
+    },
+    // The server paused a write for this browser's signature (client/src/remote-sign.ts).
+    // Writes and presence both work this way; the payload is a message hash or
+    // the exact text the companion checks.
+    async answer(json) {
+      while (json?.sign) {
+        const { id, payload } = json.sign;
+        const bytes = new Uint8Array(payload.slice(2).match(/../g)?.map((h) => parseInt(h, 16)) ?? []);
+        const res = await fetch("/api/sign", {
+          method: "POST",
+          headers: { "x-clearcast-token": TOKEN, "content-type": "application/json" },
+          body: JSON.stringify({ id, sig: await key.sign(bytes) }),
+        });
+        json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error ?? `signing failed (${res.status})`);
+      }
+      return json;
     },
     // The same bytes the server checks (client/src/session.ts).
     async session() {

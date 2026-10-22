@@ -8,7 +8,7 @@
 // What does get saved is the app key, which can only sign the message types
 // listed in SCOPES, and which the node expires after TTL seconds unused.
 
-import { randomBytes } from "node:crypto";
+import { createPrivateKey, randomBytes, sign } from "node:crypto";
 import { chmod, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -387,3 +387,17 @@ export async function forgetKey(): Promise<boolean> {
 }
 
 export const appSigner = (key: AppKey) => new NobleEd25519Signer(hexToBytes(key.privateKey));
+
+// Who signs a write: an fid, its app key's public half, and a way to sign.
+// Locally that's the key file (fileAuthor). On a hosted clearcast it's the
+// person's browser, asked over HTTP mid-request (ui-server.ts), so sign() may
+// wait for them. Everything that writes or signs for the companion takes one.
+export type Author = { fid: number; publicKey: Hex; sign(bytes: Uint8Array): Promise<Hex> };
+
+const PKCS8_ED25519 = Buffer.from("302e020100300506032b657004220420", "hex");
+export function fileAuthor(key: AppKey): Author {
+  const pk = createPrivateKey({ key: Buffer.concat([PKCS8_ED25519, Buffer.from(key.privateKey.replace(/^0x/, ""), "hex")]), format: "der", type: "pkcs8" });
+  return { fid: key.fid, publicKey: key.publicKey, sign: async (bytes) => ("0x" + sign(null, bytes, pk).toString("hex")) as Hex };
+}
+export const localAuthor = async () => fileAuthor(await loadKey());
+

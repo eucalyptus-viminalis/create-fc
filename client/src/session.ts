@@ -44,11 +44,12 @@ function challengeOk(nonce: string): boolean {
 export const sessionPayload = (origin: string, fid: number, key: string, nonce: string) => `clearcast-session:v1:${origin}:${fid}:${key.toLowerCase()}:${nonce}`;
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex");
-export function signatureOk(key: string, sig: string, payload: string): boolean {
+export const signatureOk = (key: string, sig: string, payload: string) => signatureOkBytes(key, sig, Buffer.from(payload));
+export function signatureOkBytes(key: string, sig: string, payload: Uint8Array): boolean {
   if (!HEX_KEY.test(key) || !HEX_SIG.test(sig)) return false;
   try {
     const pub = createPublicKey({ key: Buffer.concat([SPKI_ED25519, Buffer.from(key.slice(2), "hex")]), format: "der", type: "spki" });
-    return verify(null, Buffer.from(payload), pub, Buffer.from(sig.slice(2), "hex"));
+    return verify(null, payload, pub, Buffer.from(sig.slice(2), "hex"));
   } catch {
     return false;
   }

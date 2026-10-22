@@ -68,9 +68,10 @@ async function api(path, body) {
     headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+  let json = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
   if (res.status === 401) showSignedOut(); // the key was removed, e.g. from a terminal
   if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+  if (json.sign) json = await mine.key.answer(json); // hosted: sign in this browser (mine.js)
   for (const c of json.calls ?? []) state.log.unshift(c);
   state.log.length = Math.min(state.log.length, 300);
   renderLog();

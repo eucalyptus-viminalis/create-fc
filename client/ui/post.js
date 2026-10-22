@@ -210,7 +210,9 @@ async function upload(blob, att) {
     x.onload = () => {
       let json = {};
       try { json = JSON.parse(x.responseText); } catch {}
-      x.status === 200 ? resolve(json.data) : reject(new Error(json.error ?? `upload failed (${x.status})`));
+      if (x.status !== 200) return reject(new Error(json.error ?? `upload failed (${x.status})`));
+      // Hosted: the upload waits for this browser to sign it (mine.js).
+      json.sign ? mine.key.answer(json).then((j) => resolve(j.data), reject) : resolve(json.data);
     };
     x.onerror = () => reject(new Error("upload failed: is clearcast still running?"));
     x.send(blob);

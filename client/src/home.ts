@@ -5,11 +5,10 @@
 // fc-companion (node/companion.mjs), a small service on the same server, on
 // port 3390, because Snapchain doesn't track either.
 
-import { createPrivateKey, sign } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { platform } from "node:os";
 import { join } from "node:path";
-import { KEY_DIR, loadKey, type AppKey } from "./keys.ts";
+import { KEY_DIR, type Author } from "./keys.ts";
 import { FARCASTER_EPOCH, NODE, NodeError, get, pool, type Message, type Page } from "./node.ts";
 import { following, profile } from "./read.ts";
 
@@ -121,35 +120,34 @@ export function checkDevice(d: { id?: unknown; status?: unknown } | undefined): 
   return { id: d.id, status: d.status };
 }
 const os = ({ darwin: "mac", win32: "windows", linux: "linux" } as Record<string, string>)[platform()] ?? platform();
-const label = `clearcast on ${os}`;
+// What others on the node see next to your name. A hosted clearcast names
+// itself instead of the server's OS (setDeviceLabel).
+let label = `clearcast on ${os}`;
+export const setDeviceLabel = (l: string) => void (label = l.slice(0, 64));
 
 // Ed25519 over the exact bytes the companion checks (see node/companion.mjs).
-const PKCS8_ED25519 = Buffer.from("302e020100300506032b657004220420", "hex");
-export function signWith(key: AppKey, payload: string): string {
-  const pk = createPrivateKey({ key: Buffer.concat([PKCS8_ED25519, Buffer.from(key.privateKey.replace(/^0x/, ""), "hex")]), format: "der", type: "pkcs8" });
-  return "0x" + sign(null, Buffer.from(payload), pk).toString("hex");
-}
+export const signWith = (by: Author, payload: string) => by.sign(Buffer.from(payload));
 
-async function heartbeat(key: AppKey, device: string, status: PresenceStatus | "offline") {
+async function heartbeat(key: Author, device: string, status: PresenceStatus | "offline") {
   const d = { id: device, label };
   const h = { fid: key.fid, device: d.id, label: d.label, status, ts: Date.now() };
-  const sig = signWith(key, `clearcast-presence:v1:${h.fid}:${h.device}:${h.label}:${h.status}:${h.ts}`);
+  const sig = await signWith(key, `clearcast-presence:v1:${h.fid}:${h.device}:${h.label}:${h.status}:${h.ts}`);
   await companion("/v1/presence", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...h, key: key.publicKey, sig }) });
   return d;
 }
 
 // Say "I'm here" without reading the list: uploads need a recent heartbeat.
-export async function heartbeatNow(device: Device) {
+export async function heartbeatNow(by: Author, device: Device) {
   try {
-    await heartbeat(await loadKey(), device.id, device.status);
+    await heartbeat(by, device.id, device.status);
   } catch {}
 }
 
 // Tell the companion this device is leaving (on sign out), so it drops off
 // everyone's list now rather than in 90 s. Best effort.
-export async function leaveNode(device: string) {
+export async function leaveNode(by: Author, device: string) {
   try {
-    await heartbeat(await loadKey(), device, "offline");
+    await heartbeat(by, device, "offline");
   } catch {}
 }
 
@@ -172,8 +170,7 @@ export type Presence =
     };
 
 // Say we're here (or invisible), then read who's online, closest first.
-export async function presence(device: Device): Promise<Presence> {
-  const key = await loadKey();
+export async function presence(key: Author, device: Device): Promise<Presence> {
   const status = device.status;
   let me: { id: string; label: string };
   try {
@@ -183,7 +180,7 @@ export async function presence(device: Device): Promise<Presence> {
     throw e;
   }
   const ts = Date.now();
-  const sig = signWith(key, `clearcast-presence-read:v1:${key.fid}:${ts}`);
+  const sig = await signWith(key, `clearcast-presence-read:v1:${key.fid}:${ts}`);
   const { online } = await companion<{ online: Online[] }>(`/v1/presence?fid=${key.fid}&ts=${ts}&key=${key.publicKey}&sig=${sig}`);
 
   const mine = new Set(await following(key.fid));

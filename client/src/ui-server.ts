@@ -16,12 +16,13 @@ import { fileURLToPath } from "node:url";
 import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
-import { forgetKey, hostedMode, loadKey, revokeKey } from "./keys.ts";
+import { fileAuthor, forgetKey, hostedMode, loadKey, localAuthor, revokeKey, type Author } from "./keys.ts";
+import { Conversation, answer, browserAuthor } from "./remote-sign.ts";
 import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
 import { cast, follow, react } from "./write.ts";
 import { legacyState } from "./legacy.ts";
 import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
-import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit } from "./home.ts";
+import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, setDeviceLabel, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
@@ -199,9 +200,9 @@ let SECURE = false; // https, so cookies get Secure
 
 // Per request: who's signed in (hosted), where they're calling from, and any
 // cookie to set on the way out.
-type Ctx = { session?: Session; client: string; cookies: string[] };
+type Ctx = { session?: Session; client: string; cookies: string[]; conv?: Conversation };
 const ctx = new AsyncLocalStorage<Ctx>();
-const here = () => ctx.getStore() ?? { client: "?", cookies: [] };
+const here = (): Ctx => ctx.getStore() ?? { client: "?", cookies: [] };
 
 // Everything but status needs you signed in: the feed, keys and apps are always your own.
 class SignedOut extends NodeError {}
@@ -215,6 +216,15 @@ const myFid = async () => {
   if (!key) throw new SignedOut("signed out: run clearcast login in a terminal");
   return key.fid;
 };
+
+// Who signs this request's writes: the key file here, or the signed-in
+// person's browser on a hosted clearcast (remote-sign.ts).
+async function author(): Promise<Author> {
+  await myFid();
+  if (LOCAL_ONLY) return localAuthor();
+  const c = here();
+  return browserAuthor(c.session!, (c.conv ??= new Conversation()));
+}
 
 // A session names a key; check now and then that it's still an app key of
 // that fid, so removing it in the Farcaster app signs that browser out here.
@@ -287,8 +297,7 @@ const routes: Record<string, Handler> = {
   // Who's on this node. Each call is also your heartbeat, so the page calls it
   // every 30 s with its device id and status (online or invisible).
   "POST /api/presence": async (_q, b) => {
-    await myFid();
-    return presence(checkDevice(b.device as { id?: unknown; status?: unknown }));
+    return presence(await author(), checkDevice(b.device as { id?: unknown; status?: unknown }));
   },
   "GET /api/me": async () => {
     if (!LOCAL_ONLY) {
@@ -381,7 +390,10 @@ const routes: Record<string, Handler> = {
       // The browser deletes its own key. A key approved in the Farcaster app
       // can't revoke itself, so it stays valid on chain until removed there.
       const s = here().session;
-      if (s) feedCache.delete(s.fid);
+      if (s) {
+        feedCache.delete(s.fid);
+        if (typeof b.device === "string") await leaveNode(await author(), b.device);
+      }
       here().cookies.push(clearCookie(SECURE));
       return { removed: true, revoked: "not revoked: remove it in the Farcaster app, under connected apps" };
     }
@@ -389,7 +401,7 @@ const routes: Record<string, Handler> = {
     let revoked: string = "no key";
     if (key) {
       feedCache.delete(key.fid);
-      if (typeof b.device === "string") await leaveNode(b.device);
+      if (typeof b.device === "string") await leaveNode(fileAuthor(key), b.device);
       revoked = await revokeKey(key, { log: () => {} }).then(
         (r) => r.state,
         (e) => `not revoked: ${e instanceof Error ? e.message : String(e)}`,
@@ -403,33 +415,48 @@ const routes: Record<string, Handler> = {
     if (embeds.length > 2) throw new NodeError("a cast holds two attachments at most");
     if (!text && !embeds.length) throw new NodeError("nothing to post");
     const replyTo = b.replyTo as { fid: number; hash: Hex } | undefined;
-    return cast(text, { replyTo, embeds });
+    return cast(text, { replyTo, embeds }, await author());
   },
   // A link's preview card: title, description, image, site (unfurl.ts).
   "GET /api/unfurl": async (q) => unfurl(String(q.get("url") ?? "")),
   // People to @mention: those you follow whose name starts with q, plus an exact username.
   "GET /api/mentions": async (q) => mentionSuggestions(await myFid(), q.get("q") ?? ""),
   // Image space on your node (images.ts). Uploads come in as raw bytes; see the server below.
-  "GET /api/images/usage": async () => {
-    await myFid();
-    return imageUsage();
-  },
-  "POST /api/images/delete": async (_q, b) => {
-    await myFid();
-    return deleteImage(String(b.name ?? ""));
-  },
+  "GET /api/images/usage": async () => imageUsage(await author()),
+  "POST /api/images/delete": async (_q, b) => deleteImage(await author(), String(b.name ?? "")),
   "POST /api/react": async (_q, b) =>
-    react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false),
+    react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false, await author()),
   // Follow by username or fid.
   "POST /api/follow": async (_q, b) => {
     await myFid();
     const fid = await resolveFid(String(b.user ?? "").trim().replace(/^@/, ""));
     const p = await profileOf(fid);
-    return { ...(await follow(fid, b.on !== false)), user: { fid, username: p.username } };
+    return { ...(await follow(fid, b.on !== false, await author())), user: { fid, username: p.username } };
   },
 };
 
 // ------------------------------------------------------------------ server
+
+// Run a request. It may pause for signatures from the browser
+// (remote-sign.ts): each pause answers the waiting HTTP request with
+// { sign: { id, payload } }, and the browser's POST /api/sign gets whatever
+// comes next. Locally nothing pauses, so this is one plain reply.
+function converse(res: ServerResponse, c: Ctx, run: () => Promise<unknown>) {
+  const conv = (c.conv ??= new Conversation());
+  recordCalls(run).then(
+    ({ result, calls }) => conv.say({ done: { data: result, calls } }),
+    (e) => conv.say({ failed: e }),
+  );
+  return reply(res, c, conv);
+}
+
+async function reply(res: ServerResponse, c: Ctx, conv: Conversation) {
+  const r = await conv.next();
+  if ("sign" in r) return send(res, 200, { sign: r.sign });
+  if ("failed" in r) throw r.failed;
+  if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
+  return send(res, 200, r.done);
+}
 
 function send(res: ServerResponse, status: number, body: unknown, type = "application/json") {
   res.writeHead(status, { "content-type": type, "cache-control": "no-store", "x-content-type-options": "nosniff" });
@@ -465,6 +492,7 @@ export async function startUi(port: number, explicit = false, opts: UiOptions = 
   if (opts.hosted) {
     LOCAL_ONLY = false;
     hostedMode(); // never touch a key file again in this process
+    if (opts.origin) setDeviceLabel(`clearcast at ${new URL(opts.origin).host}`);
   }
   for (let p = port; p < port + (explicit ? 1 : 20); p++) {
     try {
@@ -506,6 +534,8 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
         const from = req.headers.origin;
         if ((from && from !== origin) || req.headers["x-clearcast-token"] !== token) return send(res, 403, { error: "forbidden" });
         // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
+        // A hosted page's answer to "sign this": carry on the paused request.
+        if (req.method === "POST" && path === "/api/sign") return reply(res, c, answer(c.session, await readJson(req)));
         if (req.method === "POST" && path === "/api/images") {
           await myFid();
           const device = checkDevice({ id: req.headers["x-clearcast-device"], status: req.headers["x-clearcast-status"] });
@@ -516,15 +546,12 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
             if (size > 6 * 1024 * 1024) throw new NodeError("images max out at 5 MB");
             chunks.push(c as Buffer);
           }
-          const { result, calls } = await recordCalls(() => uploadImage(Buffer.concat(chunks), device));
-          return send(res, 200, { data: result, calls });
+          return converse(res, c, async () => uploadImage(await author(), Buffer.concat(chunks), device));
         }
         const handler = routes[`${req.method} ${path}`];
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};
-        const { result, calls } = await recordCalls(() => handler(url.searchParams, body));
-        if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
-        return send(res, 200, { data: result, calls });
+        return converse(res, c, () => handler(url.searchParams, body));
       }
       // The home view is the front page; the earlier all-in-one page lives on at /classic.
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);

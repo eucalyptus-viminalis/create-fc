@@ -49,6 +49,8 @@
     }
     if (res.status === 401) throw new SignedOut(json.error);
     if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
+    // Hosted: the server may pause the request until this browser signs (mine.js).
+    if (json.sign) return (await mine.key.answer(json)).data;
     return json.data;
   }
 
