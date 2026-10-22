@@ -7,6 +7,7 @@
 // post as you through this server: the request must come from this server's
 // own origin, and carry a token that's only embedded in the page it served.
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -15,10 +16,11 @@ import { fileURLToPath } from "node:url";
 import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
-import { forgetKey, loadKey, revokeKey } from "./keys.ts";
+import { forgetKey, hostedMode, loadKey, revokeKey } from "./keys.ts";
+import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
 import { cast, follow, react } from "./write.ts";
 import { legacyState } from "./legacy.ts";
-import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
+import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
@@ -184,19 +186,47 @@ const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
 
 type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<unknown>;
 
-// This server only ever listens on 127.0.0.1, so the person at the keyboard
-// is the only one who can reach it, and typing a seed phrase into its page is
-// as safe as typing it into a terminal. A shared (hosted) mode must set this
-// to false.
-const LOCAL_ONLY = true;
+// Two modes (ADR 003):
+//   local   clearcast ui. Only the person at this computer can reach it, so
+//           typing a seed phrase into its page is as safe as a terminal, and
+//           it signs with the key file in ~/.fc-client.
+//   hosted  clearcast serve. Other people use it over the network. Each
+//           person's key stays in their browser and a session cookie says who
+//           they are (session.ts). It never accepts a seed phrase or uses a key file.
+let LOCAL_ONLY = true;
+let ORIGIN = ""; // where people reach this server; requests must come from here
+let SECURE = false; // https, so cookies get Secure
+
+// Per request: who's signed in (hosted), where they're calling from, and any
+// cookie to set on the way out.
+type Ctx = { session?: Session; client: string; cookies: string[] };
+const ctx = new AsyncLocalStorage<Ctx>();
+const here = () => ctx.getStore() ?? { client: "?", cookies: [] };
 
 // Everything but status needs you signed in: the feed, keys and apps are always your own.
 class SignedOut extends NodeError {}
 const myFid = async () => {
+  if (!LOCAL_ONLY) {
+    const s = here().session;
+    if (!s) throw new SignedOut("signed out: sign in on this page");
+    return s.fid;
+  }
   const key = await loadKey().catch(() => undefined);
   if (!key) throw new SignedOut("signed out: run clearcast login in a terminal");
   return key.fid;
 };
+
+// A session names a key; check now and then that it's still an app key of
+// that fid, so removing it in the Farcaster app signs that browser out here.
+const checked = new Map<string, number>(); // "fid:key" -> when it was last confirmed
+async function stillValid(s: Session): Promise<boolean> {
+  const id = `${s.fid}:${s.key}`;
+  if (Date.now() - (checked.get(id) ?? 0) < 10 * 60_000) return true;
+  if (!(await signerActive(s.fid, s.key))) return checked.delete(id), false;
+  if (checked.size > 50_000) checked.clear();
+  checked.set(id, Date.now());
+  return true;
+}
 
 // When your last visit ended, as the page sends it (ms). The browser keeps it
 // (ui/mine.js); without one, "new" means the last day.
@@ -261,6 +291,10 @@ const routes: Record<string, Handler> = {
     return presence(checkDevice(b.device as { id?: unknown; status?: unknown }));
   },
   "GET /api/me": async () => {
+    if (!LOCAL_ONLY) {
+      const s = here().session;
+      return s ? { ...(await profileOf(s.fid)), scopes: ["ALL"], publicKey: s.key, hosted: true } : null;
+    }
     const key = await loadKey().catch(() => undefined);
     if (!key) return null;
     return { ...(await profileOf(key.fid)), scopes: key.scopes, publicKey: key.publicKey };
@@ -287,6 +321,18 @@ const routes: Record<string, Handler> = {
   },
   // Signing in (see signin.ts). Which ways are available here?
   "GET /api/signin/options": async () => {
+    if (!LOCAL_ONLY) {
+      // Hosted: phone approval only, vouched for by this node's app account,
+      // with a key the browser makes. browser: true tells the page to make it.
+      const node = await nodeSignInOptions();
+      const nodeApp = node?.phone && node.appFid ? await profileOf(node.appFid) : undefined;
+      return {
+        app: null,
+        node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: null, inviteRequired: node.invite !== false } : null,
+        phrase: false,
+        browser: true,
+      };
+    }
     const app = await loadAppAccount();
     const p = app ? await profileOf(app.fid) : undefined;
     // node: this node's companion can vouch for phone sign-ins (needs an invite code).
@@ -294,16 +340,32 @@ const routes: Record<string, Handler> = {
     const nodeApp = node?.phone && node.appFid ? await profileOf(node.appFid) : undefined;
     return {
       app: app ? { fid: app.fid, username: p?.username, display: p?.display, pfp: p?.pfp, sponsor: app.sponsor } : null,
-      node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: invite ?? null } : null,
+      node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: invite ?? null, inviteRequired: node.invite !== false } : null,
       phrase: LOCAL_ONLY,
+      browser: false,
     };
   },
   // Phone sign-in: this computer's own app account if it has one, else the node's (with an invite code).
   "POST /api/signin/app": async (_q, b) => {
+    if (!LOCAL_ONLY) throw new NodeError("this clearcast is hosted: sign in with a key your browser makes (/api/signin/browser)");
     if (await loadAppAccount()) return startAppSignIn();
-    const invite = String(b.invite ?? "").trim();
-    if (!invite) throw new NodeError("type the invite code from your node's owner");
-    return startNodeSignIn(invite);
+    // The companion says whether it needs an invite code.
+    return startNodeSignIn(String(b.invite ?? "").trim());
+  },
+  // Hosted sign-in: the browser made a key and sends its public half.
+  "POST /api/signin/browser": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this clearcast runs on your computer and keeps its key in ~/.fc-client");
+    return startBrowserSignIn(String(b.key ?? ""), String(b.invite ?? "").trim(), here().client);
+  },
+  "GET /api/signin/browser": async (q) => browserSignInStatus(q.get("token") ?? ""),
+  // A session: sign this challenge with your browser's key, then POST it back.
+  "GET /api/session/challenge": async () => ({ nonce: challenge(), origin: ORIGIN }),
+  "POST /api/session": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this clearcast runs on your computer: it needs no session");
+    const s = await startSession(ORIGIN, b);
+    checked.set(`${s.fid}:${s.key}`, Date.now());
+    here().cookies.push(sessionCookie(s, SECURE));
+    return { fid: s.fid };
   },
   "GET /api/signin/app": async (q) => appSignInStatus(q.get("token") ?? ""),
   "POST /api/signin/phrase": async (_q, b) => {
@@ -315,6 +377,14 @@ const routes: Record<string, Handler> = {
   // from a seed phrase sign-in can; keys approved in the Farcaster app can't),
   // then delete it from this computer either way.
   "POST /api/signout": async (_q, b) => {
+    if (!LOCAL_ONLY) {
+      // The browser deletes its own key. A key approved in the Farcaster app
+      // can't revoke itself, so it stays valid on chain until removed there.
+      const s = here().session;
+      if (s) feedCache.delete(s.fid);
+      here().cookies.push(clearCookie(SECURE));
+      return { removed: true, revoked: "not revoked: remove it in the Farcaster app, under connected apps" };
+    }
     const key = await loadKey().catch(() => undefined);
     let revoked: string = "no key";
     if (key) {
@@ -389,10 +459,16 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
 
 // Start on `port`; if something else already uses it, try the next few
 // unless the port was asked for explicitly.
-export async function startUi(port: number, explicit = false): Promise<string> {
+export type UiOptions = { hosted?: boolean; origin?: string };
+
+export async function startUi(port: number, explicit = false, opts: UiOptions = {}): Promise<string> {
+  if (opts.hosted) {
+    LOCAL_ONLY = false;
+    hostedMode(); // never touch a key file again in this process
+  }
   for (let p = port; p < port + (explicit ? 1 : 20); p++) {
     try {
-      return await listenOn(p);
+      return await listenOn(p, opts);
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
       if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: clearcast ui --port ${p + 1}`);
@@ -401,13 +477,29 @@ export async function startUi(port: number, explicit = false): Promise<string> {
   throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: clearcast ui --port <n>`);
 }
 
-async function listenOn(port: number): Promise<string> {
+async function listenOn(port: number, opts: UiOptions): Promise<string> {
   const token = randomBytes(24).toString("hex");
-  const origin = `http://127.0.0.1:${port}`;
+  // Hosted behind a proxy (Caddy), people reach it at its public address.
+  const origin = (opts.origin ?? `http://127.0.0.1:${port}`).replace(/\/$/, "");
+  ORIGIN = origin;
+  SECURE = origin.startsWith("https://");
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", origin);
     const path = url.pathname;
+    // Hosted, this listens on 127.0.0.1 behind Caddy, which names the visitor.
+    const forwarded = String(req.headers["x-forwarded-for"] ?? "").split(",")[0]!.trim();
+    const c: Ctx = { client: (!LOCAL_ONLY && forwarded) || req.socket.remoteAddress || "?", cookies: [] };
+    if (!LOCAL_ONLY) {
+      const s = readSession(req.headers.cookie);
+      if (s && (await stillValid(s).catch(() => true))) c.session = s;
+      else if (s) c.cookies.push(clearCookie(SECURE));
+    }
+    return ctx.run(c, () => handle(req, res, url, path, c));
+  });
+
+  async function handle(req: IncomingMessage, res: ServerResponse, url: URL, path: string, c: Ctx) {
+    if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
     try {
       if (path.startsWith("/api/")) {
         // Only this page may call the API: same origin, and the page's token.
@@ -431,6 +523,7 @@ async function listenOn(port: number): Promise<string> {
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};
         const { result, calls } = await recordCalls(() => handler(url.searchParams, body));
+        if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
         return send(res, 200, { data: result, calls });
       }
       // The home view is the front page; the earlier all-in-one page lives on at /classic.
@@ -446,7 +539,7 @@ async function listenOn(port: number): Promise<string> {
       const message = e instanceof Error ? e.message : String(e);
       send(res, e instanceof SignedOut ? 401 : e instanceof NoAppAccount ? 409 : e instanceof NodeError ? 400 : 500, { error: message });
     }
-  });
+  }
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

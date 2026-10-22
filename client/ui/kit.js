@@ -32,14 +32,21 @@
 
   // The local server's API. Only this page can call it: it sends the token the
   // server embedded in the page. 401 means signed out.
+  // On a hosted clearcast a 401 can just mean the session ended (the server
+  // restarted, say): if this browser has a key, sign a new challenge and retry once.
   class SignedOut extends Error {}
-  async function api(path, body) {
+  let reauth;
+  async function api(path, body, retried = false) {
     const res = await fetch(path, {
       method: body ? "POST" : "GET",
       headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
     const json = await res.json().catch(() => ({}));
+    if (res.status === 401 && !retried && window.mine) {
+      reauth ??= mine.key.session().catch(() => false).finally(() => setTimeout(() => (reauth = undefined), 5000));
+      if (await reauth) return api(path, body, true);
+    }
     if (res.status === 401) throw new SignedOut(json.error);
     if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
     return json.data;

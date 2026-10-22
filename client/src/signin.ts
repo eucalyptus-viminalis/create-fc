@@ -127,7 +127,7 @@ export async function startAppSignIn() {
 
 // --- 1b. the node vouches (fc-companion's app account)
 
-export type NodeSignIn = { phone: boolean; appFid: number | null } | null;
+export type NodeSignIn = { phone: boolean; appFid: number | null; invite?: boolean } | null; // invite: whether sign-in needs a code
 
 // Can this node's companion start phone sign-ins? null: no companion.
 export async function nodeSignInOptions(): Promise<NodeSignIn> {
@@ -172,6 +172,49 @@ export async function startNodeSignIn(invite: string) {
   await writeFile(INVITE_FILE, JSON.stringify({ node: NODE, code: invite }, null, 2) + "\n");
   const qr = await QRCode.toString(json.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
   return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
+}
+
+// --- 1c. hosted: the key is made in the browser (ADR 003)
+//
+// The browser sends only the public half; the node's companion vouches for it
+// as above. When it's approved, the browser keeps the key and opens a session
+// (session.ts). Nothing is saved here. `client` is the visitor's address, so
+// the companion's limit of sign-ins per address counts visitors, not this server.
+
+const browserRequests = new Map<string, { publicKey: string; expires: number }>(); // token -> key waiting for approval
+
+export async function startBrowserSignIn(key: string, invite: string, client: string) {
+  for (const [t, r] of browserRequests) if (r.expires < Date.now()) browserRequests.delete(t);
+  if (!/^0x[0-9a-f]{64}$/i.test(key)) throw new NodeError("that isn't an Ed25519 public key");
+  let res: Response;
+  try {
+    res = await fetch(`${COMPANION}/v1/signin`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-clearcast-client": client },
+      body: JSON.stringify({ key: key.toLowerCase(), invite }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new NodeError(`can't reach your node's companion at ${COMPANION}`);
+  }
+  const json = (await res.json().catch(() => ({}))) as { error?: string; token: string; deeplinkUrl: string; requestFid: number; deadline: number };
+  if (!res.ok) throw new NodeError(json.error ?? `the companion said ${res.status}`);
+  browserRequests.set(json.token, { publicKey: key.toLowerCase(), expires: json.deadline * 1000 });
+  const qr = await QRCode.toString(json.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
+  return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
+}
+
+// "approved" once the key is on chain and this node has seen it. The browser
+// then signs a session challenge with it.
+export async function browserSignInStatus(token: string) {
+  const pending = browserRequests.get(token);
+  if (!pending) throw new NodeError("this sign-in request has expired. Start again.");
+  const { signedKeyRequest: req } = await farcaster<{ signedKeyRequest: SignedKeyRequest }>(`/v2/signed-key-request?token=${encodeURIComponent(token)}`);
+  if (req.state !== "completed" || !req.userFid) return { state: req.state };
+  const seen = await get("/v1/signer", { fid: req.userFid, signer: pending.publicKey }).then(() => true, () => false);
+  if (!seen) return { state: "syncing" as const };
+  browserRequests.delete(token);
+  return { state: "approved" as const, fid: req.userFid, key: pending.publicKey };
 }
 
 // Poll Farcaster's service; once the key is on chain and your node has seen

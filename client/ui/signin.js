@@ -4,6 +4,8 @@
 //     node's (fc-companion), which needs an invite code from the node's owner
 //   - your seed phrase: only while clearcast listens on this computer alone
 //   - a terminal, and making an account: only on your own computer
+// On a hosted clearcast (browser: true) this browser makes the app key and
+// keeps it (mine.key); only its public half goes to the server.
 // Copy rule: active voice, max 7 words a sentence.
 
 const { $, wait, esc, api, tone, toast } = kit;
@@ -92,7 +94,7 @@ function choose() {
 function open() {
   sfx.open();
   const id = S.ways[S.sel].id;
-  if (id === "phone") return S.opts.app ? phoneStart() : S.opts.node?.phone ? invite() : setup();
+  if (id === "phone") return S.opts.app ? phoneStart() : S.opts.node?.phone ? (S.opts.node.inviteRequired ? invite() : phoneStart()) : setup();
   if (id === "phrase") return phrase();
   if (id === "terminal") return terminal("use a terminal", "clearcast login", ["Run this in your own terminal.", "It asks for your seed phrase there."]);
   if (id === "new") return terminal("make an account", "clearcast new-account", ["Run this in your own terminal.", "It costs about $0.20 of ETH.", "Then sign in here."]);
@@ -154,9 +156,14 @@ async function phoneStart(code) {
   S.screen = "phone";
   const run = ++S.run;
   show(head("approve on your phone") + tile("getting a code", "", steps(PHONE_STEPS, 0)));
+  const browser = S.opts.browser;
+  if (browser && !(await mine.key.supported()))
+    return show(head("approve on your phone") + tile("this browser can't sign in", "", `<div class="err"><p>It can't make the key clearcast needs.</p><p>Try a recent Chrome, Safari or Firefox.</p></div>`));
   let req;
   try {
-    req = await api("/api/signin/app", code ? { invite: code } : {});
+    req = browser
+      ? await api("/api/signin/browser", { key: await mine.key.create(), invite: code ?? "" })
+      : await api("/api/signin/app", code ? { invite: code } : {});
   } catch (e) {
     sfx.error();
     if (code) return invite(e.message);
@@ -183,7 +190,11 @@ async function phoneStart(code) {
     await wait(2000);
     if (run !== S.run) return;
     let st;
-    try { st = await api(`/api/signin/app?token=${encodeURIComponent(req.token)}`); }
+    try {
+      st = await api(`/api/signin/${browser ? "browser" : "app"}?token=${encodeURIComponent(req.token)}`);
+      // Approved: this browser keeps the key, then proves it to the server.
+      if (st.state === "approved") { await mine.key.confirm(st.fid); await mine.key.session(); st.state = "signed-in"; }
+    }
     catch (e) { sfx.error(); return show(head("approve on your phone") + tile("this code stopped working", "", `<div class="err"><p>${esc(e.message)}</p></div><div class="row">${go("start again", "A", 'id="again"')}</div>`)), $("#again").addEventListener("click", () => phoneStart(code)); }
     if (st.state === "signed-in") return done();
     const next = st.state === "pending" ? 1 : 2;
@@ -296,7 +307,7 @@ async function done(already = false) {
     `<section class="tile" style="margin-top:40px"><h2><span>signed in</span><span>${me ? `fid ${me.fid}` : ""}</span></h2><div class="done">
       ${me?.pfp ? `<img class="avatar" src="${esc(me.pfp)}" alt="" referrerpolicy="no-referrer">` : `<span class="avatar"></span>`}
       <h2>${already ? "already in" : "you're in"}</h2><p>${already ? `You're signed in as ${name}.` : `Welcome, ${name}.`}</p>
-      <p class="dim">Your ${kit.ext(`${DOCS}/guide/app-key`, "app key")} has been saved on this computer.</p>
+      <p class="dim">Your ${kit.ext(`${DOCS}/guide/app-key`, "app key")} has been saved ${me?.hosted ? "in this browser. It never leaves it" : "on this computer"}.</p>
       <p class="dim">You can now start interacting with Farcaster on this device.</p>
       <div class="row">${go("start", "A", 'id="start"')}</div></div></section>`,
     `<span><kbd>A</kbd>/<kbd>↵</kbd> start</span>`,

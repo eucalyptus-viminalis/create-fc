@@ -346,13 +346,24 @@ export async function revokeKey(key: AppKey, opts: { dryRun?: boolean; log: (s: 
 // ---------------------------------------------------------- the key file
 
 export async function saveKey(key: AppKey): Promise<void> {
+  if (!serverKey) throw new NoServerKey("this clearcast is hosted, so it never saves a key on the server");
   await mkdir(KEY_DIR, { recursive: true, mode: 0o700 });
   await chmod(KEY_DIR, 0o700);
   await writeFile(KEY_FILE, JSON.stringify(key, null, 2) + "\n", { mode: 0o600 });
   await chmod(KEY_FILE, 0o600);
 }
 
+// A hosted clearcast (ADR 003) never signs with a key file: every person's
+// key is in their own browser. hostedMode() turns this server's key off for
+// good, so a key left in ~/.fc-client can't post for anyone.
+let serverKey = true;
+export function hostedMode() {
+  serverKey = false;
+}
+export class NoServerKey extends NodeError {}
+
 export async function loadKey(): Promise<AppKey> {
+  if (!serverKey) throw new NoServerKey("this clearcast is hosted, so it never uses a key on the server. Your key is in your browser.");
   let raw: string;
   try {
     raw = await readFile(KEY_FILE, "utf8");

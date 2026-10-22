@@ -7,7 +7,7 @@
 //   GET  /v1/presence    who is online on this node right now (signed, members only)
 //   POST /v1/presence    "I'm here" from a clearcast, every ~30 s (signed)
 //   GET  /v1/signin      can people sign in here by approving on their phone?
-//   POST /v1/signin      start a phone sign-in for a key (needs an invite code)
+//   POST /v1/signin      start a phone sign-in for a key (an invite code, if the node asks for one)
 //   POST /v1/images      upload an image for a cast (signed, people on this node)
 //   DELETE /v1/images/<file>   give an image's space back (signed, its uploader)
 //   GET  /v1/images/usage      how much of your image space you've used (signed)
@@ -23,9 +23,12 @@
 // that an "app account" vouches for, by signing it with its custody key. The
 // node's owner sets one up with `fc-node app-account`; this signs requests as
 // that account, so friends on the node need no setup of their own. Their new
-// key is made on their own computer: only its public half comes here. Each
-// request needs an invite code from `fc-node invite`, so strangers can't use
-// the app account, and each address gets 20 tries an hour.
+// key is made on their own computer or in their browser: only its public half
+// comes here. Sign-in is open by default, so a hosted clearcast lets anyone in
+// (ADR 003); `fc-node signin invite` makes each request need an invite code
+// from `fc-node invite`. Each address gets 20 tries an hour. A hosted
+// clearcast on this server names its visitor in x-clearcast-client, which is
+// only believed from this machine.
 //
 // Images: a cast can only link to an image, so the node hosts them. Files go
 // in IMAGES_DIR, which Caddy serves over HTTPS at IMAGE_BASE (set up by
@@ -51,6 +54,7 @@ const SKEW_MS = 60_000; // how far a heartbeat's clock may be from ours
 const MAX_DEVICES = 5_000;
 const APP_FILE = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
 const INVITES_FILE = process.env.INVITES_FILE ?? "/state/invites";
+const SIGNIN_FILE = process.env.SIGNIN_FILE ?? "/state/signin"; // "open" (the default) or "invite"
 const FARCASTER_API = "https://api.farcaster.xyz";
 const IMAGES_DIR = process.env.IMAGES_DIR ?? "/images";
 const LEDGER_FILE = process.env.LEDGER_FILE ?? "/ledger/images.json";
@@ -170,6 +174,15 @@ function appAccount() {
   }
 }
 
+// Written by `fc-node signin`. No file means open.
+function inviteOnly() {
+  try {
+    return readFileSync(SIGNIN_FILE, "utf8").trim() === "invite";
+  } catch {
+    return false;
+  }
+}
+
 // Written by `fc-node invite`: one code per line, then a tab and a note.
 const normCode = (c) => String(c ?? "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 function inviteOk(code) {
@@ -216,7 +229,7 @@ async function startSignIn(b, ip) {
   const app = appAccount();
   if (!app) return [404, "this node has no app account yet. Its owner can run: fc-node app-account"];
   if (limited(ip)) return [429, "too many sign-ins from here. Try again in an hour."];
-  if (!inviteOk(b.invite)) return [403, "that invite code doesn't work on this node"];
+  if (inviteOnly() && !inviteOk(b.invite)) return [403, "that invite code doesn't work on this node"];
   if (!/^0x[0-9a-f]{64}$/i.test(String(b.key))) return [400, "bad key"];
   if (!(await stillOwns(app))) return [409, `the saved key no longer owns fid ${app.fid}. The node's owner can run: fc-node app-account`];
 
@@ -378,6 +391,15 @@ async function readBody(req) {
   return JSON.parse(raw || "{}");
 }
 
+// Who's asking. A hosted clearcast on this same machine passes its visitor's
+// address on; from anywhere else the header is ignored.
+const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+function clientOf(req) {
+  const ip = req.socket.remoteAddress ?? "?";
+  const named = String(req.headers["x-clearcast-client"] ?? "").slice(0, 64);
+  return LOOPBACK.has(ip) && named ? named : ip;
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://companion");
   try {
@@ -409,10 +431,10 @@ createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/v1/signin") {
       const app = appAccount();
-      return send(res, 200, { phone: Boolean(app), appFid: app?.fid ?? null, invite: true });
+      return send(res, 200, { phone: Boolean(app), appFid: app?.fid ?? null, invite: inviteOnly() });
     }
     if (req.method === "POST" && url.pathname === "/v1/signin") {
-      const [status, body] = await startSignIn(await readBody(req), req.socket.remoteAddress ?? "?");
+      const [status, body] = await startSignIn(await readBody(req), clientOf(req));
       return send(res, status, body);
     }
     if (req.method === "POST" && url.pathname === "/v1/presence") {

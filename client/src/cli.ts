@@ -17,6 +17,10 @@ const HELP = `clearcast: a Farcaster client that talks only to your own node (${
 
 Usage:
   clearcast ui [--port 4747]           Open the client in your browser
+  clearcast serve --origin https://<host> [--port 4748]
+                                       Host clearcast for other people (ADR 003): their
+                                       keys stay in their browsers. Listens on 127.0.0.1;
+                                       put a proxy like Caddy in front for https
   clearcast status                     Is the node in sync?
   clearcast new-account [--recovery 0x..] [--dry-run]
                                        Register a new Farcaster account (~$0.20 of ETH
@@ -96,6 +100,7 @@ async function main() {
       "not-app": { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
       port: { type: "string" },
+      origin: { type: "string" },
       sponsor: { type: "boolean" },
       recovery: { type: "string" },
       display: { type: "string" },
@@ -128,6 +133,13 @@ async function main() {
       const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
       spawn(opener, [url], { stdio: "ignore", detached: true }).on("error", () => {}).unref();
       return new Promise<void>(() => {}); // run until Ctrl-C
+    }
+    case "serve": {
+      if (!values.origin || !/^https?:\/\/[^/]+\/?$/.test(values.origin)) throw new NodeError("clearcast serve needs --origin, the address people open, e.g. --origin https://clearcast.example.com");
+      const url = await startUi(Number(values.port ?? 4748), values.port !== undefined, { hosted: true, origin: values.origin });
+      console.log(`hosted clearcast is listening on 127.0.0.1 for ${url}  (node: ${NODE})`);
+      console.log("Each person signs in with their phone; keys stay in their browsers. Ctrl-C to stop.");
+      return new Promise<void>(() => {});
     }
     case "login":
       return login(Boolean(values["dry-run"]));

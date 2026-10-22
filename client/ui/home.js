@@ -71,6 +71,7 @@ document.addEventListener("click", async (e) => {
   try {
     $("#signout").textContent = "signing out…";
     const r = await api("/api/signout", { device: (await mine.device()).id });
+    await mine.key.forget(); // hosted: the key lived in this browser
     sfx.toggle();
     // Keys approved in the Farcaster app can't revoke themselves; say so before reloading.
     if (r.revoked.startsWith("not revoked")) { toast("Deleted here. Remove it in the Farcaster app.", 5000); await wait(5000); }

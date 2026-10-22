@@ -18,6 +18,15 @@
 //   mine.save(fid, cast, on)             save a cast (keeps a copy) or unsave it
 //   mine.feedCleared(fid)                the classic feed's { before, hashes, today }
 //   mine.changeFeedCleared(fid, change)  { add, remove, before, counted }, like the old /api/cleared
+//
+// On a hosted clearcast, your app key lives here too:
+//   mine.key.supported()   can this browser make Ed25519 keys?
+//   mine.key.create()      make a key for a sign-in; returns its public half (hex)
+//   mine.key.confirm(fid)  the sign-in was approved: keep that key as yours
+//   mine.key.get()         { fid, publicKey } or null
+//   mine.key.sign(text)    sign with it; returns the signature (hex)
+//   mine.key.session()     sign the server's challenge to open a session
+//   mine.key.forget()      sign out: delete it from this browser
 
 (() => {
   const TOKEN = document.querySelector('meta[name="clearcast-token"]')?.content ?? "";
@@ -185,5 +194,57 @@
     });
   }
 
-  window.mine = { device, setStatus, visit, inbox, clear, save, feedCleared, changeFeedCleared };
+  // ------------------------------------------------------------ your key
+  // An Ed25519 key made by WebCrypto with extractable: false: the browser can
+  // sign with it, but nothing (this page included) can read the private half
+  // out. Only the public half is ever sent. IndexedDB stores the CryptoKey
+  // itself. In memory only (no IndexedDB), it's gone when the tab closes.
+  const hex = (buf) => "0x" + [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  let supportedP;
+  const key = {
+    supported: () =>
+      (supportedP ??= crypto.subtle.generateKey({ name: "Ed25519" }, false, ["sign", "verify"]).then(() => true, () => false)),
+    async create() {
+      const pair = await crypto.subtle.generateKey({ name: "Ed25519" }, false, ["sign", "verify"]);
+      const publicKey = hex(await crypto.subtle.exportKey("raw", pair.publicKey));
+      await update("key-pending", () => ({ publicKey, privateKey: pair.privateKey }));
+      return publicKey;
+    },
+    async confirm(fid) {
+      const p = await get("key-pending");
+      if (!p) throw new Error("no key is waiting for approval in this browser");
+      await update("key", () => ({ fid, publicKey: p.publicKey, privateKey: p.privateKey }));
+      await update("key-pending", () => undefined);
+    },
+    async get() {
+      const k = await get("key");
+      return k?.privateKey ? { fid: k.fid, publicKey: k.publicKey } : null;
+    },
+    async sign(text) {
+      const k = await get("key");
+      if (!k?.privateKey) throw new Error("no key in this browser: sign in first");
+      return hex(await crypto.subtle.sign({ name: "Ed25519" }, k.privateKey, new TextEncoder().encode(text)));
+    },
+    // The same bytes the server checks (client/src/session.ts).
+    async session() {
+      const k = await key.get();
+      if (!k) return false;
+      const call = (path, body) =>
+        fetch(path, { method: body ? "POST" : "GET", headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) }, body: body && JSON.stringify(body) })
+          .then(async (r) => ({ ok: r.ok, json: await r.json().catch(() => ({})) }));
+      const ch = await call("/api/session/challenge");
+      if (!ch.ok) return false;
+      const { nonce, origin } = ch.json.data;
+      const sig = await key.sign(`clearcast-session:v1:${origin}:${k.fid}:${k.publicKey}:${nonce}`);
+      const r = await call("/api/session", { fid: k.fid, key: k.publicKey, nonce, sig });
+      if (!r.ok) throw new Error(r.json.error ?? "couldn't open a session");
+      return true;
+    },
+    async forget() {
+      await update("key", () => undefined);
+      await update("key-pending", () => undefined);
+    },
+  };
+
+  window.mine = { device, setStatus, visit, inbox, clear, save, feedCleared, changeFeedCleared, key };
 })();
