@@ -5,6 +5,9 @@
 #   fc-node app-account [show|remove]
 #                                  let people sign in to clearcast here by approving on
 #                                  their phone: saves an account's custody key on this server
+#   fc-node client [domain|sslip|off]
+#                                  host clearcast here for people who don't run their own:
+#                                  https://clearcast.<ip>.sslip.io, or your own domain
 #   fc-node signin [open|invite]   who can sign in by phone: anyone (open, the default)
 #                                  or only people with an invite code
 #   fc-node invite [note]          make an invite code for a friend
@@ -23,6 +26,10 @@ case "${1:-status}" in
       else awk -v w="$worst" 'BEGIN { printf "catching up: %.1f h behind, gaining about 4 s per second (~%.1f h to go).\n", w/3600, w/4/3600 }'; fi
       if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
       else echo "companion: not running (re-run command 1 to install it)"; fi
+      if [ -f /var/lib/fc-clearcast/url ]; then
+        if docker ps --format '{{.Names}}' | grep -qx fc-clearcast; then echo "clearcast: hosted at $(cat /var/lib/fc-clearcast/url)"
+        else echo "clearcast: set up but not running (fc-node client to restart it; docker logs fc-clearcast)"; fi
+      fi
     elif systemctl is-active --quiet fc-node-setup; then
       echo "setup running. Latest:"
       grep -E "shard [0-9]|setup|loaded" "$LOG" | tail -n 2 | sed 's/^/  /'
@@ -42,6 +49,7 @@ case "${1:-status}" in
     f=/var/lib/fc-companion/app-account.json
     [ -f "$f" ] && { chown 1000:1000 "$f"; chmod 600 "$f"; }
     ;;
+  client) shift; exec fc-client-install "$@" ;;
   signin)
     f=/var/lib/fc-companion/signin
     case "${2:-}" in
@@ -77,5 +85,5 @@ case "${1:-status}" in
         [ -f /var/lib/fc-companion/app-account.json ] || echo "Phone sign-in is off until you run: fc-node app-account" ;;
     esac
     ;;
-  *) echo "usage: fc-node status | logs | app-account [show|remove] | signin [open|invite] | invite [note|list|revoke <code>]"; exit 1 ;;
+  *) echo "usage: fc-node status | logs | app-account [show|remove] | client [domain|sslip|off] | signin [open|invite] | invite [note|list|revoke <code>]"; exit 1 ;;
 esac
