@@ -34,7 +34,10 @@ Usage:
                                        fameboy ui by approving in the Farcaster app
   fameboy profile [--display "Name"] [--pfp https://…] [--bio "…"]
                                        Show or change your display name, picture and bio
-  fameboy username <name> [--dry-run]  Claim an fname and set it as your username
+  fameboy username <name> [--replace] [--dry-run]
+                                       Claim an fname and set it as your username.
+                                       --replace gives up the name the account has now
+                                       first (names can change about once every 28 days)
                                        (asks for the seed phrase, like login)
   fameboy cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
                                        Post a cast. @names become mentions.
@@ -103,6 +106,7 @@ async function main() {
       origin: { type: "string" },
       sponsor: { type: "boolean" },
       recovery: { type: "string" },
+      replace: { type: "boolean" },
       display: { type: "string" },
       pfp: { type: "string" },
       bio: { type: "string" },
@@ -149,7 +153,7 @@ async function main() {
       const phrase = normalizePhrase(await promptPhrase("seed phrase (hidden): "));
       checkPhrase(phrase);
       const custody = await findCustody(phrase, (line) => console.error(line));
-      return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], log: (l) => console.error(l) });
+      return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], replace: values.replace, log: (l) => console.error(l) });
     }
     case "new-account":
       return newAccount({ dryRun: values["dry-run"], recovery: values.recovery });

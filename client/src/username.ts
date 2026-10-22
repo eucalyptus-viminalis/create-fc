@@ -12,7 +12,10 @@
 //   3. Your app key signs a USER_DATA_ADD setting USERNAME = <name>. The node
 //      only accepts it once the proof from step 2 is there, so we wait for it.
 //
-// The fname server allows one name per FID, and changing it is rate-limited.
+// The fname server allows one name per FID, and changing it is rate-limited
+// (Farcaster's docs: at most once every 28 days). To change it, --replace
+// first gives the current name back (a transfer to fid 0), then claims the
+// new one. If the claim fails after that, it tries to take the old name back.
 
 import { FarcasterNetwork, Message as MessageProto, UserDataType, ViemLocalEip712Signer, makeUserDataAdd, makeUserNameProofClaim } from "@farcaster/core";
 import { bytesToHex } from "viem";
@@ -39,47 +42,56 @@ export function checkName(name: string) {
 }
 
 // What would happen if `fid` asked for `name`? Throws if it can't have it.
-export async function nameStatus(name: string, fid: number): Promise<"available" | "already-yours"> {
+// With replace, a name the fid holds now is given up first ("replace").
+export async function nameStatus(name: string, fid: number, replace = false): Promise<{ status: "available" | "already-yours" | "replace"; current?: string }> {
   checkName(name);
   const holder = await fnameGet(`name=${encodeURIComponent(name)}`);
-  if (holder && holder.to === fid) return "already-yours";
+  if (holder && holder.to === fid) return { status: "already-yours" };
   if (holder && holder.to !== 0) throw new NodeError(`@${name} is taken (fid ${holder.to})`);
   const current = await fnameGet(`fid=${fid}`);
-  if (current) throw new NodeError(`fid ${fid} already has the fname @${current.username}. Release it on the fname server before claiming another.`);
-  return "available";
+  if (current && !replace)
+    throw new NodeError(`fid ${fid} already has the fname @${current.username}. To give it up and take @${name} instead: fameboy username ${name} --replace`);
+  return current ? { status: "replace", current: current.username } : { status: "available" };
 }
 
-export async function setUsername(name: string, custody: Custody, o: { dryRun?: boolean; log: (s: string) => void }) {
-  const { log } = o;
-  const status = await nameStatus(name, custody.fid);
-  log(`@${name}: ${status === "available" ? "available" : "already registered to this fid"}`);
+// One signed transfer on the fname server: claim (from 0 to fid) or give back (fid to 0).
+async function transfer(custody: Custody, name: string, from: number, to: number, dryRun?: boolean) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const claim = makeUserNameProofClaim({ name, owner: custody.account.address, timestamp });
+  const sig = await new ViemLocalEip712Signer(custody.account).signUserNameProofClaim(claim);
+  if (sig.isErr()) throw new NodeError(`couldn't sign the name transfer: ${sig.error.message}`);
+  if (dryRun) return;
+  const res = await fetch(`${FNAMES}/transfers`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name, from, to, fid: custody.fid, owner: custody.account.address, timestamp, signature: bytesToHex(sig.value) }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) throw new NodeError(`fname server refused: ${res.status} ${await res.text()}`);
+}
 
-  // 1. claim it on the fname server
-  if (status === "available") {
-    const timestamp = Math.floor(Date.now() / 1000);
-    const claim = makeUserNameProofClaim({ name, owner: custody.account.address, timestamp });
-    const sig = await new ViemLocalEip712Signer(custody.account).signUserNameProofClaim(claim);
-    if (sig.isErr()) throw new NodeError(`couldn't sign the name claim: ${sig.error.message}`);
-    if (o.dryRun) {
-      log("dry run: signed the name claim, but didn't send it to the fname server.");
-    } else {
-      const res = await fetch(`${FNAMES}/transfers`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name,
-          from: 0,
-          to: custody.fid,
-          fid: custody.fid,
-          owner: custody.account.address,
-          timestamp,
-          signature: bytesToHex(sig.value),
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!res.ok) throw new NodeError(`fname server refused: ${res.status} ${await res.text()}`);
-      log(`fname server registered @${name} to fid ${custody.fid}`);
+export async function setUsername(name: string, custody: Custody, o: { dryRun?: boolean; replace?: boolean; log: (s: string) => void }) {
+  const { log } = o;
+  const { status, current } = await nameStatus(name, custody.fid, o.replace);
+  log(`@${name}: ${status === "already-yours" ? "already registered to this fid" : status === "replace" ? `available; giving up @${current} first` : "available"}`);
+
+  // 0. --replace: give the current name back
+  if (status === "replace" && current) {
+    await transfer(custody, current, custody.fid, 0, o.dryRun);
+    log(o.dryRun ? `dry run: signed giving up @${current}, but didn't send it.` : `gave @${current} back to the fname server`);
+  }
+
+  // 1. claim the new one on the fname server
+  if (status !== "already-yours") {
+    try {
+      await transfer(custody, name, 0, custody.fid, o.dryRun);
+    } catch (e) {
+      if (status !== "replace" || !current || o.dryRun) throw e;
+      // The old name is gone and the new one was refused (often the 28-day limit). Try to take the old one back.
+      const back = await transfer(custody, current, 0, custody.fid).then(() => `took @${current} back`, () => `couldn't take @${current} back either`);
+      throw new NodeError(`${e instanceof Error ? e.message : e}. ${back}. The account's profile still shows its old username until a new one is set.`);
     }
+    log(o.dryRun ? "dry run: signed the name claim, but didn't send it to the fname server." : `fname server registered @${name} to fid ${custody.fid}`);
   }
 
   // 2. an app key allowed to sign USER_DATA_ADD. Keys from older versions of
@@ -91,8 +103,12 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
   const forApp = app?.fid === custody.fid;
   let key = forApp ? app.appKey : await loadKey().catch(() => undefined);
   if (!key || key.fid !== custody.fid || !(key.scopes.includes("USER_DATA_ADD") || key.scopes.includes("ALL"))) {
-    log(key ? "your app key can't edit profiles; registering a new one with that scope" : "registering an app key");
-    const fresh = await registerAppKey(custody, { dryRun: o.dryRun, save: !forApp, log });
+    // Never replace this computer's sign-in key with one for another account
+    // (e.g. renaming a node's app account from your own computer): that key
+    // is made just for this change and not saved.
+    const otherAccount = Boolean(key && key.fid !== custody.fid);
+    log(otherAccount ? `registering an app key for fid ${custody.fid}, used for this change only` : key ? "your app key can't edit profiles; registering a new one with that scope" : "registering an app key");
+    const fresh = await registerAppKey(custody, { dryRun: o.dryRun, save: !forApp && !otherAccount, log });
     if (!fresh) return log("dry run: stopping before USER_DATA_ADD, since there's no key that could sign it.");
     if (forApp) await saveAppAccount(custody, app.sponsor, fresh);
     key = fresh;
