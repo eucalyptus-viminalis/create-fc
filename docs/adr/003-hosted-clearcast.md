@@ -2,7 +2,7 @@
 
 ## Status
 
-**accepted** (2026-10-23). Design notes: `developer/hosted-clearcast.md`. The client is now called fameboy (ADR 004); read "clearcast" here as fameboy.
+**implemented** (2026-10-23). Tested end to end on a live node: phone sign-in, a session, casts, likes, presence and images, all signed in the browser. Design notes: `developer/hosted-clearcast.md`. The client is now called fameboy (ADR 004); read "clearcast" here as fameboy.
 
 ## Context
 
@@ -48,4 +48,10 @@ Options for where hosted users' app keys live:
 
 | Date | Commit | Change |
 | --- | --- | --- |
-| 2026-10-23 | (this commit) | Created, status accepted |
+| 2026-10-23 | cb53724 | Created, status accepted |
+| 2026-10-23 | 6a66c12 | Step 1: personal state in the browser |
+| 2026-10-23 | 38f0187 | Step 2: browser keys, phone sign-in, sessions, open sign-in |
+| 2026-10-23 | 85e404f | Step 3: writes signed in the browser |
+| 2026-10-23 | bed40a2 | Step 4: `fc-node client` |
+| 2026-10-23 | 15033f9 | Step 5: docs |
+| 2026-10-23 | (this commit) | Implemented, after the end-to-end test and its fixes (6b5eeb0, bdc1503) |

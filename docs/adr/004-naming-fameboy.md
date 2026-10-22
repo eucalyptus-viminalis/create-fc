@@ -45,4 +45,4 @@ ADR 003 makes the client something anyone can host for other people. So each hos
 
 | Date | Commit | Change |
 | --- | --- | --- |
-| 2026-10-23 | (this commit) | Created, status accepted |
+| 2026-10-23 | 239d69d | Created, status accepted |
