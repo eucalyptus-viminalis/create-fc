@@ -204,8 +204,9 @@ export async function startBrowserSignIn(key: string, invite: string, client: st
   return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
 }
 
-// "approved" once the key is on chain and this node has seen it. The browser
-// then signs a session challenge with it.
+// "ready" once the key is on chain and this node has seen it. The browser then
+// signs a session challenge with it. (Not "approved": Farcaster's service uses
+// that word for "tapped approve", before the key is on chain.)
 export async function browserSignInStatus(token: string) {
   const pending = browserRequests.get(token);
   if (!pending) throw new NodeError("this sign-in request has expired. Start again.");
@@ -214,7 +215,7 @@ export async function browserSignInStatus(token: string) {
   const seen = await get("/v1/signer", { fid: req.userFid, signer: pending.publicKey }).then(() => true, () => false);
   if (!seen) return { state: "syncing" as const };
   browserRequests.delete(token);
-  return { state: "approved" as const, fid: req.userFid, key: pending.publicKey };
+  return { state: "ready" as const, fid: req.userFid, key: pending.publicKey };
 }
 
 // Poll Farcaster's service; once the key is on chain and your node has seen

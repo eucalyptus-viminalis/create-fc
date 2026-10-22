@@ -544,7 +544,12 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (s && (await stillValid(s).catch(() => true))) c.session = s;
       else if (s) c.cookies.push(clearCookie(SECURE));
     }
-    return ctx.run(c, () => handle(req, res, url, path, c));
+    return ctx.run(c, () =>
+      handle(req, res, url, path, c).catch((e) => {
+        // Last resort: one bad request must never stop the server.
+        if (!res.headersSent) send(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      }),
+    );
   });
 
   async function handle(req: IncomingMessage, res: ServerResponse, url: URL, path: string, c: Ctx) {
@@ -556,7 +561,7 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
         if ((from && from !== origin) || req.headers["x-fameboy-token"] !== token) return send(res, 403, { error: "forbidden" });
         // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
         // A hosted page's answer to "sign this": carry on the paused request.
-        if (req.method === "POST" && path === "/api/sign") return reply(res, c, answer(c.session, await readJson(req)));
+        if (req.method === "POST" && path === "/api/sign") return await reply(res, c, answer(c.session, await readJson(req)));
         if (req.method === "POST" && path === "/api/images") {
           await myFid();
           const device = checkDevice({ id: req.headers["x-fameboy-device"], status: req.headers["x-fameboy-status"] });
@@ -567,12 +572,13 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
             if (size > 6 * 1024 * 1024) throw new NodeError("images max out at 5 MB");
             chunks.push(c as Buffer);
           }
-          return converse(res, c, async () => uploadImage(await author(), Buffer.concat(chunks), device));
+          return await converse(res, c, async () => uploadImage(await author(), Buffer.concat(chunks), device));
         }
         const handler = routes[`${req.method} ${path}`];
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};
-        return converse(res, c, () => handler(url.searchParams, body));
+        // await, so the catch below answers with the error instead of it escaping and stopping the server.
+        return await converse(res, c, () => handler(url.searchParams, body));
       }
       // The home view is the front page; the earlier all-in-one page lives on at /classic.
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);

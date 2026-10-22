@@ -213,6 +213,7 @@
       return publicKey;
     },
     async confirm(fid) {
+      if (!Number.isInteger(fid) || fid <= 0) throw new Error("the sign-in finished without an fid");
       const p = await get("key-pending");
       if (!p) throw new Error("no key is waiting for approval in this browser");
       await update("key", () => ({ fid, publicKey: p.publicKey, privateKey: p.privateKey }));

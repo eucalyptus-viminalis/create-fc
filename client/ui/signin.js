@@ -193,7 +193,7 @@ async function phoneStart(code) {
     try {
       st = await api(`/api/signin/${browser ? "browser" : "app"}?token=${encodeURIComponent(req.token)}`);
       // Approved: this browser keeps the key, then proves it to the server.
-      if (st.state === "approved") { await mine.key.confirm(st.fid); await mine.key.session(); st.state = "signed-in"; }
+      if (st.state === "ready") { await mine.key.confirm(st.fid); await mine.key.session(); st.state = "signed-in"; }
     }
     catch (e) { sfx.error(); return show(head("approve on your phone") + tile("this code stopped working", "", `<div class="err"><p>${esc(e.message)}</p></div><div class="row">${go("start again", "A", 'id="again"')}</div>`)), $("#again").addEventListener("click", () => phoneStart(code)); }
     if (st.state === "signed-in") return done();
