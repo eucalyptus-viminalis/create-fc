@@ -23,6 +23,7 @@ import { nameHolder, pickFameboyName } from "./fameboy-name.mjs";
 
 const SNAPCHAIN = (process.env.SNAPCHAIN ?? "http://127.0.0.1:3381").replace(/\/$/, "");
 const OUT = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
+const SIGNIN_FILE = process.env.SIGNIN_FILE ?? "/state/signin"; // written by fc-node signin
 const MAX_INDEX = 10;
 
 async function get(path, params, timeoutMs = 120_000) {
@@ -114,16 +115,15 @@ if (!found) throw new Error(`none of the first ${MAX_INDEX} addresses owns a Far
 
 const privateKey = found.account.getHdKey().privateKey;
 writeFileSync(OUT, JSON.stringify({ fid: found.fid, address: found.account.address, privateKey: bytesToHex(privateKey), savedAt: new Date().toISOString() }, null, 2) + "\n", { mode: 0o600 });
+const username = await usernameOf(found.fid).catch(() => undefined);
 console.log(`
-Done. fid ${found.fid} now vouches for sign-ins on this node.
-People see this account's name when they approve.`);
+Done. ${username ? `@${username} (fid ${found.fid})` : `fid ${found.fid}`} now vouches for sign-ins on this node.
+People see ${username ? `"@${username}"` : "this account's name"} when they approve, and their casts say "via" it.`);
 
 // No username yet? Suggest @fameboy<color> with a random color that's still free.
 // Claiming it needs an app key, which this server doesn't keep, so the person
 // claims it with fameboy on their own computer.
-const username = await usernameOf(found.fid).catch(() => undefined);
-if (username) console.log(`It's @${username}.`);
-else {
+if (!username) {
   console.log("\nIt has no username yet, so the approval screen shows its number. Picking a free @fameboy<color> name...");
   const suggestion = await pickFameboyName({ fid: found.fid, log: (s) => console.log(s) });
   const name = await chooseName(suggestion, found.fid);
@@ -132,11 +132,20 @@ Claim @${name} from your own computer (it asks for this account's seed phrase):
   fameboy username ${name}`);
   else console.log("Claim one later from your own computer: fameboy username <name>");
 }
-console.log("\nGive friends an invite code: fc-node invite");
+// Who can sign in now: open (the default) or invite-only (fc-node signin).
+let inviteOnly = false;
+try {
+  inviteOnly = readFileSync(SIGNIN_FILE, "utf8").trim() === "invite";
+} catch {}
+console.log(
+  inviteOnly
+    ? "\nSign-in needs an invite code: fc-node invite <name> makes one. To let anyone in: fc-node signin open"
+    : "\nAnyone can sign in through this node. To keep it to friends: fc-node signin invite",
+);
 
 async function usernameOf(fid) {
-  const { messages } = await get("/v1/userDataByFid", { fid, user_data_type: "USER_DATA_TYPE_USERNAME" }, 15_000);
-  return messages?.[0]?.data?.userDataBody?.value || undefined;
+  const { messages = [] } = await get("/v1/userDataByFid", { fid, user_data_type: "USER_DATA_TYPE_USERNAME" }, 15_000);
+  return messages.map((m) => m.data?.userDataBody).find((b) => b?.type === "USER_DATA_TYPE_USERNAME")?.value || undefined;
 }
 
 // Keep the suggestion or type another name; checks the fname server for each.

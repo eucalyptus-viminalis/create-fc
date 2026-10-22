@@ -48,6 +48,14 @@ case "${1:-status}" in
       node:22-alpine node /app/app-account.mjs "$@" || exit 1
     f=/var/lib/fc-companion/app-account.json
     [ -f "$f" ] && { chown 1000:1000 "$f"; chmod 600 "$f"; }
+    # The app account names this node's hosted fameboy and its address.
+    case "${1:-}" in show|remove) ;; *)
+      if [ -f /var/lib/fc-fameboy/url ]; then
+        echo "fameboy is hosted at $(cat /var/lib/fc-fameboy/url). Run fc-node client to move it to an address with the new name."
+      else
+        echo "Host fameboy for people who don't run their own: fc-node client"
+      fi ;;
+    esac
     ;;
   client) shift; exec fc-fameboy-install "$@" ;;
   signin)
