@@ -27,6 +27,8 @@ The key is approved by Farcaster, not by your node. Your node only carries messa
 
 In `~/.fameboy/appkey.json` on your computer, readable only by your user account. It never goes to your node or anywhere else. Only the public half is shared, and that's public by design.
 
+On a [hosted fameboy](./host-fameboy), the one you open at a web address, the key lives in your browser instead. Your browser makes it when you sign in, and it can't be copied out, even by the page. Each browser you sign in on has its own key.
+
 Anyone who copies that file can post as you until the key is removed. Treat it like a password.
 
 ## How long it lasts
@@ -38,7 +40,7 @@ Anyone who copies that file can post as you until the key is removed. Treat it l
 
 There are two different things you might want:
 
-- **Sign out of this computer:** **sign out** on the home screen, or `fameboy logout`. This deletes the file. The key itself still exists on Farcaster.
+- **Sign out of this computer:** **sign out** on the home screen, or `fameboy logout`. This deletes the file (on a hosted fameboy, the key in your browser). The key itself still exists on Farcaster.
 - **Remove the key from Farcaster:** so it can never post again, even from a copy.
   - Signed in with your seed phrase: run `fameboy revoke`. It removes the key, then signs you out.
   - Approved on your phone: remove fameboy from your connected apps in the Farcaster app's settings.

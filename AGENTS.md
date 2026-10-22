@@ -79,7 +79,17 @@ For the Farcaster-app option, the node needs an app account: an account made for
 
 > `ssh -t root@<ip> fc-node app-account`
 
-Then `ssh root@<ip> fc-node invite <friend's name>` makes an invite code for each friend who shares the node; they type it on the sign-in page. (`fameboy app-account` on their own computer still works for that computer alone.)
+Anyone can then sign in through the node. If the person wants only friends, `ssh root@<ip> fc-node signin invite` turns on invite codes, and `ssh root@<ip> fc-node invite <friend's name>` makes one per friend; they type it on the sign-in page. (`fameboy app-account` on their own computer still works for that computer alone.)
+
+## Optional: host fameboy for others
+
+Once the node has an app account, it can host fameboy at a web address, so people can use Farcaster through it without installing anything. It costs nothing extra. Offer it, and run it only after they say yes:
+
+```bash
+ssh root@<ip> fc-node client
+```
+
+It prints the address, `https://<app account's name>.<ip with dashes>.sslip.io`. Tell the person that anyone can sign in there unless they run `fc-node signin invite`, and that every cast made through it says "via" their app account. `fc-node client off` stops it. More: https://eucalyptus-viminalis.github.io/create-fc/docs/guide/host-fameboy
 
 Don't run `fameboy login`, `fameboy app-account`, `fc-node app-account`, `fameboy username` or `fameboy new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
 

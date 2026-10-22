@@ -43,7 +43,15 @@ It asks for the account's seed phrase without showing it, finds the account on y
 
 Never paste a seed phrase into a chat, an issue, or an AI assistant. Type it only at this prompt.
 
-## 3. Give each friend an invite code
+## 3. Choose who can sign in
+
+Anyone can sign in through your node by default. That's what lets you [host fameboy](./host-fameboy) for people you've never met. To keep it to friends, turn on invite codes:
+
+```bash
+ssh root@<ip> fc-node signin invite
+```
+
+Then give each friend a code:
 
 ```bash
 ssh root@<ip> fc-node invite alice
@@ -51,19 +59,20 @@ ssh root@<ip> fc-node invite alice
 
 That prints a code like `K7Q2-X9MP`. Send it to Alice. She types it once when she signs in, and fameboy remembers it.
 
+- `fc-node signin` says which mode the node is in. `fc-node signin open` lets anyone in again.
 - `fc-node invite list` shows every code, when you made it and the note.
 - `fc-node invite revoke K7Q2-X9MP` stops a code working. Anyone who already signed in with it stays signed in.
 
-### Why codes?
+### Open or invite-only?
 
-The companion listens on port 3390, which is open to the internet. Without codes, anyone who found it could start sign-ins in your app account's name. Here's what that would and wouldn't mean:
+The companion listens on port 3390, which is open to the internet. With sign-in open, anyone who finds it can start sign-ins in your app account's name. Here's what that does and doesn't mean:
 
 - **It can't cost you anything.** If approving costs a fee, each person pays their own.
 - **It can't touch anyone's account.** Each person approves on their own phone, for their own account.
 - **It doesn't open your node any further.** Port 3381 is already public, so anyone can read from your node either way.
 - **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. fameboy's "apps in your feed" shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
 
-Codes keep that to people you chose. On top of that, each internet address gets 20 sign-in tries an hour, which also stops anyone guessing codes.
+Invite codes keep that to people you chose. Either way, each internet address gets 20 sign-in tries an hour, which also stops anyone guessing codes.
 
 ## 4. Your friend signs in
 
@@ -74,7 +83,7 @@ On their own computer:
    curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
    ```
 2. Run `fameboy ui`. The sign-in page opens.
-3. Choose **approve on your phone** and type the invite code.
+3. Choose **approve on your phone**, and type the invite code if your node asks for one.
 4. Scan the code with their phone and approve in the Farcaster app. It may ask them to pay a small onchain fee.
 
 Their new key is made on their computer. Only its public half goes to your server, so you never hold anything that can post as them.

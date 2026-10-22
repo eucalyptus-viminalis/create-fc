@@ -22,7 +22,7 @@ export default defineConfig({
       { text: "create-fc", link: "https://eucalyptus-viminalis.github.io/create-fc/" },
     ],
     sidebar: [
-      { text: "Guides", items: [{ text: "Share your node with friends", link: "/guide/share-your-node" }, { text: "Images in your casts", link: "/guide/images" }] },
+      { text: "Guides", items: [{ text: "Share your node with friends", link: "/guide/share-your-node" }, { text: "Host fameboy for others", link: "/guide/host-fameboy" }, { text: "Images in your casts", link: "/guide/images" }] },
       { text: "Explainers", items: [{ text: "Your app key", link: "/guide/app-key" }] },
       { text: "Reference", items: [{ text: "Costs", link: "/Costs" }] },
       {
