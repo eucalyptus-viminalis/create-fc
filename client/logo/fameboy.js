@@ -1,53 +1,115 @@
-// fameboy's mark: a clear glass sphere lit from the top left (direction A).
-// orb() returns SVG markup on a 512 grid. Ids get a unique prefix so many
-// copies can sit in one page. Loaded by scripts/build-logo.cjs and by the
-// pages in mockups/.
-const INK = '#17151f', ACC = '#7959ff', ACC_INK = '#5d43d6', GROUND = '#e6e5ec';
-let n = 0;
-const uid = () => 'k' + (++n);
-const svg = body => `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
-const blur = (id, s) => `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${s}"/></filter>`;
-const tile = (id, dark, accent = false) => {
-  const [a, b] = accent ? ['#8b6dff', '#4f37c4'] : dark ? ['#2a2540', '#0e0c15'] : ['#f8f7fb', '#d7d5e2'];
-  return `<radialGradient id="${id}" cx="28%" cy="18%" r="100%"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></radialGradient>`;
-};
+// fameboy's mark: a clear keycap, seen from your chair (19° above the desk,
+// turned 33°), lit from the top left. Picked in mockups/keycap.html.
+//
+// The cap is modelled in millimetres (a Cherry-style cap, 18 mm across, with a
+// top that tilts toward you and a cylindrical scoop) and drawn as SVG
+// polygons. A clear cap shows its far walls and the switch stem through the
+// near walls, so the colour reads like a see-through Game Boy Color shell.
+//
+// keycap(options) returns SVG markup. Loaded by scripts/build-logo.cjs, by the
+// pages in mockups/, and in the browser by client/ui/theme.js (which tints the
+// favicon with each copy's colour) as window.fameboyKeycap.
+(function () {
+  const CLEAR_TINT = '#9ea3b0';
+  const CAP = {
+    w0: 18, d0: 18, r0: 1.3,          // bottom edge
+    w1: 12.6, d1: 13.4, r1: 2.6,      // top face
+    back: 0.7,                        // the top sits a little toward the back
+    zFront: 7.4, zBack: 9.4,          // and tilts toward you
+    dish: 0.75,                       // scoop across the top
+  };
+  let n = 0;
 
-// A · glass orb with a caustic: rendered sphere, light from top-left,
-// refracted light gathering on the far rim and focusing to a point on the ground.
-function orb(theme, { tint = false, full = false, bare = false, crisp = false } = {}) {
-  // full: the sphere fills the frame (for the circular pfp) and the ground is out of view.
-  // bare: no background tile, so the glass shows whatever it sits on (the mark and favicon).
-  // crisp: tuned for ~28px, with a darker edge and a thin ink rim so the outline survives shrinking.
-  // Everything is drawn relative to the round 1 sphere (r 148) and scaled by k.
-  const d = theme === 'dark', i = uid(), cx = 256, cy = full ? 256 : 222, r = full ? 254 : 148, k = r / 148;
-  const caus = tint ? ACC : '#fff';
-  const at = (dx, dy) => [cx + dx * k, cy + dy * k];
-  const [wx, wy] = at(-58, -72), [px, py] = at(-73, -81);
-  return svg(`<defs>${tile(i + 'bg', d)}
-    <radialGradient id="${i}body" cx="38%" cy="32%" r="72%">
-      <stop offset="0" stop-color="#fff" stop-opacity="${d ? .10 : .45}"/>
-      <stop offset=".72" stop-color="#fff" stop-opacity="${d ? .03 : .10}"/>
-      <stop offset="1" stop-color="${d ? '#fff' : INK}" stop-opacity="${d ? .38 : crisp ? .5 : .34}"/></radialGradient>
-    <linearGradient id="${i}cres" x1=".15" y1=".15" x2=".85" y2=".85">
-      <stop offset=".5" stop-color="${caus}" stop-opacity="0"/><stop offset="1" stop-color="${caus}" stop-opacity=".95"/></linearGradient>
-    <radialGradient id="${i}caus"><stop offset="0" stop-color="${caus}"/><stop offset=".3" stop-color="${caus}" stop-opacity=".6"/><stop offset="1" stop-color="${caus}" stop-opacity="0"/></radialGradient>
-    <mask id="${i}m"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff"/><circle cx="${cx - 24 * k}" cy="${cy - 28 * k}" r="${r - 4 * k}" fill="#000"/></mask>
-    <clipPath id="${i}c"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
-    ${blur(i + 'b3', 3 * k)}${blur(i + 'b6', 6 * k)}${blur(i + 'b16', 16 * k)}</defs>
-    ${bare ? '' : `<rect width="512" height="512" fill="url(#${i}bg)"/>`}
-    ${full ? '' : `<ellipse cx="282" cy="400" rx="140" ry="20" fill="${d ? '#000' : INK}" opacity="${d ? .6 : .28}" filter="url(#${i}b16)"/>
-    <ellipse cx="300" cy="398" rx="74" ry="13" fill="url(#${i}caus)" filter="url(#${i}b3)"/>
-    <ellipse cx="300" cy="398" rx="20" ry="3.5" fill="${caus}"/>`}
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${i}body)"/>
-    <g clip-path="url(#${i}c)">
-      <ellipse cx="${cx}" cy="${cy - 92 * k}" rx="${125 * k}" ry="${40 * k}" fill="${d ? '#000' : INK}" opacity="${d ? .35 : .10}" filter="url(#${i}b16)"/>
-      <g filter="url(#${i}b6)"><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${i}cres)" mask="url(#${i}m)"/></g>
-    </g>
-    <ellipse cx="${wx}" cy="${wy}" rx="${44 * k}" ry="${22 * k}" transform="rotate(-38 ${wx} ${wy})" fill="#fff" opacity=".85" filter="url(#${i}b3)"/>
-    <circle cx="${px}" cy="${py}" r="${7 * k}" fill="#fff"/>
-    ${crisp ? `<circle cx="${cx}" cy="${cy}" r="${r - 7}" fill="none" stroke="${INK}" stroke-opacity=".3" stroke-width="14"/>
-    <circle cx="${cx}" cy="${cy}" r="${r - 17}" fill="none" stroke="#fff" stroke-opacity=".95" stroke-width="6"/>`
-    : `<circle cx="${cx}" cy="${cy}" r="${r - .8 * k}" fill="none" stroke="#fff" stroke-opacity="${d ? .55 : .95}" stroke-width="${1.6 * k}"/>`}`);
-}
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const unit = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const clamp = (v) => Math.max(0, Math.min(255, v));
+  const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const rgb = (c) => `rgb(${c.map(Math.round).join(',')})`;
+  const pts = (p) => p.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ');
 
-if (typeof module !== 'undefined') module.exports = { orb };
+  // Rounded-rect outline, counter-clockwise from above, with a fixed point count.
+  function rrect(w, d, r, cy, per) {
+    const hw = w / 2, hd = d / 2, out = [];
+    for (const [cx, cyy, a0] of [[hw - r, cy - hd + r, -90], [hw - r, cy + hd - r, 0], [-hw + r, cy + hd - r, 90], [-hw + r, cy - hd + r, 180]])
+      for (let j = 0; j <= per; j++) { const a = (a0 + 90 * j / per) * Math.PI / 180; out.push([cx + r * Math.cos(a), cyy + r * Math.sin(a)]); }
+    return out;
+  }
+  const topZ = (x, y) => lerp(CAP.zFront, CAP.zBack, (y - (CAP.back - CAP.d1 / 2)) / CAP.d1) - CAP.dish * (1 - (x / (CAP.w1 / 2)) ** 2);
+
+  function model(per, rings) {
+    const faces = [];
+    const top = rrect(CAP.w1, CAP.d1, CAP.r1, CAP.back, per).map(([x, y]) => [x, y, topZ(x, y)]);
+    const bottom = rrect(CAP.w0, CAP.d0, CAP.r0, 0, per).map(([x, y]) => [x, y, 0]);
+    const k = top.length;
+    for (let i = 0; i < k; i++) { const j = (i + 1) % k; faces.push({ p: [bottom[i], bottom[j], top[j], top[i]], part: 'wall' }); }
+    const ring = (s) => top.map(([x, y]) => { const px = x * s, py = CAP.back + (y - CAP.back) * s; return [px, py, topZ(px, py)]; });
+    for (let r = 0; r < rings; r++) {
+      const a = ring(1 - r / rings), b = ring(1 - (r + 1) / rings);
+      for (let i = 0; i < k; i++) { const j = (i + 1) % k; faces.push({ p: r === rings - 1 ? [a[i], a[j], b[i]] : [a[i], a[j], b[j], b[i]], part: 'top' }); }
+    }
+    return faces;
+  }
+  // The stem inside: a round post, seen through the cap.
+  function stem() {
+    const R = 2.75, N = 16, ring = (z) => Array.from({ length: N }, (_, i) => { const a = i / N * 2 * Math.PI; return [R * Math.cos(a), R * Math.sin(a), z]; });
+    const lo = ring(0.6), hi = ring(7.0), f = [];
+    for (let i = 0; i < N; i++) { const j = (i + 1) % N; f.push({ p: [lo[i], lo[j], hi[j], hi[i]], part: 'stem' }); }
+    return f;
+  }
+
+  // hex: the copy's colour (null for clear). tile: draw on a square background
+  // (for profile pictures). small: fewer facets and a stronger rim, for ≤32px.
+  function keycap({ hex = null, elev = 19, yaw = -33, tile = null, small = false } = {}) {
+    const id = 'kc' + (++n);
+    const th = elev * Math.PI / 180, ps = yaw * Math.PI / 180;
+    const cy = Math.cos(ps), sy = Math.sin(ps), ce = Math.cos(th), se = Math.sin(th);
+    const rot = ([x, y, z]) => [x * cy - y * sy, x * sy + y * cy, z];
+    const V = [0, -ce, se], L = unit([-0.55, -0.25, 0.8]), H = unit([L[0] + V[0], L[1] + V[1], L[2] + V[2]]);
+    const S = 10;
+    const proj = (q) => { const [x, y, z] = rot(q); return [x * S, -(z * ce + y * se) * S, -y * ce + z * se]; };
+    const base = hexRgb(hex || CLEAR_TINT);
+    const light = (nn, c, k = 1) => {
+      const d = Math.max(0, dot(nn, L)), sp = Math.pow(Math.max(0, dot(nn, H)), 60);
+      return { fill: c.map((v) => clamp(v * (0.42 + 0.68 * d) * k + 255 * sp * 0.85)), sp };
+    };
+    const prep = (f) => {
+      const w = f.p.map(rot), p = f.p.map(proj);
+      const nn = unit(cross(sub(w[1], w[0]), sub(w[2], w[0])));
+      return { ...f, n: nn, q: p, depth: p.reduce((a, v) => a + v[2], 0) / p.length, facing: dot(nn, V) > 0 };
+    };
+    const byDepth = (a) => a.slice().sort((x, y) => x.depth - y.depth);
+    const poly = (f, fill, extra = '') => `<polygon points="${pts(f.q)}" fill="${fill}" stroke="${fill}" stroke-width=".7" stroke-linejoin="round"${extra}/>`;
+
+    const faces = model(small ? 5 : 8, small ? 3 : 5).map(prep);
+    const inner = byDepth(faces.filter((f) => !f.facing && f.part === 'wall'));
+    const outer = byDepth(faces.filter((f) => f.facing));
+    const posts = byDepth(stem().map(prep).filter((f) => f.facing));
+    const postRgb = base.map((c) => clamp(c * 0.55 + 70));
+
+    let body = `<g opacity=".55">${inner.map((f) => poly(f, rgb(light(f.n.map((v) => -v), base, 0.8).fill))).join('')}</g>`;
+    if (!small) body += `<g opacity=".8">${posts.map((f) => poly(f, rgb(light(f.n, postRgb).fill))).join('')}</g>`;
+    body += `<g opacity="${small ? .78 : .62}">${outer.map((f) => poly(f, rgb(light(f.n, base).fill))).join('')}</g>`;
+    body += outer.map((f) => { const s = light(f.n, base).sp; return s > 0.06 ? poly(f, '#fff', ` opacity="${Math.min(1, s).toFixed(2)}"`) : ''; }).join('');
+    const rim = rrect(CAP.w1, CAP.d1, CAP.r1, CAP.back, 8).map(([x, y]) => proj([x, y, topZ(x, y)]));
+    body += `<polygon points="${pts(rim)}" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="${small ? 2.6 : 1.4}" stroke-linejoin="round"/>`;
+    if (small) { // an outline so the cap holds its shape on any tab colour
+      const sil = rrect(CAP.w0, CAP.d0, CAP.r0, 0, 5).map(([x, y]) => proj([x, y, 0]));
+      body = `<polygon points="${pts(sil)}" fill="none" stroke="rgb(23,21,31)" stroke-opacity=".35" stroke-width="3" stroke-linejoin="round"/>` + body;
+    }
+
+    const all = faces.flatMap((f) => f.q);
+    const minX = Math.min(...all.map((q) => q[0])), maxX = Math.max(...all.map((q) => q[0]));
+    const minY = Math.min(...all.map((q) => q[1])), maxY = Math.max(...all.map((q) => q[1]));
+    const w = maxX - minX, h = maxY - minY, pad = tile ? Math.max(w, h) * 0.24 : 2, side = Math.max(w, h) + pad * 2;
+    const vx = minX - (side - w) / 2, vy = minY - (side - h) / 2;
+    if (tile) body = `<defs><radialGradient id="${id}t" cx="28%" cy="18%" r="100%"><stop offset="0" stop-color="${tile[0]}"/><stop offset="1" stop-color="${tile[1]}"/></radialGradient></defs>`
+      + `<rect x="${vx.toFixed(1)}" y="${vy.toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="url(#${id}t)"/>` + body;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${side.toFixed(1)} ${side.toFixed(1)}">${body}</svg>`;
+  }
+
+  if (typeof module !== 'undefined') module.exports = { keycap };
+  else globalThis.fameboyKeycap = keycap;
+})();

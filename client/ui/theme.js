@@ -7,7 +7,7 @@
 // those four recolours every page. Each shade keeps the colour's hue at a
 // fixed lightness, so text stays readable whatever the colour.
 //
-// Also: the favicon sphere is tinted, the page title uses the copy's name, and
+// Also: the favicon keycap takes the colour, the page title uses the copy's name, and
 // the classic page's accent follows the colour.
 //
 // Load it first, in <head>:  <script src="/theme.js"></script>
@@ -33,14 +33,17 @@
     return [[0.42, 87], [0.48, 64], [0.55, 32], [0.62, 11]].map(([k, l]) => css(h, Math.min(s * k * 1.6, 0.7), l));
   }
 
+  // The favicon is the keycap in this copy's colour, drawn by client/logo/fameboy.js.
   function favicon(hex) {
-    fetch("/fameboy.svg")
-      .then((r) => r.text())
-      .then((svg) => {
-        const tinted = svg.replace("</defs>", `</defs><circle cx="256" cy="256" r="254" fill="${hex}" opacity=".88"/>`);
-        document.querySelectorAll('link[rel="icon"]').forEach((l) => (l.href = `data:image/svg+xml,${encodeURIComponent(tinted)}`));
-      })
-      .catch(() => {});
+    const draw = () => {
+      const svg = window.fameboyKeycap({ hex, small: true });
+      document.querySelectorAll('link[rel="icon"]').forEach((l) => (l.href = `data:image/svg+xml,${encodeURIComponent(svg)}`));
+    };
+    if (window.fameboyKeycap) return draw();
+    const s = document.createElement("script");
+    s.src = "/fameboy-keycap.js";
+    s.onload = draw;
+    document.head.append(s);
   }
 
   const theme = { name: "fameboy", color: null, hex: null };
@@ -55,6 +58,7 @@
       root.style.setProperty("--accent-ink", shades(theme.hex)[2]);
       favicon(theme.hex);
     } else {
+      document.querySelectorAll('link[rel="icon"]').forEach((l) => (l.href = "/fameboy-small.svg"));
       for (const n of [0, 1, 2, 3, "accent", "accent-ink"].map((x) => (typeof x === "number" ? `--g${x}` : `--${x}`))) root.style.removeProperty(n);
     }
     if (theme.name !== "fameboy") document.title = document.title.replace(/\bfameboy\b/, theme.name);

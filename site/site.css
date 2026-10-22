@@ -321,6 +321,6 @@ code {
   .tg-header__nav .tg-quiet-link { display: none; }
 }
 
-/* fameboy's own mark (the glass sphere) beside its name in the client section */
+/* fameboy's own mark (the clear keycap) beside its name in the client section */
 .cc-eyebrow { display: flex; align-items: center; gap: 10px; }
 .cc-eyebrow img { flex: none; filter: drop-shadow(0 2px 6px rgb(23 21 31 / 0.12)); }

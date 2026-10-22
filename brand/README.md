@@ -1,6 +1,6 @@
 # brand
 
-The create-fc identity. fameboy's own mark (the glass orb) lives with the client in `client/logo/`.
+The create-fc identity. fameboy's own mark (the clear keycap) lives with the client in `client/logo/`.
 
 ## The mark
 
