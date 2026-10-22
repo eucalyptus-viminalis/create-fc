@@ -67,7 +67,17 @@ async function transfer(custody: Custody, name: string, from: number, to: number
     body: JSON.stringify({ name, from, to, fid: custody.fid, owner: custody.account.address, timestamp, signature: bytesToHex(sig.value) }),
     signal: AbortSignal.timeout(30_000),
   });
-  if (!res.ok) throw new NodeError(`fname server refused: ${res.status} ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    if (/THROTTLED/.test(body)) {
+      // Names can change at most once every 28 days, counted from the fid's last transfer.
+      const last = await fnameGet(`fid=${custody.fid}`).catch(() => undefined);
+      const t = (last as (Transfer & { timestamp?: number }) | undefined)?.timestamp;
+      const when = t ? ` @${last!.username} was claimed on ${new Date(t * 1000).toLocaleString()}, so the next change works from about ${new Date((t + 28 * 86400) * 1000).toLocaleString()}.` : "";
+      throw new NodeError(`the fname server says this account changed its name too recently: names can change once every 28 days.${when} Nothing was changed.`);
+    }
+    throw new NodeError(`fname server refused: ${res.status} ${body}`);
+  }
 }
 
 export async function setUsername(name: string, custody: Custody, o: { dryRun?: boolean; replace?: boolean; log: (s: string) => void }) {
