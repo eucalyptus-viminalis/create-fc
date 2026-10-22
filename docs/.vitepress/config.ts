@@ -13,9 +13,9 @@ export default defineConfig({
   cleanUrls: true,
   // Developer notes live here too but aren't for readers.
   srcExclude: ["adr/**", "quality-attributes.md"],
-  head: [["link", { rel: "icon", href: "/create-fc/docs/clearcast.svg", type: "image/svg+xml" }]],
+  head: [["link", { rel: "icon", href: "/create-fc/docs/favicon.svg", type: "image/svg+xml" }]],
   themeConfig: {
-    logo: "/clearcast.svg",
+    logo: { light: "/create-fc-mark.svg", dark: "/create-fc-mark-white.svg", alt: "" },
     nav: [
       { text: "Guides", link: "/guide/share-your-node" },
       { text: "Costs", link: "/Costs" },

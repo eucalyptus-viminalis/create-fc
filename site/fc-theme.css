@@ -21,7 +21,8 @@
   --fc-term-prompt: #b3a3ff;
 }
 
-/* Brand mark: three wedges, for three commands (and Snapchain's three shards). */
-.tg-mark {
-  background: repeating-conic-gradient(from -54deg, var(--tg-orange-vivid) 0 108deg, transparent 108deg 120deg);
-}
+/* Brand lockup: the keyboard mark + "create-fc", one image from brand/logo/.
+   Height is 1.24x the wordmark's old font size, so the header keeps its rhythm. */
+.fc-lockup { display: block; height: 28px; width: auto; }
+.tg-wordmark--sm .fc-lockup { height: 20px; }
+@media (max-width: 640px) { .tg-wordmark .fc-lockup { height: 26px; } .tg-wordmark--sm .fc-lockup { height: 20px; } }

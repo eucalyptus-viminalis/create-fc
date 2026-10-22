@@ -1,5 +1,5 @@
 #!/bin/bash
-# Command 2: install fc, a Farcaster client that talks to your own node.
+# Command 2: install clearcast, a Farcaster client that talks to your own node.
 #
 #   curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<your node>:3381
 #
@@ -53,6 +53,6 @@ echo
 cat <<'EOF'
 
 Open it in your browser:  clearcast ui
-In the terminal:          clearcast feed dwr     clearcast help
+In the terminal:          clearcast casts dwr    clearcast help
 To post, register an app key (read the warning it prints first):  clearcast login
 EOF

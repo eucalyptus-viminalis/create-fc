@@ -44,6 +44,7 @@ fetch node/fc-node /usr/local/bin/fc-node
 mkdir -p /usr/local/lib/fc-companion
 fetch node/companion.mjs /usr/local/lib/fc-companion/companion.mjs
 fetch node/companion-app-account.mjs /usr/local/lib/fc-companion/app-account.mjs
+fetch node/colorcast.mjs /usr/local/lib/fc-companion/colorcast.mjs
 fetch node/companion-package.json /usr/local/lib/fc-companion/package.json
 fetch node/companion-pnpm-lock.yaml /usr/local/lib/fc-companion/pnpm-lock.yaml
 fetch node/companion-install.sh /usr/local/sbin/fc-companion-install

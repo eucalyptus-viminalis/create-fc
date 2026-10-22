@@ -79,7 +79,8 @@ async function clearIds(kind, ids, on) {
 
 // ------------------------------------------------------------------ state
 const S = { view: "casts", me: null, since: null };
-const C = { data: null, tab: "new", focus: null, checked: new Set(), anchor: null, undo: null, reply: null, counts: new Map(), liked: new Set() };
+const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "ctrl";
+const C = { data: null, tab: "new", focus: null, checked: new Set(), follow: false, undo: null, reply: null, counts: new Map(), liked: new Set() };
 const L = { data: null, tab: "new", checked: new Set() };
 const R = { data: null, tab: "new", checked: new Set(), reply: null };
 
@@ -112,7 +113,7 @@ function renderCasts() {
   C.listTab = C.tab;
   $("#view").innerHTML = `<div class="mail${C.reading ? " reading" : ""}">
     <section class="tile list" aria-label="Casts">
-      <div class="lhead"><span class="ck${n && n === shown.length ? " on" : ""}" data-all title="Select all"></span><span>${shown.length} ${C.tab === "saved" ? "saved" : C.tab === "cleared" ? "cleared" : "waiting"}</span><span style="margin-left:auto">shift-click: a range</span></div>
+      <div class="lhead"><span class="ck${n && n === shown.length ? " on" : ""}" data-all title="Select all"></span><span>${shown.length} ${C.tab === "saved" ? "saved" : C.tab === "cleared" ? "cleared" : "waiting"}</span><span style="margin-left:auto">${MOD}-click: add · shift-click: range</span></div>
       ${shown.length ? shown.map((x) => `
         <div class="item${x.hash === C.focus ? " focus" : ""}${C.checked.has(x.hash) ? " checked" : ""}" data-hash="${x.hash}">
           <span class="ck" data-ck></span>${pic(x.author?.pfp)}
@@ -151,10 +152,25 @@ function wireCasts(shown, c) {
   document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { C.tab = b.dataset.tab; C.checked.clear(); C.reply = null; renderCasts(); }));
   document.querySelectorAll(".item").forEach((el) => el.addEventListener("click", (e) => {
     if (e.target.closest("a")) return;
-    const h = el.dataset.hash, order = shown.map((x) => x.hash);
-    if (e.target.hasAttribute("data-ck") || e.metaKey || e.ctrlKey) { C.checked.has(h) ? C.checked.delete(h) : C.checked.add(h); C.anchor = h; sfx.tick(); }
-    else if (e.shiftKey && C.anchor) { const [a, b] = [order.indexOf(C.anchor), order.indexOf(h)].sort((p, q) => p - q); order.slice(a, b + 1).forEach((x) => C.checked.add(x)); sfx.tick(); }
-    else { C.focus = h; C.anchor = h; C.reply = null; C.reading = true; sfx.move(); }
+    const h = el.dataset.hash, order = shown.map((x) => x.hash), i = order.indexOf(h);
+    // Like Mail: a click selects just this cast; cmd (Mac) or ctrl (Windows, Linux) adds or removes one;
+    // shift selects from the selected cast furthest from here through this one.
+    // On touch there are no modifier keys, so tapping the box adds or removes one.
+    if (e.metaKey || e.ctrlKey || (e.pointerType === "touch" && e.target.hasAttribute("data-ck"))) {
+      C.checked.has(h) ? C.checked.delete(h) : C.checked.add(h);
+      C.follow = false; sfx.tick();
+    } else if (e.shiftKey) {
+      const from = [...C.checked].map((x) => order.indexOf(x)).filter((j) => j >= 0);
+      if (!from.length && C.focus) from.push(order.indexOf(C.focus));
+      const far = from.reduce((f, j) => (Math.abs(j - i) > Math.abs(f - i) ? j : f), i);
+      C.checked = new Set(order.slice(Math.min(far, i), Math.max(far, i) + 1));
+      C.follow = false; sfx.tick();
+    } else {
+      C.checked = new Set([h]); C.follow = true;
+      if (C.focus !== h) C.reply = null;
+      C.reading = true; sfx.move();
+    }
+    C.focus = h;
     renderCasts();
   }));
   $("[data-all]")?.addEventListener("click", () => { if (C.checked.size === shown.length) C.checked.clear(); else shown.forEach((x) => C.checked.add(x.hash)); renderCasts(); });
@@ -285,10 +301,10 @@ async function repliesClear(hashes, on) {
 // ================================================================== keys and controller
 function castsKey(k, e) {
   const order = castsShown().map((x) => x.hash), i = order.indexOf(C.focus);
-  const move = (d) => { const n = order[Math.max(0, Math.min(order.length - 1, i + d))]; if (n && n !== C.focus) { C.focus = n; C.reply = null; sfx.move(); renderCasts(); document.querySelector(".item.focus")?.scrollIntoView({ block: "nearest" }); } };
+  const move = (d) => { const n = order[Math.max(0, Math.min(order.length - 1, i + d))]; if (n && n !== C.focus) { C.focus = n; C.reply = null; if (C.follow) C.checked = new Set([n]); sfx.move(); renderCasts(); document.querySelector(".item.focus")?.scrollIntoView({ block: "nearest" }); } };
   if (k === "j" || k === "arrowdown") return move(1), true;
   if (k === "k" || k === "arrowup") return move(-1), true;
-  if (k === "x" && C.focus) { C.checked.has(C.focus) ? C.checked.delete(C.focus) : C.checked.add(C.focus); sfx.tick(); renderCasts(); return true; }
+  if (k === "x" && C.focus) { C.follow = false; C.checked.has(C.focus) ? C.checked.delete(C.focus) : C.checked.add(C.focus); sfx.tick(); renderCasts(); return true; }
   if (k === "e") { const sel = C.checked.size ? [...C.checked] : [C.focus]; castAct(C.tab === "cleared" ? "unclear" : "clear", sel); return true; }
   if (k === "s") { castAct("save", C.checked.size ? [...C.checked] : [C.focus]); return true; }
   if (k === "l") { castAct("like", [C.focus]); return true; }

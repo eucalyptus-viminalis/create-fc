@@ -75,7 +75,7 @@ The client shows the person's own feed, so it needs them signed in: an app key, 
 
 > Sign in on the page `clearcast ui` opened: approve in the Farcaster app, or use your seed phrase there (it stays on your computer). Or run `clearcast login` in your own terminal, not through me. Read the warning it prints. No account yet? `clearcast new-account` registers one for about $0.20 of ETH on Optimism.
 
-For the Farcaster-app option, the node needs an app account: an account made for it, named after the client and themselves (e.g. `@name-clearcast`), since people approving see that name. The person sets it up once on the server, in their own SSH session, so everyone using the node can approve on their phone:
+For the Farcaster-app option, the node needs an app account: an account made for it. People approving see its name, so setup suggests a free `@<color>cast` username with a random color (e.g. `@tealcast`, checking the fname server and trying another color when one is taken), which they can keep or replace with their own. The person sets it up once on the server, in their own SSH session, so everyone using the node can approve on their phone:
 
 > `ssh -t root@<ip> fc-node app-account`
 
