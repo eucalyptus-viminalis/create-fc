@@ -27,6 +27,7 @@ import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
 import type { Hex } from "viem";
+import { colorOf } from "../../node/fameboy-name.mjs";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const UI_DIR = join(HERE, "..", "ui");
@@ -245,7 +246,27 @@ const sinceOf = (q: URLSearchParams) => {
   return Number.isFinite(n) && n > 0 && n <= Date.now() ? n : Date.now() - 86_400_000;
 };
 
+// This copy's name and colour (ADR 004): the username of the app account that
+// vouches for sign-ins here. Locally that's this computer's app account if it
+// has one, else the node's; hosted, always the node's. @fameboy<color> gives
+// the pages that colour (ui/theme.js); any other name, or none, the clear look.
+let instanceCache: { at: number; value: Promise<{ name: string; fid: number | null; color: string | null; hex: string | null }> } | undefined;
+function instance() {
+  if (instanceCache && Date.now() - instanceCache.at < 10 * 60_000) return instanceCache.value;
+  const value = (async () => {
+    const local = LOCAL_ONLY ? await loadAppAccount().catch(() => undefined) : undefined;
+    const fid = local?.fid ?? (await nodeSignInOptions())?.appFid ?? null;
+    const name = fid ? (await profileOf(fid)).username : undefined;
+    const c = colorOf(name);
+    return { name: name ?? "fameboy", fid, color: c?.color ?? null, hex: c?.hex ?? null };
+  })();
+  instanceCache = { at: Date.now(), value };
+  value.catch(() => (instanceCache = undefined));
+  return value;
+}
+
 const routes: Record<string, Handler> = {
+  "GET /api/instance": async () => instance(),
   "GET /api/status": async () => {
     const info = await get<{ version: string; shardInfos: { shardId: number; maxHeight: number; blockDelay: number }[] }>("/v1/info");
     return { node: NODE, version: info.version, shards: info.shardInfos.sort((a, b) => a.shardId - b.shardId) };

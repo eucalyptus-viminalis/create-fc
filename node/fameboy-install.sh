@@ -3,8 +3,9 @@
 # setup.sh copies this to /usr/local/sbin/fc-fameboy-install; run it with
 # `fc-node client`. Safe to run again: it updates fameboy and restarts it.
 #
-#   fc-node client               set up or update, at https://fameboy.<ip with dashes>.sslip.io
-#                                (or the domain you set before)
+#   fc-node client               set up or update, at https://<name>.<ip with dashes>.sslip.io,
+#                                where <name> is this node's app account's username, e.g.
+#                                fameboyteal (ADR 004). Or the domain you set before.
 #   fc-node client <domain>      use your own domain; point its A record at this server first
 #   fc-node client sslip         go back to the sslip.io address
 #   fc-node client off           stop hosting it
@@ -63,7 +64,15 @@ if [ -n "${domain:-}" ]; then
   fi
   echo "$domain" > "$STATE/domain"
 fi
-host=$(cat "$STATE/domain" 2>/dev/null || echo "fameboy.${ip//./-}.sslip.io")
+# This copy's name (ADR 004): the username of the node's app account, else "fameboy".
+app_fid=$(curl -s -m 3 localhost:3390/v1/signin | jq -r '.appFid // empty' 2>/dev/null || true)
+name=""
+if [ -n "$app_fid" ]; then
+  name=$(curl -s -m 5 "localhost:3381/v1/userDataByFid?fid=$app_fid" \
+    | jq -r '[.messages[]?.data.userDataBody | select(.type == "USER_DATA_TYPE_USERNAME") | .value][0] // empty' 2>/dev/null || true)
+fi
+[[ "$name" =~ ^[a-z0-9][a-z0-9-]{0,15}$ ]] || name=fameboy
+host=$(cat "$STATE/domain" 2>/dev/null || echo "$name.${ip//./-}.sslip.io")
 origin="https://$host"
 
 # ---------------------------------------------------------------- the code

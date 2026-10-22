@@ -25,6 +25,15 @@ const sfx = {
 // ------------------------------------------------------------------ boot
 // The c blinks for as long as this node takes to answer, then the rest of
 // the name lights up and the dashboard appears.
+// Under the wordmark: this copy's colour ("TEAL" for @fameboyteal), the rest of
+// its name ("CLEAR" for @fameboyclear), or its own name. Unnamed: the clear look.
+function paintEdition() {
+  const t = window.theme ?? {};
+  $("#boot-edition").textContent = t.color ?? (t.name && t.name !== "fameboy" ? t.name.replace(/^fameboy(?=.)/, "") : "clear");
+}
+paintEdition();
+document.addEventListener("fameboy:theme", paintEdition);
+
 async function boot() {
   const b = $("#boot"), letters = [...b.querySelectorAll(".word span")], status = $("#boot-status");
   let on = false;

@@ -353,7 +353,8 @@ function renderInbox(all, left) {
       <button type="button" class="glass-btn glass-btn--quiet" data-refresh title="Ask your node again for the newest casts">↻ Check for new</button>
       ${clearedHere ? `<button type="button" class="link-btn" data-show-cleared aria-pressed="${state.showCleared}">${state.showCleared ? "Hide" : "Show"} ${clearedHere} cleared</button>` : ""}
     </div>`;
-  document.title = left.length ? `(${left.length}) fameboy` : "fameboy";
+  const name = window.theme?.name ?? "fameboy";
+  document.title = left.length ? `(${left.length}) ${name}` : name;
 }
 
 function castHtml(c, i) {
@@ -531,7 +532,7 @@ function showSignedOut() {
   $("#signin").hidden = false;
   $("#me-chip").hidden = true;
   $("#signout-btn").hidden = true;
-  document.title = "fameboy";
+  document.title = window.theme?.name ?? "fameboy";
   $("#app-body").innerHTML = `<button type="button" class="tg-btn tg-btn--ink tg-btn--sm" id="app-start">Show the code</button>`;
   loadSignInOptions();
   clearInterval(showSignedOut.poll);
