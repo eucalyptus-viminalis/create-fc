@@ -2,7 +2,7 @@
 
 ## Status
 
-**accepted** (2026-10-23). Design notes: `developer/hosted-clearcast.md`.
+**accepted** (2026-10-23). Design notes: `developer/hosted-clearcast.md`. The client is now called fameboy (ADR 004); read "clearcast" here as fameboy.
 
 ## Context
 
