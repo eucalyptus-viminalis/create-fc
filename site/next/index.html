@@ -24,8 +24,8 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · seed: IM Fell English, IM Fell English SC, Pinyon Script, Courier Prime · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Pinyon+Script&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · seed: IM Fell English, IM Fell English SC, Pinyon Script, Courier Prime · client: Silkscreen, VT323, Jost, Barlow Condensed, Permanent Marker · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Pinyon+Script&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Permanent+Marker&family=Silkscreen&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&family=VT323&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/agent/agent.css">
@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="sections/costs/costs.css">
 <link rel="stylesheet" href="sections/troubleshooting/troubleshooting.css">
 <link rel="stylesheet" href="sections/seed/seed.css">
+<link rel="stylesheet" href="sections/client/client.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
@@ -671,7 +672,81 @@
     <a class="dl" href="img/nda-seed-phrase-card.zip" download="seed-phrase-card.zip">Download</a>
   </div>
 </section>
-<section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
+<!-- The client: fameboy, as a 1995 magazine ad (sections/client/) -->
+<section class="doc doc-client" id="client" aria-label="The fameboy client">
+  <div class="wrap">
+  <div class="fit" id="cl-fit"><div class="sheet">
+  <article class="page" aria-labelledby="cl-t">
+    <div class="show" aria-hidden="true">LETTERS<p>Dear Handheld Heroes, my node finished syncing at 3am and I've been checking the weather every morning since. Is that normal? Also, who is @gm-bot-4471 and why does it keep following me?</p><p>Tips &amp; Tricks · page 88</p></div>
+    <div class="print">
+    <h2 class="label" id="cl-t">Check in. Don't scroll.</h2>
+
+    <!-- left: the weather report that opens the app -->
+    <div class="scr s1" data-color="teal"><div class="ui">
+      <div class="tile"><h3><span>network conditions</span><span>snapchain</span></h3>
+        <div class="body">
+          <div class="wx">
+            <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" id="cl-wx"></svg>
+            <span class="w">brisk</span>
+            <span>412 messages a minute, usually 280.</span>
+          </div>
+          <div class="bars" id="cl-bars"></div>
+        </div></div>
+    </div></div>
+
+    <!-- centre: the loading screen -->
+    <div class="scr s2" data-color="tangerine"><div class="ui boot"><div>
+      <div class="word" aria-label="fameboy"><span>f</span><span>a</span><span>m</span><span>e</span><span>b</span><span>o</span><span>y</span></div>
+      <div class="ed edition"></div>
+      <div class="status" id="cl-status">connecting to this node</div>
+    </div></div></div>
+
+    <!-- right: new followers, with what each wallet holds -->
+    <div class="scr s3" data-color="orchid"><div class="ui">
+      <div class="tile"><h3><span>new followers</span><span>4</span></h3>
+        <div class="body fol">
+          <div><span><i class="fresh"></i>@fameboyteal</span><span class="tier">shrimp</span><span class="act yes">follow</span></div>
+          <div><span><i class="fresh"></i>@moxie</span><span class="tier">dolphin</span><span class="act yes">follow</span></div>
+          <div><span>@gm-bot-4471</span><span class="tier zero">no funds</span><span class="act">clear</span></div>
+          <div><span>@dwr</span><span class="tier">whale</span><span class="act yes">follow</span></div>
+        </div></div>
+    </div></div>
+
+    <div class="names">
+      <div><b>the weather</b>first thing you see</div>
+      <div><b>the hello</b>your node, answering · in tangerine</div>
+      <div><b>the welcome</b>who's new, and who's real</div>
+    </div>
+
+    <div class="points">
+      <div><h4><i>1</i>Check in</h4><p>fameboy opens on how Farcaster is doing today, not on an endless feed. See <em>what you missed</em>, say hi, and get on with your day.</p></div>
+      <div><h4><i>2</i>Follow back</h4><p>Give people the benefit of the doubt. Each new follower shows what their verified wallets hold, from plankton to whale, so <em>empty accounts stand out</em>.*</p></div>
+      <div><h4><i>3</i>Play</h4><p>Bleeps, bloops and pixels. Plug in a controller: <em>A to like</em>, B to clear. Going through your casts should feel like a game, not a chore.</p></div>
+    </div>
+
+    <div class="letter"><q>Is this a weather app? Haha, who knows! But it feels great to check in every morning :)</q><p>— a happy @fameboyteal</p></div>
+
+    <div class="logo"><div class="caps" aria-hidden="true"><span class="keycap" data-color="teal"></span><span class="keycap" data-color="tangerine"></span><span class="keycap" data-color="orchid"></span><span class="keycap" data-color="lime"></span><span class="keycap" data-color="clear"></span></div><div class="w">fameboy</div><div class="tag">now in 470 colours.</div></div>
+
+    
+    <p class="fine">*Wallet ratings are coming to fameboy; screen shown is a preview. @fameboyclear is the copy the create-fc project hosts on its own Snapchain node: no API keys, no one else's servers. Run your own copy, in your own colour, with the create-fc Git kit. Sound effects can be switched off with M.</p>
+    </div>
+    <!-- outside .print: the QR code must stay crisp enough to scan -->
+    <div class="try">
+      <div class="tx">
+        <h4>Try it now!</h4>
+        <p>No install, no node. Open the copy we host, <b>@fameboyclear</b>, and sign in by approving in the Farcaster app.</p>
+        <a href="https://fameboyclear.91-99-76-223.sslip.io">fameboyclear.91-99-76-223.sslip.io</a>
+      </div>
+      <a class="qr no-arrow" href="https://fameboyclear.91-99-76-223.sslip.io" aria-label="Open fameboyclear"><svg class="qrsvg" role="img" aria-label="QR code for fameboyclear.91-99-76-223.sslip.io" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" shape-rendering="crispEdges"><path stroke="#1c1c1a" d="M0 0.5h7m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m3 0h7M0 1.5h1m5 0h1m1 0h1m1 0h4m1 0h5m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h3m3 0h1m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m3 0h2m6 0h1m3 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h1m3 0h2m2 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m2 0h2m4 0h1m2 0h1m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M11 7.5h1m2 0h1m1 0h5M0 8.5h1m2 0h7m6 0h1m2 0h1m1 0h1m2 0h1m1 0h3M1 9.5h3m1 0h1m1 0h2m1 0h2m1 0h1m4 0h3m2 0h2m1 0h2M1 10.5h1m1 0h2m1 0h2m2 0h2m2 0h1m1 0h1m3 0h2m2 0h1m1 0h1M1 11.5h1m2 0h2m1 0h4m2 0h2m2 0h3m4 0h2m2 0h1M0 12.5h2m1 0h1m2 0h1m7 0h1m1 0h1m2 0h1m2 0h2m4 0h1M0 13.5h2m1 0h2m6 0h1m1 0h2m1 0h2m4 0h7M0 14.5h1m1 0h1m1 0h1m1 0h1m1 0h3m2 0h2m2 0h4m2 0h2m1 0h1m1 0h1M0 15.5h2m1 0h2m3 0h3m2 0h1m2 0h2m2 0h2m1 0h1m2 0h1m1 0h1M2 16.5h1m2 0h2m4 0h5m1 0h2m1 0h1m2 0h1m1 0h1M0 17.5h1m2 0h1m1 0h1m1 0h10m2 0h3m2 0h1m1 0h2M0 18.5h3m1 0h1m1 0h1m1 0h1m4 0h1m1 0h2m2 0h1m1 0h1m2 0h2m2 0h1M0 19.5h3m2 0h1m1 0h2m3 0h3m3 0h2m1 0h1m2 0h3M0 20.5h3m2 0h2m1 0h1m3 0h2m1 0h1m2 0h10M8 21.5h1m2 0h4m5 0h1m3 0h2M0 22.5h7m1 0h1m1 0h2m1 0h1m1 0h1m2 0h3m1 0h1m1 0h2M0 23.5h1m5 0h1m1 0h1m4 0h1m3 0h1m1 0h2m3 0h1m3 0h1M0 24.5h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h1m2 0h7m2 0h1M0 25.5h1m1 0h3m1 0h1m1 0h1m1 0h2m2 0h2m3 0h3m5 0h1M0 26.5h1m1 0h3m1 0h1m2 0h1m1 0h6m1 0h1m1 0h2m1 0h2m1 0h3M0 27.5h1m5 0h1m2 0h1m2 0h2m2 0h3m3 0h1m2 0h2m1 0h1M0 28.5h7m1 0h2m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1"/></svg>
+<span>scan me</span></a>
+    </div>
+    <div class="scan light"></div>
+    <div class="scan"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+  </article>
+  </div></div>
+</div>
+</section>
 
 <!-- Finish: NDA Form 1 (sections/finish/) -->
 <section class="doc doc-finish" id="finish" aria-labelledby="nda-t">
@@ -799,6 +874,8 @@
 <script type="module" src="sections/explainers/explainers.js"></script>
 <script type="module" src="sections/costs/costs.js"></script>
 <script type="module" src="sections/troubleshooting/troubleshooting.js"></script>
+<script src="vendor/fameboy-keycap.js"></script>
+<script type="module" src="sections/client/client.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>

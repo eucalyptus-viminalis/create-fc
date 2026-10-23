@@ -1,0 +1,115 @@
+/* The client: fameboy, as a full-page ad torn from a 1995 magazine (after Nintendo's "Play It Loud").
+   Every screen is fameboy's own UI in a colour edition; "Try it now" opens the hosted @fameboyclear.
+   From brand/mockups/client-ad/round-3.html. Everything is scoped to .doc-client. */
+.doc-client {
+    --g0: #dcdcd2; --g1: #a6a69d; --g2: #57574f; --g3: #1c1c1a; --fc: #8a63d2;
+    --desk: #cfcfc6; --px: "Silkscreen", monospace; --vt: "VT323", monospace;
+  }
+  .doc-client *, .doc-client *::before, .doc-client *::after { margin: 0; padding: 0; }
+  .doc-client { background: var(--desk); color: var(--g3); }
+  .doc-client .wrap { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; padding: 40px 16px 80px; overflow-x: hidden; }
+  .doc-client .fit { width: min(760px, 100%); }
+  .doc-client .fit > .sheet { transform-origin: 0 0; }
+  /* The page lies on the desk: clip-path cuts box-shadow off, so the shadow is a filter on a wrapper. */
+  .doc-client .sheet { width: 760px; height: 1000px; filter: drop-shadow(0 1px 0 rgb(0 0 0 / .08)) drop-shadow(6px 10px 14px rgb(0 0 0 / .22)); }
+  .doc-client .sheet > .page { transform: rotate(-.35deg); }
+
+  /* ---------- the torn-out page ---------- */
+  .doc-client .page { position: relative; width: 760px; height: 1000px; overflow: hidden; background: #f1efe6;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 97%, 1.2% 94%, .3% 91%, 1.4% 87%, .4% 83%, 1.5% 79%, .2% 75%, 1.3% 71%, .4% 67%, 1.6% 63%, .3% 59%, 1.2% 55%, .5% 51%, 1.5% 47%, .2% 43%, 1.3% 39%, .4% 35%, 1.6% 31%, .3% 27%, 1.2% 23%, .5% 19%, 1.4% 15%, .2% 11%, 1.3% 7%, .4% 3%); }
+
+  /* ---------- scanned: a flatbed scan of a page torn from a 1996 magazine ----------
+     Same technique as troubleshooting-scan.html: the content prints through an ink filter,
+     the paper gets scanner tooth and blotches, and the glass caught some dust. Coated
+     magazine stock scans flatter and greyer than the 50s documents' newsprint. */
+  .doc-client .print { position: absolute; inset: 0; filter: url(#ink-client); }
+  @media (prefers-contrast: more) { .doc-client .print { filter: none; } }
+  .doc-client .scan { position: absolute; inset: 0; pointer-events: none; z-index: 40; }
+  .doc-client .scan.light { background:
+      linear-gradient(90deg, rgb(60 50 30 / .16), rgb(60 50 30 / 0) 60px),
+      linear-gradient(180deg, rgb(255 255 255 / .3), rgb(255 255 255 / 0) 40%, rgb(90 80 50 / .07)); mix-blend-mode: multiply; }
+  .doc-client .scan svg { width: 100%; height: 100%; mix-blend-mode: multiply; display: block; }
+  /* the next page, faintly through thin stock */
+  .doc-client .show { position: absolute; inset: 60px 50px; z-index: 0; transform: scaleX(-1); opacity: .028; filter: blur(.9px); pointer-events: none; user-select: none; overflow: hidden;
+    font: 800 46px/1.05 "Jost"; color: #000; }
+  .doc-client .show p { font: 500 15px/1.5 "Jost"; margin-top: 16px; }
+
+  .doc-client .label { position: absolute; left: 132px; top: 44px; background: var(--g3); color: #fff; font: 400 44px/1 var(--vt); padding: 10px 26px 12px; transform: rotate(-4deg); box-shadow: 4px 4px 0 var(--fc); }
+
+  /* ---------- screens ---------- */
+  .doc-client .scr { position: absolute; border-radius: 10px; background: #0d0c0b; padding: 10px; box-shadow: 0 22px 34px -14px rgb(0 0 0 / .5); }
+  .doc-client .ui { position: relative; height: 100%; border-radius: 4px; background: var(--g0); overflow: hidden; container-type: inline-size; font: 400 14px/1.1 var(--vt); color: var(--g3); }
+  /* scan lines and glass: these screens were photographed */
+  .doc-client .ui::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(0deg, rgb(0 0 0 / .05) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgb(0 0 0 / .035) 0 1px, transparent 1px 3px); }
+  .doc-client .ui::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+    background: linear-gradient(160deg, rgb(255 255 255 / .35), transparent 30%), radial-gradient(120% 90% at 50% 50%, transparent 60%, rgb(0 0 0 / .18)); }
+  .doc-client .px { font-family: var(--px); -webkit-font-smoothing: none; }
+  .doc-client .s1 { left: 30px; top: 168px; width: 236px; height: 168px; transform: rotate(-8deg); }
+  .doc-client .s2 { left: 236px; top: 128px; width: 300px; height: 212px; transform: rotate(2deg); z-index: 2; }
+  .doc-client .s3 { right: 28px; top: 162px; width: 236px; height: 168px; transform: rotate(8deg); }
+
+  /* boot (centre) */
+  .doc-client .boot { display: grid; place-items: center; }
+  .doc-client .boot .word { font: 400 11.5cqw/1 var(--px); -webkit-font-smoothing: none; text-align: center; white-space: nowrap; }
+  .doc-client .boot .word span { opacity: .1; } .doc-client .boot .word span.on { opacity: 1; }
+  .doc-client .boot .ed { font: 400 4.4cqw/1 var(--px); -webkit-font-smoothing: none; text-align: center; color: var(--g2); letter-spacing: .3em; text-transform: uppercase; margin-top: 2cqw; }
+  .doc-client .boot .status { font-size: 4.6cqw; color: var(--g2); text-align: center; margin-top: 3cqw; min-height: 1.2em; }
+
+  /* tiles, as on the home screen */
+  .doc-client .tile { margin: 4cqw; border: .9cqw solid var(--g3); box-shadow: 1.6cqw 1.6cqw 0 var(--g3); background: var(--g0); }
+  .doc-client .tile h3 { display: flex; justify-content: space-between; font: 400 3.4cqw/1 var(--px); -webkit-font-smoothing: none; background: var(--g3); color: var(--g0); padding: 1.8cqw 2.4cqw 1.4cqw; }
+  .doc-client .tile h3 span:last-child { opacity: .7; }
+  .doc-client .tile .body { padding: 2.6cqw 3cqw 3cqw; font-size: 6.4cqw; }
+  .doc-client .wx { display: grid; grid-template-columns: auto 1fr; gap: 1cqw 3cqw; align-items: center; }
+  .doc-client .wx svg { width: 17cqw; height: 17cqw; grid-row: span 2; }
+  .doc-client .wx .w { font: 400 7.6cqw/1 var(--px); -webkit-font-smoothing: none; }
+  .doc-client .bars { display: grid; grid-template-columns: repeat(24, 1fr); gap: .5cqw; align-items: end; height: 14cqw; margin-top: 3cqw; }
+  .doc-client .bars i { background: var(--g3); } .doc-client .bars i.later { background: transparent; outline: .4cqw dotted var(--g1); outline-offset: -.4cqw; }
+
+  /* new followers, with funds */
+  .doc-client .fol div { display: grid; grid-template-columns: 1fr auto auto; gap: 2cqw; align-items: center; padding: 1.3cqw 0; border-bottom: .5cqw dashed var(--g1); }
+  .doc-client .fol div:last-child { border-bottom: 0; }
+  .doc-client .fol .tier { font: 400 3cqw/1 var(--px); -webkit-font-smoothing: none; padding: 1cqw 1.4cqw .8cqw; border: .5cqw solid var(--g3); }
+  .doc-client .fol .tier.zero { background: var(--g3); color: var(--g0); }
+  .doc-client .fol .tier.zero::before { content: "$0 "; }
+  .doc-client .fol .act { font: 400 3cqw/1 var(--px); -webkit-font-smoothing: none; color: var(--g2); }
+  .doc-client .fol .act.yes { color: var(--g3); text-decoration: underline; }
+  .doc-client .s3 .tile { margin-left: 13cqw; } .doc-client .s1 .tile { margin-right: 11cqw; }
+  .doc-client .fresh { display: inline-block; width: 1.8cqw; height: 1.8cqw; background: var(--fc); margin-right: 1.2cqw; vertical-align: .2cqw; }
+
+  .doc-client .names { position: absolute; left: 30px; right: 30px; top: 380px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
+  .doc-client .names div { font: 600 14px/1.15 "Barlow Condensed"; letter-spacing: .08em; text-transform: uppercase; color: var(--g2); }
+  .doc-client .names b { display: block; font: 400 28px/1 var(--vt); color: var(--g3); text-transform: none; letter-spacing: 0; margin-bottom: 2px; }
+
+  /* ---------- the three points ---------- */
+  .doc-client .points { position: absolute; left: 44px; right: 40px; top: 470px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  .doc-client .points h4 { font: 400 15px/1.05 var(--px); -webkit-font-smoothing: none; margin-bottom: 8px; display: flex; gap: 8px; align-items: baseline; }
+  .doc-client .points h4 i { font-style: normal; display: inline-grid; place-items: center; min-width: 22px; height: 22px; background: var(--g3); color: var(--g0); font-size: 11px; }
+  .doc-client .points p { font: 400 15.5px/1.38 "Jost"; color: #2c2a26; }
+  .doc-client .points p em { font-style: normal; background: linear-gradient(transparent 58%, rgb(138 99 210 / .32) 58%); }
+
+  /* reader's letter, taped on */
+  .doc-client .letter { position: absolute; left: 56px; top: 652px; width: 300px; background: #fffef8; padding: 14px 16px 12px; transform: rotate(-2.5deg); box-shadow: 0 10px 18px -10px rgb(0 0 0 / .45); }
+  .doc-client .letter::before { content: ""; position: absolute; left: 50%; top: -12px; width: 90px; height: 24px; transform: translateX(-50%) rotate(3deg); background: rgb(230 226 205 / .8); }
+  .doc-client .letter q { display: block; font: 400 20px/1.25 "Permanent Marker"; color: var(--g3); quotes: "“" "”"; }
+  .doc-client .letter p { margin-top: 8px; font: 600 12px/1 "Barlow Condensed"; letter-spacing: .1em; text-transform: uppercase; color: var(--g2); }
+
+  .doc-client .logo { position: absolute; right: 44px; top: 640px; text-align: right; }
+  .doc-client .logo .w { font: 400 44px/1 var(--px); -webkit-font-smoothing: none; letter-spacing: -.02em; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+  /* a handful of the 470: each copy's keycap is its colour */
+  .doc-client .logo .caps { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+  .doc-client .logo .caps .keycap { width: 50px; margin-left: -10px; display: block; filter: drop-shadow(2px 3px 2px rgb(0 0 0 / .18)); } .doc-client .logo .caps .keycap svg { display: block; width: 100%; height: auto; }
+  .doc-client .logo .tag { font: 400 26px/1 "Permanent Marker"; color: var(--fc); transform: rotate(-4deg); margin-top: 6px; text-shadow: 2px 2px 0 rgb(28 28 26 / .2); }
+
+  /* Try it now: the hosted copy, by link and by QR code */
+  .doc-client .try { position: absolute; left: 44px; right: 40px; bottom: 46px; display: grid; grid-template-columns: 1fr auto; gap: 22px; align-items: center; border: 3px solid var(--g3); padding: 12px 14px 12px 18px; background: #fff; box-shadow: 5px 5px 0 var(--g3); }
+  .doc-client .try h4 { font: 400 22px/1 var(--px); -webkit-font-smoothing: none; margin: 0 0 6px; }
+  .doc-client .try p { margin: 0 0 6px; font: 400 14px/1.3 "Jost", sans-serif; color: var(--g2); }
+  .doc-client .try p b { color: var(--g3); }
+  .doc-client .try .tx > a { font: 21px/1 var(--vt); color: var(--g3); text-decoration: underline; text-decoration-color: var(--fc); text-decoration-thickness: 2px; text-underline-offset: 3px; word-break: break-all; }
+  .doc-client .try .qr { display: grid; justify-items: center; gap: 4px; text-decoration: none; color: var(--g2); }
+  .doc-client .try .qr .qrsvg { width: 96px; height: 96px; display: block; }
+  .doc-client .try .qr span { font: 400 9px/1 var(--px); -webkit-font-smoothing: none; letter-spacing: .1em; text-transform: uppercase; }
+  .doc-client .fine { position: absolute; left: 44px; right: 40px; bottom: 16px; font: 400 8.5px/1.3 "Jost"; color: #77736a; }
+  @media (prefers-reduced-motion: reduce) { .doc-client .boot .word span { opacity: 1; } }

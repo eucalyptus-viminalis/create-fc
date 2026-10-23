@@ -1,5 +1,6 @@
 // Links that leave the site open in a new tab and carry a ↗, so it's clear before you click.
-// Applies to every document; a link can opt out with data-internal (for links styled as buttons).
+// Applies to every document; a link can opt out with data-internal (for links styled as buttons),
+// or keep the new tab but drop the ↗ with class="no-arrow".
 // The ↗ is glued to the link's last word, so it never wraps onto a line by itself.
 const here = location.origin;
 
@@ -14,7 +15,7 @@ for (const a of document.querySelectorAll('a[href]')) {
   if (url.origin === here || a.hasAttribute('data-internal') || !/^https?:$/.test(url.protocol)) continue;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  if (a.closest('svg') || a.classList.contains('ext')) continue;
+  if (a.closest('svg') || a.classList.contains('ext') || a.classList.contains('no-arrow')) continue;   // no-arrow: new tab, but no ↗ (e.g. a QR code)
   a.classList.add('ext');
   const mark = '<span class="ext-mark" aria-hidden="true">↗</span>';
   const t = lastText(a);
