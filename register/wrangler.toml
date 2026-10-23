@@ -3,6 +3,11 @@ name = "nda-register"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
+# Served at register.createfc.org (Cloudflare adds the DNS record and certificate on deploy),
+# not on the account's shared workers.dev subdomain.
+routes = [{ pattern = "register.createfc.org", custom_domain = true }]
+workers_dev = false
+
 # Font files are bundled as raw bytes; resvg's .wasm is compiled by wrangler.
 [[rules]]
 type = "Data"
@@ -17,5 +22,5 @@ SITE_URL = "https://createfc.org/"
 [[d1_databases]]
 binding = "DB"
 database_name = "nda-register"
-# Replace with the id that `pnpm wrangler d1 create nda-register` prints. Local dev doesn't need it.
-database_id = "00000000-0000-0000-0000-000000000000"
+# Made by `pnpm wrangler d1 create nda-register`. Local dev uses its own database in .wrangler/.
+database_id = "55381e1e-7cfa-4f85-9beb-3e7a7a4beb3b"
