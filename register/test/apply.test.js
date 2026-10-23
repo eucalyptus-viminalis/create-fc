@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { checkApplication, contactKind, memberNo, enrolledDate } from '../src/apply.js';
 import { cardSvg } from '../src/card.js';
 
-const good = { contact: '1234', name: '@tealcast', signature: 'Ada Operator', certify: { sync: true, cast: true }, bulletins: false };
+const good = { contact: '1234', name: '@fameboyteal', signature: 'Ada Operator', certify: { sync: true, cast: true }, bulletins: false };
 
 test('item 1 takes an FID or an e-mail address', () => {
   assert.equal(contactKind('3'), 'fid');
   assert.equal(contactKind(' you@example.com '), 'email');
   assert.equal(contactKind('0'), null);
-  assert.equal(contactKind('@tealcast'), null);
+  assert.equal(contactKind('@fameboyteal'), null);
   assert.equal(contactKind('12345678901'), null);
 });
 

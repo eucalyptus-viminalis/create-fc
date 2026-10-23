@@ -1,4 +1,4 @@
-// clearcast home: boot, then four tiles that keep themselves fresh.
+// fameboy home: boot, then four tiles that keep themselves fresh.
 // Every number comes from this node (via the local server's /api) or from
 // fc-companion on the same server. Nothing here is made up: when something
 // isn't known yet, the tile says so.
@@ -25,6 +25,15 @@ const sfx = {
 // ------------------------------------------------------------------ boot
 // The c blinks for as long as this node takes to answer, then the rest of
 // the name lights up and the dashboard appears.
+// Under the wordmark: this copy's colour ("TEAL" for @fameboyteal), the rest of
+// its name ("CLEAR" for @fameboyclear), or its own name. Unnamed: the clear look.
+function paintEdition() {
+  const t = window.theme ?? {};
+  $("#boot-edition").textContent = t.color ?? (t.name && t.name !== "fameboy" ? t.name.replace(/^fameboy(?=.)/, "") : "clear");
+}
+paintEdition();
+document.addEventListener("fameboy:theme", paintEdition);
+
 async function boot() {
   const b = $("#boot"), letters = [...b.querySelectorAll(".word span")], status = $("#boot-status");
   let on = false;
@@ -70,7 +79,8 @@ document.addEventListener("click", async (e) => {
   }
   try {
     $("#signout").textContent = "signing out…";
-    const r = await api("/api/signout", {});
+    const r = await api("/api/signout", { device: (await mine.device()).id });
+    await mine.key.forget(); // hosted: the key lived in this browser
     sfx.toggle();
     // Keys approved in the Farcaster app can't revoke themselves; say so before reloading.
     if (r.revoked.startsWith("not revoked")) { toast("Deleted here. Remove it in the Farcaster app.", 5000); await wait(5000); }
@@ -152,7 +162,16 @@ const ago = (iso) => {
 // since your last visit.
 async function loadWaiting() {
   try {
-    const d = await api("/api/waiting");
+    const me = await kit.me();
+    if (!me) throw new SignedOut();
+    // Opening home counts as a visit (it ends after 30 minutes away).
+    const { since } = await mine.visit(me.fid, { count: true });
+    const [w, st] = await Promise.all([api(`/api/waiting?since=${since}`), mine.inbox(me.fid)]);
+    const count = (view) => {
+      const left = w[view].filter((x) => !((st.cleared[view] ?? {})[x.id]));
+      return { waiting: left.length, fresh: left.filter((x) => Date.parse(x.time) > since).length };
+    };
+    const d = { since: w.since, following: w.following, casts: count("casts"), likes: count("likes"), replies: count("replies"), followers: count("followers") };
     $("#since-title").textContent = "waiting for you";
     $("#since-ago").textContent = `last visit ${ago(d.since)}`;
     const row = (view, n, one, many, fresh) =>
@@ -182,7 +201,11 @@ const F = { list: [], tab: "new" };
 async function openFollowers() {
   $("#followers").hidden = false;
   $("#fol-body").innerHTML = `<span class="dim">looking<span class="blink">_</span></span>`;
-  try { F.list = (await api("/api/inbox/followers")).followers; } catch (e) { $("#fol-body").innerHTML = `<p class="dim">${esc(e.message)}</p>`; return; }
+  try {
+    const me = await kit.me(), { since } = await mine.visit(me.fid);
+    const [d, st] = await Promise.all([api(`/api/inbox/followers?since=${since}`), mine.inbox(me.fid)]);
+    F.list = d.followers.map((f) => ({ ...f, cleared: String(f.fid) in st.cleared.followers }));
+  } catch (e) { $("#fol-body").innerHTML = `<p class="dim">${esc(e.message)}</p>`; return; }
   paintFollowers();
 }
 function closeFollowers() { $("#followers").hidden = true; loadWaiting(); }
@@ -214,7 +237,7 @@ async function follow(f, on) {
   catch (e) { toast(e.message); }
 }
 async function clearFollowers(fids, on) {
-  await api("/api/inbox/clear", { kind: "followers", ids: fids.map(String), on }).catch((e) => toast(e.message));
+  await mine.clear((await kit.me()).fid, "followers", fids.map(String), on).catch((e) => toast(e.message));
   F.list.forEach((f) => { if (fids.includes(f.fid)) f.cleared = on; });
   sfx.back();
 }
@@ -282,7 +305,7 @@ function paintNode(home) {
 function paintPresence(p) {
   if (!p.companion) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so clearcast can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
+    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so fameboy can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
     return;
   }
   S.presence = p.status;
@@ -305,7 +328,10 @@ function paintPresence(p) {
 }
 async function loadPresence(setTo) {
   try {
-    paintPresence(await api("/api/presence", setTo ? { status: setTo } : undefined));
+    const me = await kit.me();
+    if (!me) throw new SignedOut();
+    if (setTo) await mine.setStatus(me.fid, setTo);
+    paintPresence(await api("/api/presence", { device: await mine.device(me.fid) }));
   } catch (e) {
     $("#online-n").textContent = "";
     $("#presence").innerHTML = e instanceof SignedOut ? `<p>Sign in to show up here.</p><a class="k-btn primary" href="/signin">sign in</a>` : `<p class="dim">${esc(e.message)}</p>`;
@@ -398,7 +424,7 @@ async function conditionsLoop() {
   $("#snd").textContent = S.sound ? "on" : "off";
   select(0, false);
   paintClock(); setInterval(paintClock, 15_000);
-  api("/api/me").then((me) => { S.me = me; paintClock(); }, () => {});
+  kit.me().then((me) => { S.me = me; paintClock(); });
   paintConditions();
   const home = await boot();
   S.home = home; paintNode(home);

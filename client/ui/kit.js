@@ -1,10 +1,10 @@
-// clearcast's UI kit: what every page shares. Components are functions that
+// fameboy's UI kit: what every page shares. Components are functions that
 // return HTML strings (the pages build their views from strings); the rest are
 // small helpers (api, store, sound, toast) and the modes bar.
 // Load it before the page's own script:
 //   <link rel="stylesheet" href="/kit.css"> <script src="/kit.js"></script>
 //
-// kit.ext(href, label, opts)  a link that leaves clearcast. It always opens in
+// kit.ext(href, label, opts)  a link that leaves fameboy. It always opens in
 //                             a new tab, says so to screen readers, and shows
 //                             a small pixel arrow (↗) after text labels.
 //   href    where it goes (escaped here)
@@ -28,22 +28,38 @@
   // ---------------------------------------------------------------- basics
   const $ = (sel) => document.querySelector(sel);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  const TOKEN = document.querySelector('meta[name="clearcast-token"]')?.content ?? "";
+  const TOKEN = document.querySelector('meta[name="fameboy-token"]')?.content ?? "";
 
   // The local server's API. Only this page can call it: it sends the token the
   // server embedded in the page. 401 means signed out.
+  // On a hosted fameboy a 401 can just mean the session ended (the server
+  // restarted, say): if this browser has a key, sign a new challenge and retry once.
   class SignedOut extends Error {}
-  async function api(path, body) {
+  let reauth;
+  async function api(path, body, retried = false) {
     const res = await fetch(path, {
       method: body ? "POST" : "GET",
-      headers: { "x-clearcast-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
+      headers: { "x-fameboy-token": TOKEN, ...(body ? { "content-type": "application/json" } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
     const json = await res.json().catch(() => ({}));
+    // "/api/me" answers null rather than 401 when the session is gone, so treat
+    // that the same way when this browser holds a key.
+    const gone = res.status === 401 || (path === "/api/me" && res.ok && json.data === null && (await window.mine?.key.get()));
+    if (gone && !retried && window.mine) {
+      reauth ??= mine.key.session().catch(() => false).finally(() => setTimeout(() => (reauth = undefined), 5000));
+      if (await reauth) return api(path, body, true);
+    }
     if (res.status === 401) throw new SignedOut(json.error);
     if (!res.ok) throw new Error(json.error ?? `${path} failed (${res.status})`);
+    // Hosted: the server may pause the request until this browser signs (mine.js).
+    if (json.sign) return (await mine.key.answer(json)).data;
     return json.data;
   }
+
+  // Who's signed in ({ fid, username, pfp, ... }) or null. Asked once per page.
+  let meP;
+  const me = () => (meP ??= api("/api/me").catch(() => null));
 
   // This browser's storage, as JSON. It can be missing (private windows), so
   // every call is wrapped.
@@ -127,5 +143,5 @@
   const seg = (choices, current, attr = "data-tab") =>
     `<span class="k-seg" role="group">${choices.map(([id, label]) => `<button type="button" ${attr}="${esc(id)}" aria-pressed="${current === id}">${label}</button>`).join("")}</span>`;
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES };
 })();

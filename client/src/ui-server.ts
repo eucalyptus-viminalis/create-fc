@@ -7,6 +7,7 @@
 // post as you through this server: the request must come from this server's
 // own origin, and carry a token that's only embedded in the page it served.
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -15,15 +16,18 @@ import { fileURLToPath } from "node:url";
 import { NODE, NodeError, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
 import { following, profile, resolveFid, type Profile } from "./read.ts";
 import { appsFor, keysOfUser } from "./filter.ts";
-import { forgetKey, loadKey, revokeKey } from "./keys.ts";
+import { fileAuthor, forgetKey, hostedMode, loadKey, localAuthor, revokeKey, type Author } from "./keys.ts";
+import { Conversation, answer, browserAuthor } from "./remote-sign.ts";
+import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
 import { cast, follow, react } from "./write.ts";
-import { changeCleared, clearedFor } from "./cleared.ts";
-import { NoAppAccount, appSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
-import { companionStatus, conditions, lastVisit, leaveNode, live, nodeOverview, presence, sinceLastVisit, type PresenceStatus } from "./home.ts";
+import { legacyState } from "./legacy.ts";
+import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
+import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, setDeviceLabel, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
-import { castsView, followersView, likesView, repliesView, setCleared, setSaved, waiting, type Kind } from "./inbox.ts";
+import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
 import type { Hex } from "viem";
+import { colorOf } from "../../node/fameboy-name.mjs";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const UI_DIR = join(HERE, "..", "ui");
@@ -184,21 +188,85 @@ const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
 
 type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<unknown>;
 
-// This server only ever listens on 127.0.0.1, so the person at the keyboard
-// is the only one who can reach it, and typing a seed phrase into its page is
-// as safe as typing it into a terminal. A shared (hosted) mode must set this
-// to false.
-const LOCAL_ONLY = true;
+// Two modes (ADR 003):
+//   local   fameboy ui. Only the person at this computer can reach it, so
+//           typing a seed phrase into its page is as safe as a terminal, and
+//           it signs with the key file in ~/.fameboy.
+//   hosted  fameboy serve. Other people use it over the network. Each
+//           person's key stays in their browser and a session cookie says who
+//           they are (session.ts). It never accepts a seed phrase or uses a key file.
+let LOCAL_ONLY = true;
+let ORIGIN = ""; // where people reach this server; requests must come from here
+let SECURE = false; // https, so cookies get Secure
+
+// Per request: who's signed in (hosted), where they're calling from, and any
+// cookie to set on the way out.
+type Ctx = { session?: Session; client: string; cookies: string[]; conv?: Conversation };
+const ctx = new AsyncLocalStorage<Ctx>();
+const here = (): Ctx => ctx.getStore() ?? { client: "?", cookies: [] };
 
 // Everything but status needs you signed in: the feed, keys and apps are always your own.
 class SignedOut extends NodeError {}
 const myFid = async () => {
+  if (!LOCAL_ONLY) {
+    const s = here().session;
+    if (!s) throw new SignedOut("signed out: sign in on this page");
+    return s.fid;
+  }
   const key = await loadKey().catch(() => undefined);
-  if (!key) throw new SignedOut("signed out: run clearcast login in a terminal");
+  if (!key) throw new SignedOut("signed out: run fameboy login in a terminal");
   return key.fid;
 };
 
+// Who signs this request's writes: the key file here, or the signed-in
+// person's browser on a hosted fameboy (remote-sign.ts).
+async function author(): Promise<Author> {
+  await myFid();
+  if (LOCAL_ONLY) return localAuthor();
+  const c = here();
+  return browserAuthor(c.session!, (c.conv ??= new Conversation()));
+}
+
+// A session names a key; check now and then that it's still an app key of
+// that fid, so removing it in the Farcaster app signs that browser out here.
+const checked = new Map<string, number>(); // "fid:key" -> when it was last confirmed
+async function stillValid(s: Session): Promise<boolean> {
+  const id = `${s.fid}:${s.key}`;
+  if (Date.now() - (checked.get(id) ?? 0) < 10 * 60_000) return true;
+  if (!(await signerActive(s.fid, s.key))) return checked.delete(id), false;
+  if (checked.size > 50_000) checked.clear();
+  checked.set(id, Date.now());
+  return true;
+}
+
+// When your last visit ended, as the page sends it (ms). The browser keeps it
+// (ui/mine.js); without one, "new" means the last day.
+const sinceOf = (q: URLSearchParams) => {
+  const n = Number(q.get("since"));
+  return Number.isFinite(n) && n > 0 && n <= Date.now() ? n : Date.now() - 86_400_000;
+};
+
+// This copy's name and colour (ADR 004): the username of the app account that
+// vouches for sign-ins here. Locally that's this computer's app account if it
+// has one, else the node's; hosted, always the node's. @fameboy<color> gives
+// the pages that colour (ui/theme.js); any other name, or none, the clear look.
+let instanceCache: { at: number; value: Promise<{ name: string; fid: number | null; color: string | null; hex: string | null }> } | undefined;
+function instance() {
+  if (instanceCache && Date.now() - instanceCache.at < 10 * 60_000) return instanceCache.value;
+  const value = (async () => {
+    const local = LOCAL_ONLY ? await loadAppAccount().catch(() => undefined) : undefined;
+    const fid = local?.fid ?? (await nodeSignInOptions())?.appFid ?? null;
+    const name = fid ? (await profileOf(fid)).username : undefined;
+    const c = colorOf(name);
+    return { name: name ?? "fameboy", fid, color: c?.color ?? null, hex: c?.hex ?? null };
+  })();
+  instanceCache = { at: Date.now(), value };
+  value.catch(() => (instanceCache = undefined));
+  return value;
+}
+
 const routes: Record<string, Handler> = {
+  "GET /api/instance": async () => instance(),
   "GET /api/status": async () => {
     const info = await get<{ version: string; shardInfos: { shardId: number; maxHeight: number; blockDelay: number }[] }>("/v1/info");
     return { node: NODE, version: info.version, shards: info.shardInfos.sort((a, b) => a.shardId - b.shardId) };
@@ -214,38 +282,27 @@ const routes: Record<string, Handler> = {
   // Today by the hour against a usual day. Measured in the background; poll for progress.
   "GET /api/conditions": async () => conditions(await nodeOverview()),
   // What happened since you last looked.
-  "GET /api/since": async () => {
+  "GET /api/since": async (q) => {
     const fid = await myFid();
-    return sinceLastVisit(fid, await feedFor(fid));
+    return sinceLastVisit(fid, sinceOf(q), q.get("first") === "1", await feedFor(fid));
   },
-  // ---- the inbox (inbox.ts): what's waiting for you, and the four views behind it
-  // The home tile. Calling it counts as a visit (a visit ends after 30 minutes away).
-  "GET /api/waiting": async () => {
+  // ---- the inbox (inbox.ts): what's waiting for you, and the four views behind it.
+  // Every item in each view; the page takes out what it cleared and counts the rest.
+  "GET /api/waiting": async (q) => {
     const fid = await myFid();
-    await lastVisit(fid);
-    return waiting(fid, await feedFor(fid), shape, profileOf);
+    return waiting(fid, sinceOf(q), await feedFor(fid), shape, profileOf);
   },
   "GET /api/inbox/casts": async (q) => {
     const fid = await myFid();
     if (q.get("fresh")) feedCache.delete(fid);
-    return castsView(fid, await feedFor(fid));
+    return castsView(fid, sinceOf(q), await feedFor(fid));
   },
-  "GET /api/inbox/likes": async () => likesView(await myFid(), profileOf),
-  "GET /api/inbox/replies": async () => repliesView(await myFid(), shape),
-  "GET /api/inbox/followers": async () => followersView(await myFid(), profileOf),
-  // Clear (or bring back) items in a view. Kept on this computer.
-  "POST /api/inbox/clear": async (_q, b) => {
-    const kinds = ["casts", "likes", "replies", "followers"];
-    if (!kinds.includes(String(b.kind))) throw new NodeError("kind must be casts, likes, replies or followers");
-    const ids = Array.isArray(b.ids) ? (b.ids as unknown[]).map(String).filter((x) => x.length <= 200).slice(0, 2000) : [];
-    return setCleared(await myFid(), b.kind as Kind, ids, b.on !== false);
-  },
-  // Save a cast to come back to. Keeps a copy, on this computer.
-  "POST /api/inbox/save": async (_q, b) => {
-    const cast = b.cast as { hash?: unknown; fid?: unknown } | undefined;
-    if (!cast || typeof cast.hash !== "string" || !/^0x[0-9a-f]{40}$/i.test(cast.hash) || typeof cast.fid !== "number") throw new NodeError("save needs a cast");
-    return setSaved(await myFid(), cast as { hash: string; fid: number }, b.on !== false);
-  },
+  "GET /api/inbox/likes": async (q) => likesView(await myFid(), sinceOf(q), profileOf),
+  "GET /api/inbox/replies": async (q) => repliesView(await myFid(), sinceOf(q), shape),
+  "GET /api/inbox/followers": async (q) => followersView(await myFid(), sinceOf(q), profileOf),
+  // Personal state older versions kept in ~/.fameboy, for the page to take
+  // over once (legacy.ts). Never on a hosted fameboy.
+  "GET /api/legacy": async () => (LOCAL_ONLY ? legacyState(await myFid()) : null),
   // Likes, recasts and replies on one cast, for the reading pane.
   "GET /api/inbox/counts": async (q) => {
     const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
@@ -258,17 +315,16 @@ const routes: Record<string, Handler> = {
     ]);
     return { likes, recasts, replies };
   },
-  // Who's on this node. Each call is also your heartbeat, so the page calls it every 30 s.
-  "GET /api/presence": async () => {
-    await myFid();
-    return presence();
-  },
+  // Who's on this node. Each call is also your heartbeat, so the page calls it
+  // every 30 s with its device id and status (online or invisible).
   "POST /api/presence": async (_q, b) => {
-    await myFid();
-    if (b.status !== "online" && b.status !== "invisible") throw new NodeError("status must be online or invisible");
-    return presence(b.status as PresenceStatus);
+    return presence(await author(), checkDevice(b.device as { id?: unknown; status?: unknown }));
   },
   "GET /api/me": async () => {
+    if (!LOCAL_ONLY) {
+      const s = here().session;
+      return s ? { ...(await profileOf(s.fid)), scopes: ["ALL"], publicKey: s.key, hosted: true } : null;
+    }
     const key = await loadKey().catch(() => undefined);
     if (!key) return null;
     return { ...(await profileOf(key.fid)), scopes: key.scopes, publicKey: key.publicKey };
@@ -283,18 +339,6 @@ const routes: Record<string, Handler> = {
     if (q.get("fresh")) feedCache.delete(fid);
     return feedFor(fid);
   },
-  // What you've cleared from your feed. Stored on this computer only.
-  "GET /api/cleared": async () => clearedFor(await myFid()),
-  "POST /api/cleared": async (_q, b) => {
-    const fid = await myFid();
-    const iso = (t: unknown) => (typeof t === "string" && !Number.isNaN(Date.parse(t)) ? new Date(t).toISOString() : undefined);
-    const add = Array.isArray(b.add)
-      ? (b.add as { hash?: unknown; time?: unknown }[]).flatMap((a) => (typeof a.hash === "string" && /^0x[0-9a-f]{40}$/i.test(a.hash) && iso(a.time) ? [{ hash: a.hash, time: iso(a.time)! }] : []))
-      : undefined;
-    const remove = Array.isArray(b.remove) ? (b.remove as unknown[]).filter((h): h is string => typeof h === "string") : undefined;
-    const before = b.before === null ? null : iso(b.before);
-    return changeCleared(fid, { add, remove, before, counted: typeof b.counted === "number" ? b.counted : undefined });
-  },
   "GET /api/keys": async () => {
     const keys = await keysOfUser(await myFid());
     const names = new Map(
@@ -307,6 +351,18 @@ const routes: Record<string, Handler> = {
   },
   // Signing in (see signin.ts). Which ways are available here?
   "GET /api/signin/options": async () => {
+    if (!LOCAL_ONLY) {
+      // Hosted: phone approval only, vouched for by this node's app account,
+      // with a key the browser makes. browser: true tells the page to make it.
+      const node = await nodeSignInOptions();
+      const nodeApp = node?.phone && node.appFid ? await profileOf(node.appFid) : undefined;
+      return {
+        app: null,
+        node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: null, inviteRequired: node.invite !== false } : null,
+        phrase: false,
+        browser: true,
+      };
+    }
     const app = await loadAppAccount();
     const p = app ? await profileOf(app.fid) : undefined;
     // node: this node's companion can vouch for phone sign-ins (needs an invite code).
@@ -314,32 +370,59 @@ const routes: Record<string, Handler> = {
     const nodeApp = node?.phone && node.appFid ? await profileOf(node.appFid) : undefined;
     return {
       app: app ? { fid: app.fid, username: p?.username, display: p?.display, pfp: p?.pfp, sponsor: app.sponsor } : null,
-      node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: invite ?? null } : null,
+      node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: invite ?? null, inviteRequired: node.invite !== false } : null,
       phrase: LOCAL_ONLY,
+      browser: false,
     };
   },
   // Phone sign-in: this computer's own app account if it has one, else the node's (with an invite code).
   "POST /api/signin/app": async (_q, b) => {
+    if (!LOCAL_ONLY) throw new NodeError("this fameboy is hosted: sign in with a key your browser makes (/api/signin/browser)");
     if (await loadAppAccount()) return startAppSignIn();
-    const invite = String(b.invite ?? "").trim();
-    if (!invite) throw new NodeError("type the invite code from your node's owner");
-    return startNodeSignIn(invite);
+    // The companion says whether it needs an invite code.
+    return startNodeSignIn(String(b.invite ?? "").trim());
+  },
+  // Hosted sign-in: the browser made a key and sends its public half.
+  "POST /api/signin/browser": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer and keeps its key in ~/.fameboy");
+    return startBrowserSignIn(String(b.key ?? ""), String(b.invite ?? "").trim(), here().client);
+  },
+  "GET /api/signin/browser": async (q) => browserSignInStatus(q.get("token") ?? ""),
+  // A session: sign this challenge with your browser's key, then POST it back.
+  "GET /api/session/challenge": async () => ({ nonce: challenge(), origin: ORIGIN }),
+  "POST /api/session": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer: it needs no session");
+    const s = await startSession(ORIGIN, b);
+    checked.set(`${s.fid}:${s.key}`, Date.now());
+    here().cookies.push(sessionCookie(s, SECURE));
+    return { fid: s.fid };
   },
   "GET /api/signin/app": async (q) => appSignInStatus(q.get("token") ?? ""),
   "POST /api/signin/phrase": async (_q, b) => {
-    if (!LOCAL_ONLY) throw new NodeError("this clearcast is shared over the network, so it never accepts a seed phrase");
+    if (!LOCAL_ONLY) throw new NodeError("this fameboy is shared over the network, so it never accepts a seed phrase");
     return { job: startPhraseSignIn(String(b.phrase ?? "")) };
   },
   "GET /api/signin/phrase": async (q) => phraseSignInStatus(q.get("job") ?? ""),
   // Sign out: revoke the app key on Farcaster when it can revoke itself (keys
   // from a seed phrase sign-in can; keys approved in the Farcaster app can't),
   // then delete it from this computer either way.
-  "POST /api/signout": async () => {
+  "POST /api/signout": async (_q, b) => {
+    if (!LOCAL_ONLY) {
+      // The browser deletes its own key. A key approved in the Farcaster app
+      // can't revoke itself, so it stays valid on chain until removed there.
+      const s = here().session;
+      if (s) {
+        feedCache.delete(s.fid);
+        if (typeof b.device === "string") await leaveNode(await author(), b.device);
+      }
+      here().cookies.push(clearCookie(SECURE));
+      return { removed: true, revoked: "not revoked: remove it in the Farcaster app, under connected apps" };
+    }
     const key = await loadKey().catch(() => undefined);
     let revoked: string = "no key";
     if (key) {
       feedCache.delete(key.fid);
-      await leaveNode();
+      if (typeof b.device === "string") await leaveNode(fileAuthor(key), b.device);
       revoked = await revokeKey(key, { log: () => {} }).then(
         (r) => r.state,
         (e) => `not revoked: ${e instanceof Error ? e.message : String(e)}`,
@@ -353,33 +436,48 @@ const routes: Record<string, Handler> = {
     if (embeds.length > 2) throw new NodeError("a cast holds two attachments at most");
     if (!text && !embeds.length) throw new NodeError("nothing to post");
     const replyTo = b.replyTo as { fid: number; hash: Hex } | undefined;
-    return cast(text, { replyTo, embeds });
+    return cast(text, { replyTo, embeds }, await author());
   },
   // A link's preview card: title, description, image, site (unfurl.ts).
   "GET /api/unfurl": async (q) => unfurl(String(q.get("url") ?? "")),
   // People to @mention: those you follow whose name starts with q, plus an exact username.
   "GET /api/mentions": async (q) => mentionSuggestions(await myFid(), q.get("q") ?? ""),
   // Image space on your node (images.ts). Uploads come in as raw bytes; see the server below.
-  "GET /api/images/usage": async () => {
-    await myFid();
-    return imageUsage();
-  },
-  "POST /api/images/delete": async (_q, b) => {
-    await myFid();
-    return deleteImage(String(b.name ?? ""));
-  },
+  "GET /api/images/usage": async () => imageUsage(await author()),
+  "POST /api/images/delete": async (_q, b) => deleteImage(await author(), String(b.name ?? "")),
   "POST /api/react": async (_q, b) =>
-    react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false),
+    react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false, await author()),
   // Follow by username or fid.
   "POST /api/follow": async (_q, b) => {
     await myFid();
     const fid = await resolveFid(String(b.user ?? "").trim().replace(/^@/, ""));
     const p = await profileOf(fid);
-    return { ...(await follow(fid, b.on !== false)), user: { fid, username: p.username } };
+    return { ...(await follow(fid, b.on !== false, await author())), user: { fid, username: p.username } };
   },
 };
 
 // ------------------------------------------------------------------ server
+
+// Run a request. It may pause for signatures from the browser
+// (remote-sign.ts): each pause answers the waiting HTTP request with
+// { sign: { id, payload } }, and the browser's POST /api/sign gets whatever
+// comes next. Locally nothing pauses, so this is one plain reply.
+function converse(res: ServerResponse, c: Ctx, run: () => Promise<unknown>) {
+  const conv = (c.conv ??= new Conversation());
+  recordCalls(run).then(
+    ({ result, calls }) => conv.say({ done: { data: result, calls } }),
+    (e) => conv.say({ failed: e }),
+  );
+  return reply(res, c, conv);
+}
+
+async function reply(res: ServerResponse, c: Ctx, conv: Conversation) {
+  const r = await conv.next();
+  if ("sign" in r) return send(res, 200, { sign: r.sign });
+  if ("failed" in r) throw r.failed;
+  if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
+  return send(res, 200, r.done);
+}
 
 function send(res: ServerResponse, status: number, body: unknown, type = "application/json") {
   res.writeHead(status, { "content-type": type, "cache-control": "no-store", "x-content-type-options": "nosniff" });
@@ -400,7 +498,7 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel.endsWith(".html")) data = data.toString().replace("__CLEARCAST_TOKEN__", token);
+    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -409,33 +507,68 @@ async function serveFile(res: ServerResponse, root: string, rel: string, token?:
 
 // Start on `port`; if something else already uses it, try the next few
 // unless the port was asked for explicitly.
-export async function startUi(port: number, explicit = false): Promise<string> {
-  for (let p = port; p < port + (explicit ? 1 : 20); p++) {
-    try {
-      return await listenOn(p);
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
-      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: clearcast ui --port ${p + 1}`);
+export type UiOptions = { hosted?: boolean; origin?: string };
+
+export async function startUi(port: number, explicit = false, opts: UiOptions = {}): Promise<string> {
+  if (opts.hosted) {
+    LOCAL_ONLY = false;
+    hostedMode(); // never touch a key file again in this process
+    // "web: fameboyclear" for fameboyclear.<ip>.sslip.io, else the domain.
+    if (opts.origin) {
+      const host = new URL(opts.origin).host;
+      setDeviceLabel(`web: ${host.endsWith(".sslip.io") ? host.split(".")[0] : host}`);
     }
   }
-  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: clearcast ui --port <n>`);
+  for (let p = port; p < port + (explicit ? 1 : 20); p++) {
+    try {
+      return await listenOn(p, opts);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EADDRINUSE") throw e;
+      if (explicit) throw new NodeError(`port ${p} is already in use. Pick another: fameboy ui --port ${p + 1}`);
+    }
+  }
+  throw new NodeError(`ports ${port}-${port + 19} are all in use. Pick one: fameboy ui --port <n>`);
 }
 
-async function listenOn(port: number): Promise<string> {
+async function listenOn(port: number, opts: UiOptions): Promise<string> {
   const token = randomBytes(24).toString("hex");
-  const origin = `http://127.0.0.1:${port}`;
+  // Hosted behind a proxy (Caddy), people reach it at its public address.
+  const origin = (opts.origin ?? `http://127.0.0.1:${port}`).replace(/\/$/, "");
+  ORIGIN = origin;
+  SECURE = origin.startsWith("https://");
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", origin);
     const path = url.pathname;
+    // Hosted, this listens on 127.0.0.1 behind Caddy, which names the visitor.
+    const forwarded = String(req.headers["x-forwarded-for"] ?? "").split(",")[0]!.trim();
+    const c: Ctx = { client: (!LOCAL_ONLY && forwarded) || req.socket.remoteAddress || "?", cookies: [] };
+    if (!LOCAL_ONLY) {
+      const s = readSession(req.headers.cookie);
+      if (s && (await stillValid(s).catch(() => true))) c.session = s;
+      else if (s) c.cookies.push(clearCookie(SECURE));
+    }
+    return ctx.run(c, () =>
+      handle(req, res, url, path, c).catch((e) => {
+        // Last resort: one bad request must never stop the server.
+        if (!res.headersSent) send(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      }),
+    );
+  });
+
+  async function handle(req: IncomingMessage, res: ServerResponse, url: URL, path: string, c: Ctx) {
+    if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
     try {
       if (path.startsWith("/api/")) {
         // Only this page may call the API: same origin, and the page's token.
         const from = req.headers.origin;
-        if ((from && from !== origin) || req.headers["x-clearcast-token"] !== token) return send(res, 403, { error: "forbidden" });
+        if ((from && from !== origin) || req.headers["x-fameboy-token"] !== token) return send(res, 403, { error: "forbidden" });
         // An image comes in as raw bytes, not JSON (up to 6 MB; the node caps files at 5).
+        // A hosted page's answer to "sign this": carry on the paused request.
+        if (req.method === "POST" && path === "/api/sign") return await reply(res, c, answer(c.session, await readJson(req)));
         if (req.method === "POST" && path === "/api/images") {
           await myFid();
+          const device = checkDevice({ id: req.headers["x-fameboy-device"], status: req.headers["x-fameboy-status"] });
           const chunks: Buffer[] = [];
           let size = 0;
           for await (const c of req) {
@@ -443,14 +576,13 @@ async function listenOn(port: number): Promise<string> {
             if (size > 6 * 1024 * 1024) throw new NodeError("images max out at 5 MB");
             chunks.push(c as Buffer);
           }
-          const { result, calls } = await recordCalls(() => uploadImage(Buffer.concat(chunks)));
-          return send(res, 200, { data: result, calls });
+          return await converse(res, c, async () => uploadImage(await author(), Buffer.concat(chunks), device));
         }
         const handler = routes[`${req.method} ${path}`];
         if (!handler) return send(res, 404, { error: "no such endpoint" });
         const body = req.method === "POST" ? await readJson(req) : {};
-        const { result, calls } = await recordCalls(() => handler(url.searchParams, body));
-        return send(res, 200, { data: result, calls });
+        // await, so the catch below answers with the error instead of it escaping and stopping the server.
+        return await converse(res, c, () => handler(url.searchParams, body));
       }
       // The home view is the front page; the earlier all-in-one page lives on at /classic.
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
@@ -465,7 +597,7 @@ async function listenOn(port: number): Promise<string> {
       const message = e instanceof Error ? e.message : String(e);
       send(res, e instanceof SignedOut ? 401 : e instanceof NoAppAccount ? 409 : e instanceof NodeError ? 400 : 500, { error: message });
     }
-  });
+  }
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

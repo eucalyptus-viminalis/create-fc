@@ -1,12 +1,12 @@
 # Your app key
 
-When you sign in, clearcast saves an **app key** on your computer. It's what lets clearcast post, like and follow as you, without ever keeping your seed phrase.
+When you sign in, fameboy saves an **app key** on your computer. It's what lets fameboy post, like and follow as you, without ever keeping your seed phrase.
 
 ## What it is
 
 An app key is a key your Farcaster account has approved for one app. Every Farcaster app you use has its own, and your account can have many. Farcaster's docs call these [connected apps](https://docs.farcaster.xyz/learn/what-is-farcaster/apps).
 
-Your **seed phrase** is different: it controls the account itself. clearcast only needs it for a moment, if you sign in with it, to approve a new app key. Then it forgets it.
+Your **seed phrase** is different: it controls the account itself. fameboy only needs it for a moment, if you sign in with it, to approve a new app key. Then it forgets it.
 
 ## What it can and can't do
 
@@ -21,11 +21,13 @@ Anything it does can be undone from the app that owns your account, such as the 
 
 ## It works with any node
 
-The key is approved by Farcaster, not by your node. Your node only carries messages to and from the network. If you pointed clearcast at a different node, the same key would still post as you.
+The key is approved by Farcaster, not by your node. Your node only carries messages to and from the network. If you pointed fameboy at a different node, the same key would still post as you.
 
 ## Where it's kept
 
-In `~/.fc-client/appkey.json` on your computer, readable only by your user account. It never goes to your node or anywhere else. Only the public half is shared, and that's public by design.
+In `~/.fameboy/appkey.json` on your computer, readable only by your user account. It never goes to your node or anywhere else. Only the public half is shared, and that's public by design.
+
+On a [hosted fameboy](./host-fameboy), the one you open at a web address, the key lives in your browser instead. Your browser makes it when you sign in, and it can't be copied out, even by the page. Each browser you sign in on has its own key.
 
 Anyone who copies that file can post as you until the key is removed. Treat it like a password.
 
@@ -38,10 +40,10 @@ Anyone who copies that file can post as you until the key is removed. Treat it l
 
 There are two different things you might want:
 
-- **Sign out of this computer:** **sign out** on the home screen, or `clearcast logout`. This deletes the file. The key itself still exists on Farcaster.
+- **Sign out of this computer:** **sign out** on the home screen, or `fameboy logout`. This deletes the file (on a hosted fameboy, the key in your browser). The key itself still exists on Farcaster.
 - **Remove the key from Farcaster:** so it can never post again, even from a copy.
-  - Signed in with your seed phrase: run `clearcast revoke`. It removes the key, then signs you out.
-  - Approved on your phone: remove clearcast from your connected apps in the Farcaster app's settings.
+  - Signed in with your seed phrase: run `fameboy revoke`. It removes the key, then signs you out.
+  - Approved on your phone: remove fameboy from your connected apps in the Farcaster app's settings.
 
 ## Learn more
 

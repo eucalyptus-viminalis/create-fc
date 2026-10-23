@@ -44,10 +44,11 @@ fetch node/fc-node /usr/local/bin/fc-node
 mkdir -p /usr/local/lib/fc-companion
 fetch node/companion.mjs /usr/local/lib/fc-companion/companion.mjs
 fetch node/companion-app-account.mjs /usr/local/lib/fc-companion/app-account.mjs
-fetch node/colorcast.mjs /usr/local/lib/fc-companion/colorcast.mjs
+fetch node/fameboy-name.mjs /usr/local/lib/fc-companion/fameboy-name.mjs
 fetch node/companion-package.json /usr/local/lib/fc-companion/package.json
 fetch node/companion-pnpm-lock.yaml /usr/local/lib/fc-companion/pnpm-lock.yaml
 fetch node/companion-install.sh /usr/local/sbin/fc-companion-install
+fetch node/fameboy-install.sh /usr/local/sbin/fc-fameboy-install
 
 # --------------------------------------------- the job that does the work
 cat > /usr/local/sbin/fc-node-setup <<'JOB'
@@ -87,6 +88,8 @@ pkill -P "$up" 2>/dev/null || true
 kill "$up" 2>/dev/null || true
 echo "== $(date -u +%FT%TZ) node running; catching up from the snapshot"
 fc-companion-install || echo "fc-companion didn't start; the node is fine. Re-run command 1 to retry."
+# Hosting fameboy (fc-node client)? Update it too.
+if [ -f /var/lib/fc-fameboy/url ]; then fc-fameboy-install || echo "hosted fameboy didn't restart: fc-node client to retry."; fi
 JOB
 sed -i "s|__SNAPCHAIN_RAW__|$SNAPCHAIN_RAW|" /usr/local/sbin/fc-node-setup
 chmod +x /usr/local/sbin/fc-node-setup
@@ -94,6 +97,7 @@ chmod +x /usr/local/sbin/fc-node-setup
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx snapchain-snapchain-1; then
   echo "the node is already running."
   fc-companion-install || true
+  if [ -f /var/lib/fc-fameboy/url ]; then fc-fameboy-install || true; fi
 elif systemctl is-active --quiet fc-node-setup; then
   echo "setup is already running."
 else

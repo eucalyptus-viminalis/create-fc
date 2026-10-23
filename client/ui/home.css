@@ -1,5 +1,5 @@
-/* clearcast home: a handheld-style check-in dashboard.
-   Four greys, pixel type, grain. The only non-grey thing is the sphere.
+/* fameboy home: a handheld-style check-in dashboard.
+   Four greys, pixel type, grain. The only non-grey thing is the keycap.
 
    Type scale (see client/ui/mockups/fonts.html), nothing in between:
      display Silkscreen 48 · number Silkscreen 32 · title Silkscreen 16
@@ -126,6 +126,8 @@ a.mode { text-decoration: none; color: inherit; }
 #boot.out { opacity: 0; pointer-events: none; }
 #boot .word { font-size: clamp(40px, 9vw, 112px); text-align: center; }
 #boot .word span { opacity: .1; } #boot .word span.on { opacity: 1; }
+/* Under the wordmark, like "Game Boy Color": this copy's colour, or its own name (theme.js). */
+#boot .edition { font-family: var(--px); -webkit-font-smoothing: none; text-align: center; color: var(--g2); font-size: clamp(16px, 2.6vw, 30px); letter-spacing: .3em; margin-top: 8px; min-height: 1.2em; text-transform: uppercase; }
 #boot .status { text-align: center; color: var(--g2); margin-top: 18px; min-height: 1.2em; padding: 0 16px; }
 [data-reveal] { opacity: 0; transform: translateY(6px); }
 body.ready [data-reveal] { opacity: 1; transform: none; transition: opacity .3s, transform .3s steps(3); transition-delay: calc(var(--i, 0) * 60ms); }
@@ -159,7 +161,7 @@ body.ready [data-reveal] { opacity: 1; transform: none; transition: opacity .3s,
 .waits button:hover .go, .waits button:focus-visible .go { color: var(--g1); }
 
 /* new followers window */
-.scrim { position: fixed; inset: 0; z-index: 75; background: rgb(220 220 210 / .85); display: grid; place-items: center; padding: 16px; }
+.scrim { position: fixed; inset: 0; z-index: 75; background: color-mix(in srgb, var(--g0) 85%, transparent); display: grid; place-items: center; padding: 16px; }
 .scrim[hidden] { display: none; }
 .modal { width: min(780px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
 .modal .inner { padding: 18px; }

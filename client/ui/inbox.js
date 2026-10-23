@@ -1,6 +1,6 @@
-// clearcast inbox: casts from people you follow, likes on your casts, and
+// fameboy inbox: casts from people you follow, likes on your casts, and
 // replies to you. Clear what you've dealt with; it leaves the "waiting" count.
-// Save casts to come back to. Cleared and saved stay on this computer.
+// Save casts to come back to. Cleared and saved stay in this browser (mine.js).
 // Purple marks what arrived since your last visit.
 
 const { $, esc, api, tone, toast, SignedOut } = kit;
@@ -73,7 +73,7 @@ async function react(kind, cast, on = true) {
 }
 async function clearIds(kind, ids, on) {
   if (!ids.length) return;
-  await api("/api/inbox/clear", { kind, ids, on });
+  await mine.clear(S.me.fid, kind, ids, on);
   on ? sfx.clear() : sfx.tick();
 }
 
@@ -146,7 +146,7 @@ function readPane(c) {
       ${C.tab === "saved" ? "" : kit.button(cleared ? "bring back" : "clear", { look: "quiet", key: "e", attrs: `data-act="${cleared ? "unclear" : "clear"}"` })}
     </div>
     ${C.reply === c.hash ? replyBox({ hash: c.hash, fid: c.fid, username: u }) : ""}
-    <p class="dim small" style="margin-top:14px">Cleared and saved stay on this computer. Likes go to Farcaster.</p>`;
+    <p class="dim small" style="margin-top:14px">Cleared and saved stay in this browser. Likes go to Farcaster.</p>`;
 }
 function wireCasts(shown, c) {
   document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { C.tab = b.dataset.tab; C.checked.clear(); C.reply = null; renderCasts(); }));
@@ -199,7 +199,7 @@ async function castAct(a, hashes) {
     for (const h of hashes) {
       const cast = find(h); if (!cast) continue;
       const on = hashes.length > 1 ? true : !allSaved;
-      try { await api("/api/inbox/save", { cast, on }); } catch (e) { return toast(e.message); }
+      try { await mine.save(S.me.fid, cast, on); } catch (e) { return toast(e.message); }
       C.data.saved = C.data.saved.filter((s) => s.hash !== h);
       if (on) C.data.saved.unshift({ hash: h, fid: cast.fid, savedAt: new Date().toISOString(), cast });
     }
@@ -347,17 +347,27 @@ async function show(view) {
   $("#tools").innerHTML = "";
   $("#view").innerHTML = `<div class="loading">looking<span class="blink">_</span>${S.view === "casts" ? " The first time takes a few seconds." : ""}</div>`;
   try {
-    if (S.view === "casts") { C.data ??= await api("/api/inbox/casts"); renderCasts(); }
-    if (S.view === "likes") { L.data ??= await api("/api/inbox/likes"); renderLikes(); }
-    if (S.view === "replies") { R.data ??= await api("/api/inbox/replies"); renderReplies(); }
+    if (S.view === "casts") { C.data ??= await load("casts"); renderCasts(); }
+    if (S.view === "likes") { L.data ??= await load("likes"); renderLikes(); }
+    if (S.view === "replies") { R.data ??= await load("replies"); renderReplies(); }
   } catch (e) {
     if (e instanceof SignedOut) location.href = "/signin";
     else $("#view").innerHTML = `<div class="tile empty">${esc(e.message)}</div>`;
   }
 }
+// A view from the node, marked with what this browser has cleared and saved.
+async function load(view) {
+  const fid = S.me.fid, { since } = await mine.visit(fid);
+  const [d, st] = await Promise.all([api(`/api/inbox/${view}?since=${since}`), mine.inbox(fid)]);
+  const cleared = st.cleared[view] ?? {};
+  if (view === "casts") { d.casts.forEach((c) => (c.cleared = c.hash in cleared)); d.saved = st.saved; }
+  if (view === "likes") d.groups.forEach((g) => g.likes.forEach((l) => (l.cleared = l.id in cleared)));
+  if (view === "replies") d.groups.forEach((g) => g.replies.forEach((r) => (r.cleared = r.hash in cleared)));
+  return d;
+}
 addEventListener("hashchange", () => show(location.hash.slice(1)));
 (async () => {
-  S.me = await api("/api/me").catch(() => null);
+  S.me = await kit.me();
   if (!S.me) { location.href = "/signin"; return; }
   show(location.hash.slice(1) || "casts");
 })();

@@ -13,19 +13,23 @@
 #   - the fc-images container                     Caddy: serves uploaded images over
 #                                                 HTTPS at https://<ip with dashes>.sslip.io,
 #                                                 with a certificate it gets itself
-#                                                 (needs ports 80 and 443 open)
+#                                                 (needs ports 80 and 443 open). It also
+#                                                 serves any site in caddy-sites/, which is
+#                                                 how `fc-node client` hosts fameboy
 set -euo pipefail
 
 LIB=/usr/local/lib/fc-companion
 STATE=/var/lib/fc-companion
-for f in companion.mjs app-account.mjs colorcast.mjs package.json pnpm-lock.yaml; do
+for f in companion.mjs app-account.mjs fameboy-name.mjs package.json pnpm-lock.yaml; do
   [ -f "$LIB/$f" ] || { echo "fc-companion: $f is missing; re-run command 1"; exit 1; }
 done
 mkdir -p "$STATE"
 # The container runs as the image's "node" user (uid 1000). It reads the app
 # account and invites, so they're its own, mode 600.
 # Images people upload for their casts, and who uploaded what.
-mkdir -p "$STATE/images" "$STATE/ledger" "$STATE/caddy"
+mkdir -p "$STATE/images" "$STATE/ledger" "$STATE/caddy" "$STATE/caddy-sites"
+# Caddy's import needs at least one file to match.
+[ -f "$STATE/caddy-sites/00-none.caddy" ] || echo "# Sites added by fc-node client (fameboy-install.sh) go next to this file." > "$STATE/caddy-sites/00-none.caddy"
 chown 1000:1000 "$STATE/images" "$STATE/ledger"
 touch "$STATE/invites"
 chown 1000:1000 "$STATE/invites"; chmod 600 "$STATE/invites"
@@ -92,8 +96,11 @@ docker run -d --name fc-companion --restart unless-stopped --network host \
   -v /var/lib/fc-companion/images:/images -v /var/lib/fc-companion/ledger:/ledger \
   node:22-alpine node /app/companion.mjs >/dev/null
 
-# Caddy serves /img/* from the images folder over HTTPS, and nothing else.
+# Caddy serves /img/* from the images folder over HTTPS, plus any site in
+# caddy-sites/ (hosted fameboy, from fc-node client).
 cat > "$STATE/Caddyfile" <<CADDY
+import /etc/caddy/sites/*.caddy
+
 $host {
 	handle /img/* {
 		root * /srv
@@ -102,13 +109,14 @@ $host {
 		header X-Content-Type-Options nosniff
 	}
 	handle {
-		respond "clearcast images live under /img/" 404
+		respond "fameboy images live under /img/" 404
 	}
 }
 CADDY
 docker rm -f fc-images >/dev/null 2>&1 || true
 docker run -d --name fc-images --restart unless-stopped --network host --memory 128m \
-  -v "$STATE/Caddyfile:/etc/caddy/Caddyfile:ro" -v "$STATE/images:/srv/img:ro" -v "$STATE/caddy:/data" \
+  -v "$STATE/Caddyfile:/etc/caddy/Caddyfile:ro" -v "$STATE/caddy-sites:/etc/caddy/sites:ro" \
+  -v "$STATE/images:/srv/img:ro" -v "$STATE/caddy:/data" \
   caddy:2-alpine >/dev/null
 echo "fc-images: serving images at $IMAGE_BASE/img/ (needs ports 80 and 443 open)"
 

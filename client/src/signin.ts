@@ -6,7 +6,7 @@
 //    on chain. Your seed phrase never leaves your phone. The service is free
 //    and needs no API key, but it does need an "app account": a Farcaster
 //    account whose custody key vouches for every key request this server makes.
-//    Whoever runs clearcast sets it up once with `clearcast app-account`.
+//    Whoever runs fameboy sets it up once with `fameboy app-account`.
 //    Docs: https://docs.farcaster.xyz/reference/farcaster/signer-requests
 //
 //    Or the node vouches: when the node's owner ran `fc-node app-account`,
@@ -15,8 +15,8 @@
 //    is still made here; only its public half goes to the companion.
 //
 // 2. Seed phrase in the page (this computer only). The same steps as
-//    `clearcast login`: the phrase goes from your browser to this server on
-//    127.0.0.1, signs one KEY_ADD in memory, and is dropped. A clearcast that
+//    `fameboy login`: the phrase goes from your browser to this server on
+//    127.0.0.1, signs one KEY_ADD in memory, and is dropped. A fameboy that
 //    other people use over the network must never accept a phrase, so this
 //    route only exists while the server listens on this computer alone.
 
@@ -95,7 +95,7 @@ async function farcaster<T>(path: string, init?: RequestInit): Promise<T> {
 
 export async function startAppSignIn() {
   const app = await loadAppAccount();
-  if (!app) throw new NoAppAccount("no app account set up: run clearcast app-account once in a terminal");
+  if (!app) throw new NoAppAccount("no app account set up: run fameboy app-account once in a terminal");
   for (const [t, r] of requests) if (r.expires < Date.now()) requests.delete(t);
 
   const privateKey = new Uint8Array(randomBytes(32));
@@ -105,7 +105,7 @@ export async function startAppSignIn() {
   // Farcaster only checks the signature when you approve, so check here that
   // the saved key still owns the app account; otherwise the request would fail late.
   if ((await currentCustody(app.fid)) !== account.address.toLowerCase())
-    throw new NodeError(`the saved app account key doesn't own fid ${app.fid} any more. Run clearcast app-account again.`);
+    throw new NodeError(`the saved app account key doesn't own fid ${app.fid} any more. Run fameboy app-account again.`);
   const signature = await account.signTypedData({
     domain: DOMAIN,
     types: TYPES,
@@ -127,7 +127,7 @@ export async function startAppSignIn() {
 
 // --- 1b. the node vouches (fc-companion's app account)
 
-export type NodeSignIn = { phone: boolean; appFid: number | null } | null;
+export type NodeSignIn = { phone: boolean; appFid: number | null; invite?: boolean } | null; // invite: whether sign-in needs a code
 
 // Can this node's companion start phone sign-ins? null: no companion.
 export async function nodeSignInOptions(): Promise<NodeSignIn> {
@@ -174,6 +174,50 @@ export async function startNodeSignIn(invite: string) {
   return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
 }
 
+// --- 1c. hosted: the key is made in the browser (ADR 003)
+//
+// The browser sends only the public half; the node's companion vouches for it
+// as above. When it's approved, the browser keeps the key and opens a session
+// (session.ts). Nothing is saved here. `client` is the visitor's address, so
+// the companion's limit of sign-ins per address counts visitors, not this server.
+
+const browserRequests = new Map<string, { publicKey: string; expires: number }>(); // token -> key waiting for approval
+
+export async function startBrowserSignIn(key: string, invite: string, client: string) {
+  for (const [t, r] of browserRequests) if (r.expires < Date.now()) browserRequests.delete(t);
+  if (!/^0x[0-9a-f]{64}$/i.test(key)) throw new NodeError("that isn't an Ed25519 public key");
+  let res: Response;
+  try {
+    res = await fetch(`${COMPANION}/v1/signin`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-clearcast-client": client },
+      body: JSON.stringify({ key: key.toLowerCase(), invite }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    throw new NodeError(`can't reach your node's companion at ${COMPANION}`);
+  }
+  const json = (await res.json().catch(() => ({}))) as { error?: string; token: string; deeplinkUrl: string; requestFid: number; deadline: number };
+  if (!res.ok) throw new NodeError(json.error ?? `the companion said ${res.status}`);
+  browserRequests.set(json.token, { publicKey: key.toLowerCase(), expires: json.deadline * 1000 });
+  const qr = await QRCode.toString(json.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
+  return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
+}
+
+// "ready" once the key is on chain and this node has seen it. The browser then
+// signs a session challenge with it. (Not "approved": Farcaster's service uses
+// that word for "tapped approve", before the key is on chain.)
+export async function browserSignInStatus(token: string) {
+  const pending = browserRequests.get(token);
+  if (!pending) throw new NodeError("this sign-in request has expired. Start again.");
+  const { signedKeyRequest: req } = await farcaster<{ signedKeyRequest: SignedKeyRequest }>(`/v2/signed-key-request?token=${encodeURIComponent(token)}`);
+  if (req.state !== "completed" || !req.userFid) return { state: req.state };
+  const seen = await get("/v1/signer", { fid: req.userFid, signer: pending.publicKey }).then(() => true, () => false);
+  if (!seen) return { state: "syncing" as const };
+  browserRequests.delete(token);
+  return { state: "ready" as const, fid: req.userFid, key: pending.publicKey };
+}
+
 // Poll Farcaster's service; once the key is on chain and your node has seen
 // it, save it as this computer's app key.
 export async function appSignInStatus(token: string) {
@@ -208,7 +252,7 @@ export async function appSignInStatus(token: string) {
 type Job = { lines: string[]; done: boolean; error?: string; fid?: number };
 const jobs = new Map<string, Job>();
 
-// Starts the same steps as clearcast login and returns a job id to poll. The
+// Starts the same steps as fameboy login and returns a job id to poll. The
 // phrase lives only in this function's scope while it runs.
 export function startPhraseSignIn(raw: string): string {
   const phrase = normalizePhrase(raw);

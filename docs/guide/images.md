@@ -1,11 +1,11 @@
 # Images in your casts
 
-A cast can't carry an image. It carries a link, and every app loads the image from that link. So when you attach an image in clearcast, it uploads to **the node your clearcast uses**: your own, or a friend's you share. Your cast links to it there. No image host, no account, no API key.
+A cast can't carry an image. It carries a link, and every app loads the image from that link. So when you attach an image in fameboy, it uploads to **the node your fameboy uses**: your own, or a friend's you share. Your cast links to it there. No image host, no account, no API key.
 
 ## How it works
 
 1. You paste, drop or pick an image in **post**. Big photos are shrunk to 1600 px on the long side, on your computer, before they go anywhere. GIFs stay as they are, so they keep moving.
-2. clearcast uploads it to the node's companion, signed with your [app key](./app-key). The companion checks that the file really is a PNG, JPEG, GIF or WebP image, and saves it under its fingerprint (a SHA-256 hash).
+2. fameboy uploads it to the node's companion, signed with your [app key](./app-key). The companion checks that the file really is a PNG, JPEG, GIF or WebP image, and saves it under its fingerprint (a SHA-256 hash).
 3. The node serves it over HTTPS, at an address like `https://91-99-76-223.sslip.io/img/<fingerprint>.jpg`. [sslip.io](https://sslip.io) is a free service that turns that name into your server's address, which lets Caddy, the web server on your node, get a certificate without a domain of your own.
 4. Your cast links to that address. Other Farcaster apps load the image from that node.
 
@@ -39,7 +39,7 @@ ssh root@<ip> 'cat /var/lib/fc-companion/ledger/images.json'
 
 ## Who can upload
 
-Only people using your node: the companion accepts an upload only from someone whose clearcast has checked in during the last 10 minutes, signed with an app key that Farcaster says belongs to them. Each internet address also gets 120 uploads an hour.
+Only people using your node: the companion accepts an upload only from someone whose fameboy has checked in during the last 10 minutes, signed with an app key that Farcaster says belongs to them. Each internet address also gets 120 uploads an hour.
 
 Anyone with an image's link can see it. That's true of every image on Farcaster, because casts are public.
 

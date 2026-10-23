@@ -28,7 +28,7 @@ export function checkProfile(fields: ProfileFields) {
 export async function setProfile(key: AppKey, fields: ProfileFields, log: (s: string) => void) {
   checkProfile(fields);
   if (!key.scopes.includes("USER_DATA_ADD") && !key.scopes.includes("ALL"))
-    throw new NodeError("this app key can't edit profiles. Sign in again (clearcast login) for a key that can.");
+    throw new NodeError("this app key can't edit profiles. Sign in again (fameboy login) for a key that can.");
   const current = await profile(key.fid);
   for (const [k, value] of Object.entries(fields) as [keyof ProfileFields, string | undefined][]) {
     if (value === undefined || current[k] === value) continue;

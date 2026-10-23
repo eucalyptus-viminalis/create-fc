@@ -36,7 +36,7 @@ hcloud ssh-key describe "$key_name" >/dev/null 2>&1 \
   || hcloud ssh-key create --name "$key_name" --public-key-from-file "$SSH_KEY_FILE" >/dev/null
 
 # Firewall: SSH, HTTP API, gossip over UDP, gRPC, fc-companion (3390: uptime,
-# who's online and sign-in, for clearcast), and 80/443 for fc-images (Caddy
+# who's online and sign-in, for fameboy), and 80/443 for fc-images (Caddy
 # serves cast images over HTTPS; 80 is how it gets its certificate).
 # Grafana (3000) stays closed.
 fw="$NAME-fw"

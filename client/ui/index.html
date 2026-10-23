@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="clearcast-token" content="__CLEARCAST_TOKEN__" />
+  <meta name="fameboy-token" content="__FAMEBOY_TOKEN__" />
   <meta name="referrer" content="no-referrer" />
-  <title>clearcast</title>
-  <link rel="icon" href="/clearcast.svg" type="image/svg+xml" />
+  <title>fameboy</title>
+  <link rel="icon" href="/fameboy-small.svg" type="image/svg+xml" />
+  <script src="/theme.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&display=swap" />
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
   <header class="tg-header app-header">
-    <a class="tg-wordmark" href="#feed"><span class="tg-mark tg-mark--img" aria-hidden="true"><img src="/clearcast-small.svg" alt="" /></span>clearcast</a>
+    <a class="tg-wordmark" href="#feed"><span class="tg-mark tg-mark--img" aria-hidden="true"><img src="/fameboy-small.svg" alt="" /></span>fameboy</a>
     <span class="me-chip" id="me-chip" hidden></span>
     <button type="button" class="glass-btn glass-btn--quiet" id="signout-btn" hidden>Sign out</button>
     <a class="node-pill" id="node-pill" href="#node"><span class="dot"></span><span id="node-pill-text">connecting…</span></a>
@@ -21,8 +22,8 @@
   <!-- Signed out: the only thing to do is sign in, in a terminal -->
   <main class="app signin" id="signin" hidden>
     <section class="card signin__card">
-      <h1 class="tg-display-2">Sign in to clearcast</h1>
-      <p class="tg-body">clearcast shows your own feed and posts as you, so it needs an app key for your account: a key that can post, like and follow, but can't move your account or add other keys.</p>
+      <h1 class="tg-display-2">Sign in to fameboy</h1>
+      <p class="tg-body">fameboy shows your own feed and posts as you, so it needs an app key for your account: a key that can post, like and follow, but can't move your account or add other keys.</p>
 
       <div class="signin__way" id="way-app">
         <div class="signin__head"><h2 class="tg-title">Approve in the Farcaster app</h2><span class="signin__tag">Recommended</span></div>
@@ -32,7 +33,7 @@
 
       <details class="signin__way" id="way-phrase">
         <summary><h2 class="tg-title">Use your seed phrase</h2><span class="signin__tag signin__tag--quiet">This computer only</span></summary>
-        <p>The phrase goes from this page to clearcast on this computer, signs one key, and is forgotten. It's never saved or sent anywhere else. Whoever has a seed phrase owns the account.</p>
+        <p>The phrase goes from this page to fameboy on this computer, signs one key, and is forgotten. It's never saved or sent anywhere else. Whoever has a seed phrase owns the account.</p>
         <form id="phrase-form" autocomplete="off">
           <input type="password" id="phrase-input" name="phrase" autocomplete="off" spellcheck="false" placeholder="12 or 24 words" aria-label="Seed phrase" />
           <button class="tg-btn tg-btn--ink tg-btn--sm" type="submit">Sign in</button>
@@ -40,7 +41,7 @@
         <ol class="signin__log" id="phrase-log" hidden></ol>
       </details>
 
-      <p class="signin__note">Or in a terminal: <code>clearcast login</code> <button type="button" class="link-btn" data-copy="clearcast login">Copy</button>. This page notices when you're signed in.</p>
+      <p class="signin__note">Or in a terminal: <code>fameboy login</code> <button type="button" class="link-btn" data-copy="fameboy login">Copy</button>. This page notices when you're signed in.</p>
     </section>
   </main>
 
@@ -119,7 +120,7 @@
   <dialog class="card signout" id="signout-dialog">
     <form method="dialog">
       <h2 class="tg-title">Sign out of <span id="signout-name"></span>?</h2>
-      <p>This deletes the app key from this computer (<code>~/.fc-client/appkey.json</code>). To sign in again you'll run <code>clearcast login</code> with your seed phrase.</p>
+      <p>This deletes the app key from this computer (<code>~/.fameboy/appkey.json</code>). To sign in again you'll run <code>fameboy login</code> with your seed phrase.</p>
       <p>The key stays registered on Farcaster until it expires, but nobody else has a copy. Your cleared casts are kept for next time.</p>
       <div class="signout__row"><button class="glass-btn glass-btn--quiet" value="cancel">Cancel</button><button class="tg-btn tg-btn--ink tg-btn--sm" value="signout">Sign out</button></div>
     </form>
@@ -127,6 +128,7 @@
 
   <div class="tg-toast" id="toast" role="status" hidden><span id="toast-text"></span><button type="button" id="toast-undo" hidden>Undo</button></div>
   <script src="/tangerine/js/tangerine.js" defer></script>
+  <script src="/mine.js"></script>
   <script src="/app.js" type="module"></script>
 </body>
 </html>

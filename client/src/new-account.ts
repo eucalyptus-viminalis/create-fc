@@ -1,9 +1,9 @@
-// clearcast new-account: register a brand-new Farcaster account.
+// fameboy new-account: register a brand-new Farcaster account.
 //
-//   clearcast new-account [--recovery 0x...] [--dry-run]
+//   fameboy new-account [--recovery 0x...] [--dry-run]
 //
 // It's a real account on mainnet, like one the Farcaster app makes. Use it as
-// your clearcast app account, as a throwaway to try posting with, or as a
+// your fameboy app account, as a throwaway to try posting with, or as a
 // keeper.
 //
 // 1. Generates a fresh 12-word seed phrase on this machine and shows it once.
@@ -13,7 +13,7 @@
 //    address a new FID and one storage unit, enough to post.
 // 4. Waits for your node to see the registration, then asks what the account
 //    is for: you, to post (registers this client's gasless app key), or this
-//    clearcast's app account (saves its custody key, see signin.ts).
+//    fameboy's app account (saves its custody key, see signin.ts).
 //
 // The only network services involved are your node and an Optimism RPC
 // (OP_RPC, default https://mainnet.optimism.io, no key needed).
@@ -50,12 +50,12 @@ async function run(rl: ReturnType<typeof createInterface>, dryRun: boolean, reco
 
   // ---- 1. a fresh phrase, shown once
   const phrase = generateMnemonic(wordlist, 128);
-  const account = mnemonicToAccount(phrase); // m/44'/60'/0'/0/0, as clearcast login expects
+  const account = mnemonicToAccount(phrase); // m/44'/60'/0'/0/0, as fameboy login expects
   log(`
 \x1b[1mThis creates a NEW Farcaster account.\x1b[0m It's a real account, not a test one.
 
 Below is its seed phrase. It is shown once and is not saved anywhere. Put it
-in a password manager: clearcast login and clearcast app-account ask for it.
+in a password manager: fameboy login and fameboy app-account ask for it.
 Anyone holding it controls the account.
 
     \x1b[1m${phrase}\x1b[0m
@@ -132,7 +132,7 @@ custody address: ${account.address}
   for (let i = 0; ; i++) {
     const s = await get<{ units: number }>("/v1/storageLimitsByFid", { fid }).catch(() => ({ units: 0 }));
     if (s.units > 0) break;
-    if (i === 60) throw new NodeError("your node hasn't seen the registration after 5 minutes. Check clearcast status, then run clearcast login later.");
+    if (i === 60) throw new NodeError("your node hasn't seen the registration after 5 minutes. Check fameboy status, then run fameboy login later.");
     await sleep(5000);
   }
   log(`your node has fid ${fid} with storage.`);
@@ -141,7 +141,7 @@ custody address: ${account.address}
   log(`
 What's this account for?
   1  you: register this client's app key so you can post now
-  2  this clearcast's app account: the account people approve on their phone
+  2  this fameboy's app account: the account people approve on their phone
      when they sign in (saves its custody key on this computer)
   3  decide later`);
   const answer = (await rl.question("[1/2/3] ")).trim();
@@ -150,6 +150,6 @@ What's this account for?
   } else if (answer === "2") {
     await setUpAppAccount(custody, { sponsor: false, ask: (q) => rl.question(q), log });
   } else {
-    log("ok. Later: clearcast login to post as it, or clearcast app-account to make it the app account.");
+    log("ok. Later: fameboy login to post as it, or fameboy app-account to make it the app account.");
   }
 }

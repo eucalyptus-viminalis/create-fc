@@ -1,9 +1,11 @@
-// clearcast sign in. The ways shown depend on what this clearcast can do
+// fameboy sign in. The ways shown depend on what this fameboy can do
 // (GET /api/signin/options):
 //   - approve on your phone: with this computer's own app account, or the
 //     node's (fc-companion), which needs an invite code from the node's owner
-//   - your seed phrase: only while clearcast listens on this computer alone
+//   - your seed phrase: only while fameboy listens on this computer alone
 //   - a terminal, and making an account: only on your own computer
+// On a hosted fameboy (browser: true) this browser makes the app key and
+// keeps it (mine.key); only its public half goes to the server.
 // Copy rule: active voice, max 7 words a sentence.
 
 const { $, wait, esc, api, tone, toast } = kit;
@@ -57,9 +59,9 @@ function waysFrom(o) {
   ];
   if (o.phrase) {
     ways.push(
-      { id: "phrase", name: "use your seed phrase", tag: "stays on this computer", desc: ["Type your phrase on this page.", "Your phrase never leaves this computer.", "clearcast signs one key, then forgets it."] },
-      { id: "terminal", name: "use a terminal", tag: "", desc: ["Run <code>clearcast login</code> instead.", "This page notices when you finish."] },
-      { id: "new", name: "make an account", tag: "about $0.20", desc: ["No account yet? Make one.", "Run <code>clearcast new-account</code> in a terminal.", "It costs about $0.20 of ETH."] },
+      { id: "phrase", name: "use your seed phrase", tag: "stays on this computer", desc: ["Type your phrase on this page.", "Your phrase never leaves this computer.", "fameboy signs one key, then forgets it."] },
+      { id: "terminal", name: "use a terminal", tag: "", desc: ["Run <code>fameboy login</code> instead.", "This page notices when you finish."] },
+      { id: "new", name: "make an account", tag: "about $0.20", desc: ["No account yet? Make one.", "Run <code>fameboy new-account</code> in a terminal.", "It costs about $0.20 of ETH."] },
     );
   }
   return ways;
@@ -68,13 +70,13 @@ function waysFrom(o) {
 function choose() {
   S.screen = "choose"; S.run++;
   const ways = S.ways;
-  const intro = `<div class="lede"><p>clearcast needs an app key.</p><p class="dim">The key posts, likes and follows. It can't move your account.</p></div>`;
+  const intro = `<div class="lede"><p>fameboy needs an app key.</p><p class="dim">The key posts, likes and follows. It can't move your account.</p></div>`;
   const menu = ways
     .map((w, i) => `<button class="opt"${i === S.sel ? " aria-current" : ""} data-i="${i}"><span class="cur">▶</span><span class="name">${w.name}</span>${w.tag ? `<span class="tag">${w.tag}</span>` : "<span></span>"}<span class="desc">${w.desc.map((d) => `<p>${d}</p>`).join("")}</span></button>`)
     .join("");
-  const hosted = S.opts.phrase ? "" : `<p class="dim" style="margin-top:18px">Someone else runs this clearcast. So it never asks for your phrase.</p>`;
+  const hosted = S.opts.phrase ? "" : `<p class="dim" style="margin-top:18px">Someone else runs this fameboy. So it never asks for your phrase.</p>`;
   show(
-    head() + intro + `<section class="tile"><h2><span>${ways.length > 1 ? "choose a way" : "one way in"}</span><span>${ways.length > 1 ? `${ways.length} ways` : "shared clearcast"}</span></h2><div>${menu}</div></section>` + hosted,
+    head() + intro + `<section class="tile"><h2><span>${ways.length > 1 ? "choose a way" : "one way in"}</span><span>${ways.length > 1 ? `${ways.length} ways` : "shared fameboy"}</span></h2><div>${menu}</div></section>` + hosted,
     `<span><kbd>↑</kbd><kbd>↓</kbd> choose</span><span><kbd>A</kbd>/<kbd>↵</kbd> go</span><a class="dim" href="/">back home</a>`,
   );
   document.querySelectorAll(".opt").forEach((el) => {
@@ -92,10 +94,10 @@ function choose() {
 function open() {
   sfx.open();
   const id = S.ways[S.sel].id;
-  if (id === "phone") return S.opts.app ? phoneStart() : S.opts.node?.phone ? invite() : setup();
+  if (id === "phone") return S.opts.app ? phoneStart() : S.opts.node?.phone ? (S.opts.node.inviteRequired ? invite() : phoneStart()) : setup();
   if (id === "phrase") return phrase();
-  if (id === "terminal") return terminal("use a terminal", "clearcast login", ["Run this in your own terminal.", "It asks for your seed phrase there."]);
-  if (id === "new") return terminal("make an account", "clearcast new-account", ["Run this in your own terminal.", "It costs about $0.20 of ETH.", "Then sign in here."]);
+  if (id === "terminal") return terminal("use a terminal", "fameboy login", ["Run this in your own terminal.", "It asks for your seed phrase there."]);
+  if (id === "new") return terminal("make an account", "fameboy new-account", ["Run this in your own terminal.", "It costs about $0.20 of ETH.", "Then sign in here."]);
 }
 
 // ------------------------------------------------------------------ phone: setup / invite
@@ -154,16 +156,21 @@ async function phoneStart(code) {
   S.screen = "phone";
   const run = ++S.run;
   show(head("approve on your phone") + tile("getting a code", "", steps(PHONE_STEPS, 0)));
+  const browser = S.opts.browser;
+  if (browser && !(await mine.key.supported()))
+    return show(head("approve on your phone") + tile("this browser can't sign in", "", `<div class="err"><p>It can't make the key fameboy needs.</p><p>Try a recent Chrome, Safari or Firefox.</p></div>`));
   let req;
   try {
-    req = await api("/api/signin/app", code ? { invite: code } : {});
+    req = browser
+      ? await api("/api/signin/browser", { key: await mine.key.create(), invite: code ?? "" })
+      : await api("/api/signin/app", code ? { invite: code } : {});
   } catch (e) {
     sfx.error();
     if (code) return invite(e.message);
     return show(head("approve on your phone") + tile("no code this time", "", `<div class="err"><p>${esc(e.message)}</p></div>`));
   }
   if (run !== S.run) return;
-  const fee = req.sponsored ? "clearcast pays the network fee." : "You may be asked to pay a small fee.";
+  const fee = req.sponsored ? "fameboy pays the network fee." : "You may be asked to pay a small fee.";
   const paint = (at) =>
     show(
       head("approve on your phone") +
@@ -183,7 +190,11 @@ async function phoneStart(code) {
     await wait(2000);
     if (run !== S.run) return;
     let st;
-    try { st = await api(`/api/signin/app?token=${encodeURIComponent(req.token)}`); }
+    try {
+      st = await api(`/api/signin/${browser ? "browser" : "app"}?token=${encodeURIComponent(req.token)}`);
+      // Approved: this browser keeps the key, then proves it to the server.
+      if (st.state === "ready") { await mine.key.confirm(st.fid); await mine.key.session(); st.state = "signed-in"; }
+    }
     catch (e) { sfx.error(); return show(head("approve on your phone") + tile("this code stopped working", "", `<div class="err"><p>${esc(e.message)}</p></div><div class="row">${go("start again", "A", 'id="again"')}</div>`)), $("#again").addEventListener("click", () => phoneStart(code)); }
     if (st.state === "signed-in") return done();
     const next = st.state === "pending" ? 1 : 2;
@@ -199,7 +210,7 @@ function phrase(error) {
   show(
     head("use your seed phrase") +
       tile("type your seed phrase", "stays on this computer", `
-        <p>clearcast signs one key, then forgets it.</p>
+        <p>fameboy signs one key, then forgets it.</p>
         <p class="dim">It saves and sends nothing else.</p>
         <form class="field" id="phrase-form" autocomplete="off">
           <input type="password" id="phrase-input" autofocus placeholder="12 or 24 words" autocomplete="off" spellcheck="false" aria-label="Seed phrase">
@@ -234,7 +245,7 @@ function phraseProgress(lines) {
 }
 
 function phraseError(message) {
-  if (/none of the first/.test(message)) return ["No account uses this phrase.", "clearcast checked ten addresses."];
+  if (/none of the first/.test(message)) return ["No account uses this phrase.", "fameboy checked ten addresses."];
   if (/invalid|checksum|words|mnemonic|phrase/i.test(message) && !/node/i.test(message)) return ["These words don't form a phrase.", "Check spelling and word order."];
   if (/no storage units/.test(message)) return ["This account has no storage.", "Rent storage, then try again."];
   if (/didn't appear within/.test(message)) return ["This node never saw the key.", "Check that this node is in sync."];
@@ -250,7 +261,7 @@ async function phraseRun(words) {
         tile("signing you in", p.at === 0 ? "searching" : "", `
           ${steps(PHRASE_STEPS, p.at, p.notes)}
           ${p.at === 0 && p.slow ? `<div class="bar">${Array.from({ length: 10 }, (_, i) => `<i class="${i < p.tried ? "on" : ""}"></i>`).join("")}</div><p class="dim small">The first address had no account. Each check takes a while. This can take three minutes.</p>` : ""}
-          ${p.at >= 2 ? `<p class="dim small">clearcast already forgot your phrase.</p>` : `<p class="dim small">This can take up to a minute.</p>`}`),
+          ${p.at >= 2 ? `<p class="dim small">fameboy already forgot your phrase.</p>` : `<p class="dim small">This can take up to a minute.</p>`}`),
       `<a class="dim" href="/">back home</a>`,
     );
   paint({ at: 0, notes: {}, slow: false, tried: 0 });
@@ -296,7 +307,7 @@ async function done(already = false) {
     `<section class="tile" style="margin-top:40px"><h2><span>signed in</span><span>${me ? `fid ${me.fid}` : ""}</span></h2><div class="done">
       ${me?.pfp ? `<img class="avatar" src="${esc(me.pfp)}" alt="" referrerpolicy="no-referrer">` : `<span class="avatar"></span>`}
       <h2>${already ? "already in" : "you're in"}</h2><p>${already ? `You're signed in as ${name}.` : `Welcome, ${name}.`}</p>
-      <p class="dim">Your ${kit.ext(`${DOCS}/guide/app-key`, "app key")} has been saved on this computer.</p>
+      <p class="dim">Your ${kit.ext(`${DOCS}/guide/app-key`, "app key")} has been saved ${me?.hosted ? "in this browser. It never leaves it" : "on this computer"}.</p>
       <p class="dim">You can now start interacting with Farcaster on this device.</p>
       <div class="row">${go("start", "A", 'id="start"')}</div></div></section>`,
     `<span><kbd>A</kbd>/<kbd>↵</kbd> start</span>`,

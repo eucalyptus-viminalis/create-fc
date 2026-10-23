@@ -39,7 +39,7 @@
             <div class="dd-item"><span class="dd-num" aria-hidden="true">↳</span><div><a class="dd-main" href="#before">Before you start</a><span class="dd-desc">Hetzner account, API token, what it costs</span></div></div>
             <div class="dd-item"><span class="dd-num" aria-hidden="true">0</span><div><a class="dd-main" href="#cmd0">The server</a><span class="dd-desc">What command 0 creates, the firewall, sold-out types</span></div></div>
             <div class="dd-item"><span class="dd-num" aria-hidden="true">1</span><div><a class="dd-main" href="#cmd1">The read node</a><span class="dd-desc">Streaming the snapshot, catching up, fc-node status</span></div></div>
-            <div class="dd-item"><span class="dd-num" aria-hidden="true">2</span><div><a class="dd-main" href="#cmd2">The client</a><span class="dd-desc">clearcast in your browser and terminal</span><div class="dd-sub"><a href="#gui">Browser client</a><a href="#reading">Reading</a><a href="#posting">Posting</a><a href="#username">Username</a><a href="#filtering">Filtering</a></div></div></div>
+            <div class="dd-item"><span class="dd-num" aria-hidden="true">2</span><div><a class="dd-main" href="#cmd2">The client</a><span class="dd-desc">fameboy in your browser and terminal</span><div class="dd-sub"><a href="#gui">Browser client</a><a href="#reading">Reading</a><a href="#posting">Posting</a><a href="#username">Username</a><a href="#filtering">Filtering</a><a href="#hosting">Hosting</a></div></div></div>
         </div>
       </div>
       <a class="tg-quiet-link" href="#concepts">Concepts</a>
@@ -64,7 +64,7 @@
     <section class="tg-hero" aria-labelledby="hero-title">
       <div class="tg-hero__copy">
         <h1 id="hero-title">Your own Farcaster.<br />Three commands.</h1>
-        <p class="tg-hero__desc">Rent a <span class="term" tabindex="0">server<span class="tip" role="tooltip">A Hetzner Cloud machine with 8 vCPUs, 16 GB of RAM and a 1000 GB disk, billed by the hour. Delete it when you're done. <a href="#cmd0">Read more</a></span></span>, sync a Snapchain <span class="term" tabindex="0">read node<span class="tip" role="tooltip">A full copy of Farcaster's data that follows the network block by block. It serves reads and relays your posts to the validators. <a href="#cmd1">Read more</a></span></span>, and install a <span class="term" tabindex="0">client<span class="tip" role="tooltip">clearcast: a feed, posting, and a view of every app that can post as you. Runs on your computer and talks only to your node. <a href="#cmd2">Read more</a></span></span>. <span class="term" tabindex="0">No API keys<span class="tip" role="tooltip">Except your own Hetzner API token, which command 0 uses to create the server. Nothing you read or post goes through anyone else's API. <a href="#before">How to make one</a></span></span> needed! Read + write from your own node.</p>
+        <p class="tg-hero__desc">Rent a <span class="term" tabindex="0">server<span class="tip" role="tooltip">A Hetzner Cloud machine with 8 vCPUs, 16 GB of RAM and a 1000 GB disk, billed by the hour. Delete it when you're done. <a href="#cmd0">Read more</a></span></span>, sync a Snapchain <span class="term" tabindex="0">read node<span class="tip" role="tooltip">A full copy of Farcaster's data that follows the network block by block. It serves reads and relays your posts to the validators. <a href="#cmd1">Read more</a></span></span>, and install a <span class="term" tabindex="0">client<span class="tip" role="tooltip">fameboy: a feed, posting, and a view of every app that can post as you. Runs on your computer and talks only to your node. <a href="#cmd2">Read more</a></span></span>. <span class="term" tabindex="0">No API keys<span class="tip" role="tooltip">Except your own Hetzner API token, which command 0 uses to create the server. Nothing you read or post goes through anyone else's API. <a href="#before">How to make one</a></span></span> needed! Read + write from your own node.</p>
       </div>
 
 
@@ -100,8 +100,8 @@ setup started as a background job.</span>
           <p class="lead-in"><span class="lead-in__what">Run the client</span><span class="lead-in__time">~6 seconds</span></p>
           <div class="fc-term"><div class="fc-term__bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i><span>run on your computer</span><button class="fc-copy fc-copy--bar" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381">Copy command</button></div>
 <pre><code><span class="fc-p">$</span> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381
-<span class="fc-o">installed clearcast into ~/.fc-client/app, using the node at http://91.99.76.223:3381</span>
-<span class="fc-p">$</span> clearcast cast "posting through a fresh create-fc node, three commands later"
+<span class="fc-o">installed fameboy into ~/.fameboy/app, using the node at http://91.99.76.223:3381</span>
+<span class="fc-p">$</span> fameboy cast "posting through a fresh create-fc node, three commands later"
 <span class="fc-o">posted 0x39d6294b0a9e270aaa40bc404a0a08b3c5e3e6a8</span></code></pre></div>
         </div>
       </div>
@@ -161,7 +161,7 @@ setup started as a background job.</span>
         </li>
         <li>
           <h3 class="tg-title">Install the client</h3>
-          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>clearcast ui</code> opens the client in your browser. Sign in on its first page to see your feed.</p>
+          <p class="tg-body">When <code>fc-node status</code> says "in sync", run this on your own computer. Then <code>fameboy ui</code> opens the client in your browser. Sign in on its first page to see your feed.</p>
           <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://&lt;ip&gt;:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
         </li>
       </ol>
@@ -178,7 +178,7 @@ setup started as a background job.</span>
     <!-- The client -->
     <section class="tg-container tg-section tg-section--ruled" id="client" aria-labelledby="client-title">
       <div class="tg-section-head">
-        <p class="tg-eyebrow cc-eyebrow"><img src="img/clearcast.svg" alt="" width="28" height="28" />The client: clearcast</p>
+        <p class="tg-eyebrow cc-eyebrow"><img src="img/fameboy.svg" alt="" width="28" height="28" />The client: fameboy</p>
         <h2 class="tg-display-2" id="client-title">See what other clients won't show you.</h2>
       </div>
       <div class="fc-features">
@@ -189,8 +189,8 @@ setup started as a background job.</span>
       </div>
 
       <div class="fc-shots">
-        <figure><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="clearcast in the browser: Who can post as @dwr. 3 keys, held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption>@dwr has 3 app keys. All 3 can sign anything.</figcaption></figure>
-        <figure><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="clearcast in the browser: Apps in @dwr's feed. 91% of the latest 400 casts came through @warpcast; 9 apps in total." /><figcaption>91% of @dwr's feed comes through one app.</figcaption></figure>
+        <figure><img src="img/fameboy-keys.png" width="1100" height="700" loading="lazy" alt="fameboy in the browser: Who can post as @dwr. 3 keys, held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption>@dwr has 3 app keys. All 3 can sign anything.</figcaption></figure>
+        <figure><img src="img/fameboy-apps.png" width="1100" height="800" loading="lazy" alt="fameboy in the browser: Apps in @dwr's feed. 91% of the latest 400 casts came through @warpcast; 9 apps in total." /><figcaption>91% of @dwr's feed comes through one app.</figcaption></figure>
       </div>
 
       <div class="fc-try" id="try">
@@ -199,8 +199,8 @@ setup started as a background job.</span>
           <p class="tg-body">No server needed yet: point the client at our demo node, which stays up until 24 October. Then sign in on the page it opens, with an account made for trying things: the client shows your own feed.</p>
         </div>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381</code></pre><button class="fc-copy" type="button">Copy</button></div>
-        <div class="fc-term fc-term--copy"><pre><code>clearcast ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
-        <p class="tg-footnote">Needs Node.js 22.18+ and git. <code>clearcast ui</code> opens the client in your browser; it only listens on your own computer. When you run your own node, re-run the first command with its address.</p>
+        <div class="fc-term fc-term--copy"><pre><code>fameboy ui</code></pre><button class="fc-copy" type="button">Copy</button></div>
+        <p class="tg-footnote">Needs Node.js 22.18+ and git. <code>fameboy ui</code> opens the client in your browser; it only listens on your own computer. When you run your own node, re-run the first command with its address.</p>
       </div>
     </section>
 
@@ -214,7 +214,7 @@ setup started as a background job.</span>
           <a class="toc-card" href="#before"><span class="k">Before you start</span><b>Hetzner</b><span>Make a project and an API token; what it costs by the hour.</span></a>
           <a class="toc-card" href="#cmd0"><span class="k">Command 0</span><b>The server</b><span>Server, volume and firewall, and what happens when a type is sold out.</span></a>
           <a class="toc-card" href="#cmd1"><span class="k">Command 1</span><b>The read node</b><span>Why we stream the snapshot, how long catching up takes, what the warnings mean.</span></a>
-          <a class="toc-card" href="#cmd2"><span class="k">Command 2</span><b>The client</b><span>clearcast in your browser and terminal: reading, posting, a username, filtering by app.</span></a>
+          <a class="toc-card" href="#cmd2"><span class="k">Command 2</span><b>The client</b><span>fameboy in your browser and terminal: reading, posting, a username, filtering by app.</span></a>
         </nav>
       </div>
 
@@ -240,7 +240,7 @@ setup started as a background job.</span>
         </table>
         <p>Powering a server off doesn't stop the bill. Only deleting it does. This lists what it found, asks you to type <code>fc-node</code>, and deletes the server, volume, firewall and SSH key (34 seconds for us):</p>
         <div class="fc-term fc-term--copy"><pre><code>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</code></pre><button class="fc-copy" type="button">Copy</button></div>
-        <p>The volume holds the database, so the next node re-syncs from scratch. Your app key in <code>~/.fc-client</code> survives; point the client at the new node by running command 2 again with the new IP.</p>
+        <p>The volume holds the database, so the next node re-syncs from scratch. Your app key in <code>~/.fameboy</code> survives; point the client at the new node by running command 2 again with the new IP.</p>
       </section>
 
       <section class="tg-editorial__section" id="cmd0" aria-labelledby="cmd0-title">
@@ -290,7 +290,7 @@ setup started as a background job.</span>
   shard 1: 1s behind
   shard 2: 1s behind
 in sync. Run command 2 on your own computer.</span></code></pre></div>
-        <p>The first is our demo node right after loading; the second is the same node a few hours later. During setup, <code>fc-node status</code> shows the snapshot's progress instead. On your own computer, <code>clearcast status</code> reports the same numbers.</p>
+        <p>The first is our demo node right after loading; the second is the same node a few hours later. During setup, <code>fc-node status</code> shows the snapshot's progress instead. On your own computer, <code>fameboy status</code> reports the same numbers.</p>
         <p>"Behind" is <code>blockDelay</code> from <code>/v1/info</code>: how many seconds each shard's newest block trails the clock. A synced node stays in single digits. In the same response, <code>mempoolSize: 4294967295</code> is normal on a read node. It means "not reported", not an overflow.</p>
         <p>Two things look alarming and aren't. <code>Failed to dial peer … HandshakeTimedOut</code> for a couple of the bootstrap addresses, and a steady trickle of <code>InsufficientPeers ("read-node-peers")</code>. Our node logged both all day and synced fine.</p>
         <p>Why not the official one-liner? <code>snapchain-bootstrap.sh</code> reads its prompts from <code>/dev/tty</code>, which doesn't exist over <code>ssh host 'curl … | bash'</code> or in a systemd job. <code>setup.sh</code> answers both prompts in <code>.env</code> ahead of time and runs <code>snapchain.sh upgrade</code> directly.</p>
@@ -298,18 +298,18 @@ in sync. Run command 2 on your own computer.</span></code></pre></div>
 
       <section class="tg-editorial__section" id="cmd2" aria-labelledby="cmd2-title">
         <h2 id="cmd2-title">Command 2: the client</h2>
-        <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a></nav>
-        <p><code>install.sh</code> clones this repo into <code>~/.fc-client/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fc-client/config.json</code>, and puts <code>clearcast</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
+        <nav class="in-section" aria-label="In this section"><span>In this section</span><a href="#gui">Browser client</a><a href="#reading">Reading from the terminal</a><a href="#posting">Posting</a><a href="#username">A username</a><a href="#filtering">Filtering by app</a><a href="#hosting">Hosting it for others</a></nav>
+        <p><code>install.sh</code> clones this repo into <code>~/.fameboy/app</code>, installs three dependencies (<code>@farcaster/core</code>, <code>viem</code>, <code>@scure/bip39</code>), saves your node's address in <code>~/.fameboy/config.json</code>, and puts <code>fameboy</code> in <code>~/.local/bin</code>. Node.js runs the TypeScript directly, with no build step.</p>
         <h3 id="gui">The browser client</h3>
-        <p><code>clearcast ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account, so it opens on a sign-in page. <b>Approve in the Farcaster app</b>: scan a QR code and approve on your phone, so your seed phrase never leaves it. The request comes from an <b>app account</b>, the account the phone shows as "@name wants to post on your behalf". Set it up once on your server with <code>ssh -t root@&lt;ip&gt; fc-node app-account</code>, and everyone using your node can sign in this way; give each friend an invite code with <code>fc-node invite &lt;name&gt;</code> (<a class="tg-text-link" href="docs/guide/share-your-node">sharing your node</a>). Or set one up for this computer alone with <code>clearcast app-account</code>. If it has no username, setup suggests a free <code>@&lt;color&gt;cast</code> with a random color, like <code>@tealcast</code>, trying another color whenever one is taken; keep it or type your own. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number. <b>Use your seed phrase</b>: the same steps as <code>clearcast login</code>, offered only because the server listens on your computer alone. <b>Sign out</b> in the header deletes the app key from this computer.</p>
-        <figure class="fc-shot"><img src="img/clearcast-feed.png" width="1100" height="508" loading="lazy" alt="clearcast's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more." /><figcaption><b>Feed.</b> Every cast carries a “via @app” label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or “Hide the Farcaster app” to see everything else.</figcaption></figure>
-        <figure class="fc-shot"><img src="img/clearcast-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as you.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. See every app that can post as you.</figcaption></figure>
-        <figure class="fc-shot"><img src="img/clearcast-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in your feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
-        <figure class="fc-shot"><img src="img/clearcast-node.png" width="1100" height="640" loading="lazy" alt="Your node view: address, Snapchain 0.14.3, in sync, three shards 0–4 s behind, and a table of every request the page made, with times and a Copy curl button." /><figcaption><b>Your node.</b> Sync status, and every request the page made to your node, each with a Copy curl button so you can run it yourself.</figcaption></figure>
+        <p><code>fameboy ui</code> starts a small server on your own computer (<code>127.0.0.1:4747</code>, or the next free port) and opens it in your browser. Your app key stays in that server; the page never sees it. It shows your own account, so it opens on a sign-in page. <b>Approve in the Farcaster app</b>: scan a QR code and approve on your phone, so your seed phrase never leaves it. The request comes from an <b>app account</b>, the account the phone shows as "@name wants to post on your behalf". Set it up once on your server with <code>ssh -t root@&lt;ip&gt; fc-node app-account</code>, and everyone using your node can sign in this way; give each friend an invite code with <code>fc-node invite &lt;name&gt;</code> (<a class="tg-text-link" href="docs/guide/share-your-node">sharing your node</a>). Or set one up for this computer alone with <code>fameboy app-account</code>. If it has no username, setup suggests a free <code>@fameboy&lt;color&gt;</code> with a random color, like <code>@fameboyteal</code>, trying another color whenever one is taken; keep it or type your own. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number. <b>Use your seed phrase</b>: the same steps as <code>fameboy login</code>, offered only because the server listens on your computer alone. <b>Sign out</b> in the header deletes the app key from this computer.</p>
+        <figure class="fc-shot"><img src="img/fameboy-feed.png" width="1100" height="508" loading="lazy" alt="fameboy's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more." /><figcaption><b>Feed.</b> Every cast carries a “via @app” label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or “Hide the Farcaster app” to see everything else.</figcaption></figure>
+        <figure class="fc-shot"><img src="img/fameboy-keys.png" width="1100" height="700" loading="lazy" alt="Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything." /><figcaption><b>Who can post as you.</b> Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. See every app that can post as you.</figcaption></figure>
+        <figure class="fc-shot"><img src="img/fameboy-apps.png" width="1100" height="800" loading="lazy" alt="Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart." /><figcaption><b>Apps in your feed.</b> The same data as the chips, as a chart. Click a bar to see only that app's casts.</figcaption></figure>
+        <figure class="fc-shot"><img src="img/fameboy-node.png" width="1100" height="640" loading="lazy" alt="Your node view: address, Snapchain 0.14.3, in sync, three shards 0–4 s behind, and a table of every request the page made, with times and a Copy curl button." /><figcaption><b>Your node.</b> Sync status, and every request the page made to your node, each with a Copy curl button so you can run it yourself.</figcaption></figure>
         <h3 id="reading">Reading from the terminal</h3>
         <p>Every view above is a handful of plain GETs to your node, so you can repeat any of them with curl:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
-<pre><code><span class="fc-p">$</span> clearcast casts pinkmink -n 3
+<pre><code><span class="fc-p">$</span> fameboy casts pinkmink -n 3
 <span class="fc-o">@pinkmink · 1h · via @pinkmink  0xac0dd681
 clear
 
@@ -321,9 +321,9 @@ hello from my own snapchain read node 👋</span>
 
 <span class="fc-p">$</span> curl "http://&lt;ip&gt;:3381/v1/castsByFid?fid=3355372&amp;reverse=true&amp;pageSize=3"</code></pre></div>
         <p>Snapchain has no "home feed" endpoint. A feed is something a client builds. Ours is the simplest version: ask the node who you follow, fetch the latest casts from each, and merge them by time. That's one request per account you follow. For an account following 1,041 people, the feed took 13.5 seconds from Sydney to our node in Germany, while the same 1,041 requests made on the server itself took 1.7 seconds. Running the client close to the node pays off.</p>
-        <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>clearcast feed</code> skips anything more than 10 minutes ahead.</p>
+        <p>One oddity: a few old casts carry timestamps decades in the future (we found one dated 2061). They would sit at the top of any time-sorted feed forever, so <code>fameboy feed</code> skips anything more than 10 minutes ahead.</p>
         <h3 id="posting">Posting</h3>
-        <p><code>clearcast login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
+        <p><code>fameboy login</code> asks for a seed phrase once, uses it to authorize an <b>app key</b> for this client, and then forgets it. Read <a class="tg-text-link" href="#safety">Seed phrases</a> before you run it. Here's a real run:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
 <pre><code><span class="fc-o">seed phrase (hidden): ************ words
   m/44'/60'/0'/0/0  0x97547ffbA3F3e5a7553aA36948F618f39647F2Ea  fid 3355372
@@ -331,32 +331,35 @@ storage: 1 unit(s)
 app key: 0xaa2778f5b991db794630e34a0e192ce1633c135786ecbadf253406938ebdcf8e
 KEY_ADD: 0x23c71047ebe9209753273ca2b33c931989ddad97, nonce 2, ttl 30 days
 submitted to your node, which relays it to the validators. Waiting for it to land...
-done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed phrase was not saved.</span></code></pre></div>
+done. App key saved to /Users/sdf/.fameboy/appkey.json (mode 600). Your seed phrase was not saved.</span></code></pre></div>
         <p>Then the usual verbs. Each one is signed with the app key, sent to your node, and read back from it until it shows up:</p>
         <table class="fc-table">
           <caption>Our first writes through our own read node, time until each was readable again</caption>
           <thead><tr><th>Command</th><th>Confirmed after</th></tr></thead>
           <tbody>
-            <tr><td><code>clearcast cast "hello from my own snapchain read node 👋"</code></td><td>1.8 s</td></tr>
-            <tr><td><code>clearcast like pinkmink/0x085bf8a4</code> · <code>clearcast recast …</code></td><td>4.0 s each</td></tr>
-            <tr><td><code>clearcast unlike …</code> · <code>clearcast unrecast …</code></td><td>4.0–4.1 s</td></tr>
-            <tr><td><code>clearcast follow 13642</code> · <code>clearcast unfollow 13642</code></td><td>6.3 s · 1.8 s</td></tr>
+            <tr><td><code>fameboy cast "hello from my own snapchain read node 👋"</code></td><td>1.8 s</td></tr>
+            <tr><td><code>fameboy like pinkmink/0x085bf8a4</code> · <code>fameboy recast …</code></td><td>4.0 s each</td></tr>
+            <tr><td><code>fameboy unlike …</code> · <code>fameboy unrecast …</code></td><td>4.0–4.1 s</td></tr>
+            <tr><td><code>fameboy follow 13642</code> · <code>fameboy unfollow 13642</code></td><td>6.3 s · 1.8 s</td></tr>
           </tbody>
         </table>
         <p><code>@names</code> in a cast become real mentions, <code>--reply user/hash</code> replies, <code>--embed url</code> attaches a link, and <code>--dry-run</code> checks the message with your node without sending it.</p>
         <h3 id="username">A username</h3>
-        <p><code>clearcast username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
+        <p><code>fameboy username alice</code> claims a name and sets it. It's the one step that uses a service other than your node: the fname server at <code>fnames.farcaster.xyz</code>, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.</p>
         <h3 id="filtering">Filtering by the app that posted</h3>
-        <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>clearcast</code> labels each cast with its app, and filters on it:</p>
+        <p>Every cast is signed by an app key, and every app key records which app asked for it. So <code>fameboy</code> labels each cast with its app, and filters on it:</p>
         <div class="fc-term"><div class="fc-term__bar" aria-hidden="true"><i></i><i></i><i></i><span>run on your computer</span></div>
-<pre><code><span class="fc-p">$</span> clearcast apps dwr
+<pre><code><span class="fc-p">$</span> fameboy apps dwr
 <span class="fc-o">   1 key   @warpcast (fid 9152)
    1 key   @baseapp.base.eth (fid 309857)
    1 key   @neynar (fid 6131)</span>
 
-<span class="fc-p">$</span> clearcast feed me --not-app warpcast
-<span class="fc-p">$</span> clearcast feed me --app fireflyapp --app 9152</code></pre></div>
+<span class="fc-p">$</span> fameboy feed me --not-app warpcast
+<span class="fc-p">$</span> fameboy feed me --app fireflyapp --app 9152</code></pre></div>
         <p>In one account's feed of 16,416 recent casts, 89% came through the Farcaster app (fid 9152, still called @warpcast). Excluding it is a quick way to see what everything else looks like.</p>
+        <h3 id="hosting">Hosting it for others</h3>
+        <p>Most people won't run a client. Once your node has an app account, <code>ssh root@&lt;ip&gt; fc-node client</code> hosts fameboy on it at a web address named after that account, like <code>https://fameboyteal.&lt;ip with dashes&gt;.sslip.io</code>. Anyone can open it, approve on their phone, and use Farcaster through your node.</p>
+        <p>Their app key is made in their browser and never leaves it. Every cast, like and follow is signed there, and your server keeps nothing about the people who use it. A copy named <code>@fameboy&lt;color&gt;</code> takes that colour, in four shades like a Game Boy Color screen. <a class="tg-text-link" href="docs/guide/host-fameboy">The hosting guide</a> covers your own domain, invite-only sign-in, and what people trust you with.</p>
       </section>
     </div>
 
@@ -368,15 +371,15 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       </div>
       <dl class="fc-concepts">
         <div><dt>FID</dt><dd>A Farcaster account is a number, its FID, registered on OP Mainnet (Optimism). Usernames, keys and storage all hang off it. The account we tested with is 3355372.</dd></div>
-        <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>clearcast login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
+        <div><dt>Custody address</dt><dd>The Ethereum address that owns the FID, derived from the seed phrase. Most wallets use the first address, <code>m/44'/60'/0'/0/0</code>; <code>fameboy login</code> checks that one first, then the next nine. It can transfer the account and add or remove keys. It never needs to sign a cast.</dd></div>
         <div><dt>App keys (signers)</dt><dd>Ed25519 keys that sign everyday messages for one app. The custody key authorizes each one, naming the app that asked (its <code>requestFid</code>). One account can have many: Farcaster's app, Firefly, this client.</dd></div>
-        <div><dt>App account</dt><dd>The account that asks for an app key: its custody key signs the request, and its name is what you approve on your phone and what your casts show "via". There's no shared @clearcast, since every install would need its key, so each one names its own, like <code>@tealcast</code>: setup suggests a free <code>@&lt;color&gt;cast</code>.</dd></div>
+        <div><dt>App account</dt><dd>The account that asks for an app key: its custody key signs the request, and its name is what you approve on your phone and what your casts show "via". There's no shared app account, since every copy would need its key, so each one names its own, like <code>@fameboyteal</code>: setup suggests a free <code>@fameboy&lt;color&gt;</code>.</dd></div>
         <div><dt>Gasless app keys</dt><dd>App keys used to be registered with an Optimism transaction. Now a <code>KEY_ADD</code> message does it: no transaction, no gas, about a second. Each key lists the message types it may sign (its scopes) and expires after 30–90 days unused.</dd></div>
-        <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>clearcast</code>.</dd></div>
+        <div><dt>Snapchain messages</dt><dd>Casts, reactions, follows and profile fields are signed protobuf messages. Timestamps count seconds from 1 January 2021, not 1970. A message's ID is a 20-byte BLAKE3 hash, the <code>0x085bf8a4…</code> you see in <code>fameboy</code>.</dd></div>
         <div><dt>Shards</dt><dd>Snapchain splits users across shards 1 and 2 by a hash of the FID. Shard 0 orders the other two and holds things every shard needs, like app keys. Each shard is its own chain, so their heights differ.</dd></div>
         <div><dt>Read nodes vs validators</dt><dd>Validators propose and vote on blocks; there's a fixed set of them. A read node, like yours, fetches the decided blocks, checks their signatures, and serves the API. Anyone can run one.</dd></div>
-        <div><dt>Mempool and submission</dt><dd>Your read node accepts writes: it checks the message, gossips it to the validators, and keeps nothing. "Accepted" means "valid and relayed", not "in a block". That's why <code>clearcast</code> reads every write back. If gossip drops it, send it again.</dd></div>
-        <div><dt>Storage rent</dt><dd>An account needs rented storage units to post, paid on Optimism. One unit comes with registration (about $0.20 when we checked). When a store fills up, the oldest messages are pruned. <code>clearcast login</code> checks there's at least one unit.</dd></div>
+        <div><dt>Mempool and submission</dt><dd>Your read node accepts writes: it checks the message, gossips it to the validators, and keeps nothing. "Accepted" means "valid and relayed", not "in a block". That's why <code>fameboy</code> reads every write back. If gossip drops it, send it again.</dd></div>
+        <div><dt>Storage rent</dt><dd>An account needs rented storage units to post, paid on Optimism. One unit comes with registration (about $0.20 when we checked). When a store fills up, the oldest messages are pruned. <code>fameboy login</code> checks there's at least one unit.</dd></div>
         <div><dt>fnames</dt><dd>Usernames like @dwr come from the fname server, which signs a proof that the network stores. ENS names (<code>.eth</code>) work too.</dd></div>
       </dl>
     </section>
@@ -389,9 +392,9 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
         <p class="tg-body fc-split-text">A seed phrase is the master key to an account. Whoever has it can post as you, move your FID to themselves, and take any funds at the custody address. Like <code>rm -rf</code>, it's a normal tool that's unforgiving when used carelessly.</p>
       </div>
       <div class="fc-points">
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">No account yet?</h3><p class="tg-point__text"><code>clearcast new-account</code> registers a real account for about $0.20 of ETH on Optimism, and shows its phrase once. Add <code>--recovery</code> with an address you control.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="lock"></span><h3 class="tg-point__title">No account yet?</h3><p class="tg-point__text"><code>fameboy new-account</code> registers a real account for about $0.20 of ETH on Optimism, and shows its phrase once. Add <code>--recovery</code> with an address you control.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="document"></span><h3 class="tg-point__title">Read before you paste</h3><p class="tg-point__text">Only give a seed phrase to software from developers you trust, after reading what it does with it. For this client that's <code>client/src/keys.ts</code>: in memory, one signature, never written or sent.</p></article>
-        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet or the Farcaster app approves the key, and the phrase never leaves it. In clearcast that's <b>approve on your phone</b>. If you type a phrase, do it on your own computer.</p></article>
+        <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="check"></span><h3 class="tg-point__title">Prefer delegated signing</h3><p class="tg-point__text">The better pattern: the app shows a request, your wallet or the Farcaster app approves the key, and the phrase never leaves it. In fameboy that's <b>approve on your phone</b>. If you type a phrase, do it on your own computer.</p></article>
         <article class="tg-point"><span class="tg-icon-tile" aria-hidden="true" data-tg-icon="terminal"></span><h3 class="tg-point__title">Not through an AI's shell</h3><p class="tg-point__text">We learned this one live: run through a coding assistant's shell, the account script's output, phrase included, landed in the chat transcript. Run phrase commands in your own terminal.</p></article>
       </div>
     </section>
@@ -405,8 +408,8 @@ done. App key saved to /Users/sdf/.fc-client/appkey.json (mode 600). Your seed p
       <div class="fc-spec">
         <div class="tg-spec__row"><h3><code>volumes size limit exceeded</code></h3><p>Your account's total volume cap is below the requested size. New accounts get 1024 GB and can't ask for more yet. Keep <code>VOLUME_GB</code> at 1000 or less.</p></div>
         <div class="tg-spec__row"><h3><code>error during placement (resource_unavailable)</code></h3><p>That server type is sold out in that location. Command 0 moves on by itself, ending with cpx41. If you pinned <code>TYPE</code> or <code>LOCATION</code>, try another, or wait a few minutes.</p></div>
-        <div class="tg-spec__row"><h3><code>clearcast</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>clearcast</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
-        <div class="tg-spec__row"><h3><code>clearcast login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
+        <div class="tg-spec__row"><h3><code>fameboy</code> prints its help instead of running</h3><p>A pasted command can carry invisible characters. <code>fameboy</code> now says <code>unknown command "username​" (it contains hidden characters…)</code>. Retype the command.</p></div>
+        <div class="tg-spec__row"><h3><code>fameboy login</code> spends minutes on "checking indexes 1-9"</h3><p>The phrase's first address owns no account, and your node scans all 3.3 million registrations before answering "not found", 30–40 s each time. Check it's the right phrase.</p></div>
         <div class="tg-spec__row"><h3>"not visible on your node yet" after a write</h3><p>Read nodes relay and forget. If the gossip was lost, the message is gone: run the command again. We haven't lost one yet.</p></div>
         <div class="tg-spec__row"><h3><code>fc-node status</code>: "isn't answering and setup isn't running"</h3><p>Setup stopped partway. Run command 1 again: finished shards are skipped and a partial one is redone.</p></div>
       </div>

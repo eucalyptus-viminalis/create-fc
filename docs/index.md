@@ -2,7 +2,7 @@
 layout: home
 hero:
   name: create-fc docs
-  tagline: Run your own Farcaster node and the clearcast client, explained.
+  tagline: Run your own Farcaster node and the fameboy client, explained.
   actions:
     - theme: brand
       text: Share your node with friends

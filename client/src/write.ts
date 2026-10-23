@@ -1,5 +1,6 @@
 // Writes: cast, delete, follow, unfollow, like, recast. Each is a protobuf
-// message signed by your app key and POSTed to your own node, which checks it
+// message signed by your app key (an Author: the key file, or on a hosted
+// fameboy your browser) and POSTed to your own node, which checks it
 // and relays it to the validators. A read node keeps no mempool, so "accepted"
 // only means "valid and relayed". We confirm every write by reading it back.
 
@@ -8,17 +9,20 @@ import {
   FarcasterNetwork,
   Message as MessageProto,
   ReactionType,
-  makeCastAdd,
-  makeCastRemove,
-  makeLinkAdd,
-  makeLinkRemove,
-  makeReactionAdd,
-  makeReactionRemove,
+  SignatureScheme,
+  makeCastAddData,
+  makeCastRemoveData,
+  makeLinkAddData,
+  makeLinkRemoveData,
+  makeMessageHash,
+  makeMessageWithSignature,
+  makeReactionAddData,
+  makeReactionRemoveData,
   type HubAsyncResult,
-  type Message as ProtoMessage,
+  type MessageData,
 } from "@farcaster/core";
 import { bytesToHex, hexToBytes, type Hex } from "viem";
-import { appSigner, loadKey, type AppKey } from "./keys.ts";
+import { localAuthor, type Author } from "./keys.ts";
 import { NodeError, get, post, submitUntil, type Message, type Page } from "./node.ts";
 import { resolveFid } from "./read.ts";
 
@@ -26,8 +30,8 @@ const MAX_CAST_BYTES = 320; // 1,024 for Pro accounts
 
 export type CastRef = { fid: number; hash: Hex };
 
-// "dwr/0x35c7b588" -> the full cast id. The short hash is what `clearcast casts` and
-// `clearcast feed` print; we find the full one among that user's recent casts.
+// "dwr/0x35c7b588" -> the full cast id. The short hash is what `fameboy casts` and
+// `fameboy feed` print; we find the full one among that user's recent casts.
 export async function resolveCast(ref: string): Promise<CastRef> {
   const m = ref.match(/^@?([^/]+)\/(0x[0-9a-fA-F]+)$/);
   if (!m) throw new NodeError(`"${ref}" isn't a cast reference. Use user/hash, e.g. dwr/0x35c7b588`);
@@ -68,10 +72,16 @@ async function extractMentions(text: string) {
   return { text: out, mentions, mentionsPositions };
 }
 
-// Build and sign a message. With dryRun, only run the node's stateless checks.
-async function build(built: HubAsyncResult<ProtoMessage>, dryRun = false) {
-  const r = await built;
-  if (r.isErr()) throw new NodeError(`couldn't build the message: ${r.error.message}`);
+// Build a message, have its author sign the hash, and encode it. With dryRun,
+// only run the node's stateless checks.
+export async function build(by: Author, made: HubAsyncResult<MessageData>, dryRun = false) {
+  const data = await made;
+  if (data.isErr()) throw new NodeError(`couldn't build the message: ${data.error.message}`);
+  const hashed = await makeMessageHash(data.value);
+  if (hashed.isErr()) throw new NodeError(`couldn't hash the message: ${hashed.error.message}`);
+  const signature = hexToBytes(await by.sign(hashed.value));
+  const r = await makeMessageWithSignature(data.value, { signature, signatureScheme: SignatureScheme.ED25519, signer: hexToBytes(by.publicKey) });
+  if (r.isErr()) throw new NodeError(`that signature doesn't fit the message: ${r.error.message}`);
   const bytes = MessageProto.encode(r.value).finish();
   if (dryRun) {
     const { valid } = await post<{ valid: boolean }>("/v1/validateMessage", bytes);
@@ -84,15 +94,16 @@ async function build(built: HubAsyncResult<ProtoMessage>, dryRun = false) {
 const sendAndConfirm = (bytes: Uint8Array, read: () => Promise<unknown>, wantPresent = true) =>
   submitUntil(bytes, () => read().then(() => wantPresent, () => !wantPresent));
 
-const opts = (key: AppKey) => ({ fid: key.fid, network: FarcasterNetwork.MAINNET });
+const opts = (by: Author) => ({ fid: by.fid, network: FarcasterNetwork.MAINNET });
 
-export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string[]; dryRun?: boolean } = {}) {
-  const key = await loadKey();
+export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string[]; dryRun?: boolean } = {}, by?: Author) {
+  const key = by ?? (await localAuthor());
   const body = await extractMentions(text);
   const bytes = new TextEncoder().encode(body.text).length;
   if (bytes > MAX_CAST_BYTES) throw new NodeError(`that's ${bytes} bytes; casts max out at ${MAX_CAST_BYTES}`);
   const { hash, bytes: msg } = await build(
-    makeCastAdd(
+    key,
+    makeCastAddData(
       {
         ...body,
         type: CastType.CAST,
@@ -101,7 +112,6 @@ export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string
         parentCastId: o.replyTo ? { fid: o.replyTo.fid, hash: hexToBytes(o.replyTo.hash) } : undefined,
       },
       opts(key),
-      appSigner(key),
     ),
     o.dryRun,
   );
@@ -110,26 +120,26 @@ export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string
   return { hash, landed, text: body.text, mentions: body.mentions };
 }
 
-export async function deleteCast(hash: Hex) {
-  const key = await loadKey();
-  const { bytes } = await build(makeCastRemove({ targetHash: hexToBytes(hash) }, opts(key), appSigner(key)));
+export async function deleteCast(hash: Hex, by?: Author) {
+  const key = by ?? (await localAuthor());
+  const { bytes } = await build(key, makeCastRemoveData({ targetHash: hexToBytes(hash) }, opts(key)));
   const landed = await sendAndConfirm(bytes, () => get<Message>("/v1/castById", { fid: key.fid, hash }), false);
   return { landed };
 }
 
-export async function follow(targetFid: number, on = true) {
-  const key = await loadKey();
+export async function follow(targetFid: number, on = true, by?: Author) {
+  const key = by ?? (await localAuthor());
   const body = { type: "follow", targetFid };
-  const { bytes } = await build(on ? makeLinkAdd(body, opts(key), appSigner(key)) : makeLinkRemove(body, opts(key), appSigner(key)));
+  const { bytes } = await build(key, on ? makeLinkAddData(body, opts(key)) : makeLinkRemoveData(body, opts(key)));
   const landed = await sendAndConfirm(bytes, () => get<Message>("/v1/linkById", { fid: key.fid, target_fid: targetFid, link_type: "follow" }), on);
   return { landed };
 }
 
-export async function react(kind: "like" | "recast", target: CastRef, on = true) {
-  const key = await loadKey();
+export async function react(kind: "like" | "recast", target: CastRef, on = true, by?: Author) {
+  const key = by ?? (await localAuthor());
   const type = kind === "like" ? ReactionType.LIKE : ReactionType.RECAST;
   const body = { type, targetCastId: { fid: target.fid, hash: hexToBytes(target.hash) } };
-  const { bytes } = await build(on ? makeReactionAdd(body, opts(key), appSigner(key)) : makeReactionRemove(body, opts(key), appSigner(key)));
+  const { bytes } = await build(key, on ? makeReactionAddData(body, opts(key)) : makeReactionRemoveData(body, opts(key)));
   const landed = await sendAndConfirm(
     bytes,
     () =>

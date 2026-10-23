@@ -11,7 +11,7 @@ The Network Decentralization Authority's register: where the microsite's members
 `POST /apply` takes JSON:
 
 ```json
-{ "contact": "1234", "name": "@tealcast", "signature": "Ada Operator", "certify": { "sync": true, "cast": true }, "bulletins": false }
+{ "contact": "1234", "name": "@fameboyteal", "signature": "Ada Operator", "certify": { "sync": true, "cast": true }, "bulletins": false }
 ```
 
 `contact` is an FID or an e-mail address. It is stored in D1 and never shown anywhere. Member pages and cards show only the name, number, enrolled date and signature.

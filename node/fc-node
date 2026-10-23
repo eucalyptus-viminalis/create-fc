@@ -3,9 +3,14 @@
 #   fc-node status                 setup progress, then how far behind the network it is
 #   fc-node logs                   follow the setup log (Ctrl-C to stop; the node keeps going)
 #   fc-node app-account [show|remove]
-#                                  let people sign in to clearcast here by approving on
+#                                  let people sign in to fameboy here by approving on
 #                                  their phone: saves an account's custody key on this server
-#   fc-node invite [note]          make an invite code for a friend (phone sign-in needs one)
+#   fc-node client [domain|sslip|off]
+#                                  host fameboy here for people who don't run their own:
+#                                  https://fameboy.<ip>.sslip.io, or your own domain
+#   fc-node signin [open|invite]   who can sign in by phone: anyone (open, the default)
+#                                  or only people with an invite code
+#   fc-node invite [note]          make an invite code for a friend
 #   fc-node invite list | revoke <code>
 set -uo pipefail
 LOG=/var/log/fc-node-setup.log
@@ -21,6 +26,10 @@ case "${1:-status}" in
       else awk -v w="$worst" 'BEGIN { printf "catching up: %.1f h behind, gaining about 4 s per second (~%.1f h to go).\n", w/3600, w/4/3600 }'; fi
       if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
       else echo "companion: not running (re-run command 1 to install it)"; fi
+      if [ -f /var/lib/fc-fameboy/url ]; then
+        if docker ps --format '{{.Names}}' | grep -qx fc-fameboy; then echo "fameboy: hosted at $(cat /var/lib/fc-fameboy/url)"
+        else echo "fameboy: set up but not running (fc-node client to restart it; docker logs fc-fameboy)"; fi
+      fi
     elif systemctl is-active --quiet fc-node-setup; then
       echo "setup running. Latest:"
       grep -E "shard [0-9]|setup|loaded" "$LOG" | tail -n 2 | sed 's/^/  /'
@@ -39,6 +48,28 @@ case "${1:-status}" in
       node:22-alpine node /app/app-account.mjs "$@" || exit 1
     f=/var/lib/fc-companion/app-account.json
     [ -f "$f" ] && { chown 1000:1000 "$f"; chmod 600 "$f"; }
+    # The app account names this node's hosted fameboy and its address.
+    case "${1:-}" in show|remove) ;; *)
+      if [ -f /var/lib/fc-fameboy/url ]; then
+        echo "fameboy is hosted at $(cat /var/lib/fc-fameboy/url). Run fc-node client to move it to an address with the new name."
+      else
+        echo "Host fameboy for people who don't run their own: fc-node client"
+      fi ;;
+    esac
+    ;;
+  client) shift; exec fc-fameboy-install "$@" ;;
+  signin)
+    f=/var/lib/fc-companion/signin
+    case "${2:-}" in
+      open) rm -f "$f"; echo "Sign-in is open: anyone can sign in by approving on their phone." ;;
+      invite)
+        printf 'invite\n' > "$f"; chown 1000:1000 "$f"
+        echo "Sign-in needs an invite code now. Make one: fc-node invite"
+        echo "People already signed in stay signed in." ;;
+      "") if [ "$(cat "$f" 2>/dev/null)" = invite ]; then echo "invite: only people with a code (fc-node invite) can sign in"
+          else echo "open: anyone can sign in by approving on their phone (fc-node signin invite to change)"; fi ;;
+      *) echo "usage: fc-node signin [open|invite]"; exit 1 ;;
+    esac
     ;;
   invite)
     f=/var/lib/fc-companion/invites
@@ -58,8 +89,9 @@ case "${1:-status}" in
         printf '%s\t%s\t%s\n' "$code" "$(date -u +%F)" "$note" >> "$f"
         echo "Invite code: ${code:0:4}-${code:4}"
         echo "Friends type it when they sign in with their phone."
+        [ "$(cat /var/lib/fc-companion/signin 2>/dev/null)" = invite ] || echo "Sign-in is open, so nobody needs a code yet. To require one: fc-node signin invite"
         [ -f /var/lib/fc-companion/app-account.json ] || echo "Phone sign-in is off until you run: fc-node app-account" ;;
     esac
     ;;
-  *) echo "usage: fc-node status | logs | app-account [show|remove] | invite [note|list|revoke <code>]"; exit 1 ;;
+  *) echo "usage: fc-node status | logs | app-account [show|remove] | client [domain|sslip|off] | signin [open|invite] | invite [note|list|revoke <code>]"; exit 1 ;;
 esac

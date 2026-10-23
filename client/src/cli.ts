@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// clearcast: a minimal Farcaster client for your own Snapchain node.
+// fameboy: a minimal Farcaster client for your own Snapchain node.
 import { parseArgs } from "node:util";
 import { NODE, NodeError, get, toDate, type Message } from "./node.ts";
 import { castsByFid, feed, profile, resolveFid, usernames } from "./read.ts";
@@ -13,35 +13,42 @@ import { newAccount } from "./new-account.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
 import { KEY_FILE, checkPhrase, findCustody, forgetKey, loadKey, normalizePhrase, promptPhrase, registerAppKey, revokeKey } from "./keys.ts";
 
-const HELP = `clearcast: a Farcaster client that talks only to your own node (${NODE})
+const HELP = `fameboy: a Farcaster client that talks only to your own node (${NODE})
 
 Usage:
-  clearcast ui [--port 4747]           Open the client in your browser
-  clearcast status                     Is the node in sync?
-  clearcast new-account [--recovery 0x..] [--dry-run]
+  fameboy ui [--port 4747]           Open the client in your browser
+  fameboy serve --origin https://<host> [--port 4748]
+                                       Host fameboy for other people (ADR 003): their
+                                       keys stay in their browsers. Listens on 127.0.0.1;
+                                       put a proxy like Caddy in front for https
+  fameboy status                     Is the node in sync?
+  fameboy new-account [--recovery 0x..] [--dry-run]
                                        Register a new Farcaster account (~$0.20 of ETH
                                        on Optimism), for you or as the app account
-  clearcast login [--dry-run]          Import a seed phrase once, register an app key
-  clearcast whoami                     Show the saved app key and its status
-  clearcast logout                     Sign out: delete the app key from this computer
-  clearcast revoke [--dry-run]         Revoke this computer's app key on Farcaster, then
+  fameboy login [--dry-run]          Import a seed phrase once, register an app key
+  fameboy whoami                     Show the saved app key and its status
+  fameboy logout                     Sign out: delete the app key from this computer
+  fameboy revoke [--dry-run]         Revoke this computer's app key on Farcaster, then
                                        sign out. The key signs its own removal: no seed phrase
-  clearcast app-account [--sponsor]    Set up the account that lets people sign in to
-                                       clearcast ui by approving in the Farcaster app
-  clearcast profile [--display "Name"] [--pfp https://…] [--bio "…"]
+  fameboy app-account [--sponsor]    Set up the account that lets people sign in to
+                                       fameboy ui by approving in the Farcaster app
+  fameboy profile [--display "Name"] [--pfp https://…] [--bio "…"]
                                        Show or change your display name, picture and bio
-  clearcast username <name> [--dry-run]  Claim an fname and set it as your username
+  fameboy username <name> [--replace] [--dry-run]
+                                       Claim an fname and set it as your username.
+                                       --replace gives up the name the account has now
+                                       first (names can change about once every 28 days)
                                        (asks for the seed phrase, like login)
-  clearcast cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
+  fameboy cast "<text>" [--reply user/hash] [--embed url] [--dry-run]
                                        Post a cast. @names become mentions.
-  clearcast delete <hash>              Delete one of your casts
-  clearcast follow | unfollow <name>   Follow or unfollow someone
-  clearcast like | unlike <user/hash>  Like a cast, e.g. clearcast like dwr/0x35c7b588
-  clearcast recast | unrecast <user/hash>
-  clearcast user <name|fid>            Show a profile
-  clearcast casts <name|fid> [-n 20]   A user's latest casts
-  clearcast feed [-n 30]               Your feed: latest casts from everyone you follow
-  clearcast apps <name|fid>            Which apps hold keys for this account
+  fameboy delete <hash>              Delete one of your casts
+  fameboy follow | unfollow <name>   Follow or unfollow someone
+  fameboy like | unlike <user/hash>  Like a cast, e.g. fameboy like dwr/0x35c7b588
+  fameboy recast | unrecast <user/hash>
+  fameboy user <name|fid>            Show a profile
+  fameboy casts <name|fid> [-n 20]   A user's latest casts
+  fameboy feed [-n 30]               Your feed: latest casts from everyone you follow
+  fameboy apps <name|fid>            Which apps hold keys for this account
 
 Options:
   -n, --limit <n>    How many casts to show
@@ -96,8 +103,10 @@ async function main() {
       "not-app": { type: "string", multiple: true },
       help: { type: "boolean", short: "h" },
       port: { type: "string" },
+      origin: { type: "string" },
       sponsor: { type: "boolean" },
       recovery: { type: "string" },
+      replace: { type: "boolean" },
       display: { type: "string" },
       pfp: { type: "string" },
       bio: { type: "string" },
@@ -106,7 +115,7 @@ async function main() {
   const [cmd, arg] = positionals;
   const limit = values.limit ? Number(values.limit) : undefined;
   const need = () => {
-    if (!arg) throw new NodeError(`clearcast ${cmd} needs a username or fid`);
+    if (!arg) throw new NodeError(`fameboy ${cmd} needs a username or fid`);
     return resolveFid(arg);
   };
 
@@ -122,22 +131,29 @@ async function main() {
     }
     case "ui": {
       const url = await startUi(Number(values.port ?? 4747), values.port !== undefined);
-      console.log(`clearcast is running at ${url}  (your node: ${NODE})`);
+      console.log(`fameboy is running at ${url}  (your node: ${NODE})`);
       console.log("It only listens on this computer. Ctrl-C to stop.");
       const { spawn } = await import("node:child_process");
       const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
       spawn(opener, [url], { stdio: "ignore", detached: true }).on("error", () => {}).unref();
       return new Promise<void>(() => {}); // run until Ctrl-C
     }
+    case "serve": {
+      if (!values.origin || !/^https?:\/\/[^/]+\/?$/.test(values.origin)) throw new NodeError("fameboy serve needs --origin, the address people open, e.g. --origin https://fameboy.example.com");
+      const url = await startUi(Number(values.port ?? 4748), values.port !== undefined, { hosted: true, origin: values.origin });
+      console.log(`hosted fameboy is listening on 127.0.0.1 for ${url}  (node: ${NODE})`);
+      console.log("Each person signs in with their phone; keys stay in their browsers. Ctrl-C to stop.");
+      return new Promise<void>(() => {});
+    }
     case "login":
       return login(Boolean(values["dry-run"]));
     case "username": {
-      if (!arg) throw new NodeError("clearcast username needs a name: clearcast username alice");
+      if (!arg) throw new NodeError("fameboy username needs a name: fameboy username alice");
       console.error(WARNING);
       const phrase = normalizePhrase(await promptPhrase("seed phrase (hidden): "));
       checkPhrase(phrase);
       const custody = await findCustody(phrase, (line) => console.error(line));
-      return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], log: (l) => console.error(l) });
+      return setUsername(arg.replace(/^@/, "").toLowerCase(), custody, { dryRun: values["dry-run"], replace: values.replace, log: (l) => console.error(l) });
     }
     case "new-account":
       return newAccount({ dryRun: values["dry-run"], recovery: values.recovery });
@@ -152,7 +168,7 @@ async function main() {
       } finally {
         rl?.close();
       }
-      console.log(`\nclearcast ui now offers "Approve in the Farcaster app".${values.sponsor ? " Sign-ins are sponsored: the app account needs warps in the Farcaster app." : ""}`);
+      console.log(`\nfameboy ui now offers "Approve in the Farcaster app".${values.sponsor ? " Sign-ins are sponsored: the app account needs warps in the Farcaster app." : ""}`);
       break;
     }
     case "profile": {
@@ -168,7 +184,7 @@ async function main() {
       if (!(await forgetKey())) return console.log("Already signed out: no app key on this computer.");
       console.log(`Signed out${key ? ` of fid ${key.fid}` : ""}: deleted ${KEY_FILE}.`);
       console.log("The key stays registered on Farcaster until it expires, but nobody else has a copy.");
-      console.log("To sign in again: clearcast login");
+      console.log("To sign in again: fameboy login");
       break;
     }
     case "revoke": {
@@ -177,7 +193,7 @@ async function main() {
       if (values["dry-run"]) break;
       await forgetKey();
       console.log(`${r.state === "revoked" ? "Revoked" : "Nothing to revoke"}: fid ${key.fid}'s key ${key.publicKey.slice(0, 10)}…, and deleted ${KEY_FILE}.`);
-      console.log("To sign in again: clearcast login");
+      console.log("To sign in again: fameboy login");
       break;
     }
     case "whoami": {
@@ -194,13 +210,13 @@ async function main() {
         // A node that's still catching up hasn't seen recent keys yet.
         const info = await get<Info>("/v1/info").catch(() => undefined);
         const lag = info ? Math.max(...info.shardInfos.map((s) => s.blockDelay)) : 0;
-        if (lag > 60) console.log(`status    not on your node yet: it's ${(lag / 3600).toFixed(1)} h behind, and this key may be newer than that. Check again once clearcast status says "in sync".`);
-        else console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: clearcast login");
+        if (lag > 60) console.log(`status    not on your node yet: it's ${(lag / 3600).toFixed(1)} h behind, and this key may be newer than that. Check again once fameboy status says "in sync".`);
+        else console.log("status    NOT FOUND on your node: it expired, was revoked, or never landed. Run: fameboy login");
       }
       break;
     }
     case "cast": {
-      if (!arg) throw new NodeError('clearcast cast needs some text: clearcast cast "hello"');
+      if (!arg) throw new NodeError('fameboy cast needs some text: fameboy cast "hello"');
       const replyTo = values.reply ? await resolveCast(values.reply) : undefined;
       const r = await cast(arg, { replyTo, embeds: values.embed, dryRun: values["dry-run"] });
       if (values["dry-run"]) {
@@ -211,7 +227,7 @@ async function main() {
       break;
     }
     case "delete": {
-      if (!arg?.startsWith("0x")) throw new NodeError("clearcast delete needs the cast's hash (0x...)");
+      if (!arg?.startsWith("0x")) throw new NodeError("fameboy delete needs the cast's hash (0x...)");
       const hash = arg.length === 42 ? (arg as `0x${string}`) : (await resolveCast(`${(await loadKey()).fid}/${arg}`)).hash;
       const r = await deleteCast(hash);
       console.log(r.landed ? `deleted ${hash}` : `sent the delete for ${hash}; the cast is still on your node after 60 s`);
@@ -228,7 +244,7 @@ async function main() {
     case "unlike":
     case "recast":
     case "unrecast": {
-      if (!arg) throw new NodeError(`clearcast ${cmd} needs a cast: user/hash`);
+      if (!arg) throw new NodeError(`fameboy ${cmd} needs a cast: user/hash`);
       const target = await resolveCast(arg);
       const r = await react(cmd.endsWith("like") ? "like" : "recast", target, !cmd.startsWith("un"));
       const done = { like: "liked", unlike: "unliked", recast: "recasted", unrecast: "unrecasted" }[cmd];
@@ -255,7 +271,7 @@ async function main() {
       break;
     }
     case "feed": {
-      if (arg && arg !== "me") throw new NodeError(`clearcast feed shows your own feed. For someone else's casts: clearcast casts ${arg}`);
+      if (arg && arg !== "me") throw new NodeError(`fameboy feed shows your own feed. For someone else's casts: fameboy casts ${arg}`);
       const fid = (await loadKey()).fid;
       const filter = { include: await resolveApps(values.app), exclude: await resolveApps(values["not-app"]) };
       const filtering = Boolean(filter.include || filter.exclude);
@@ -285,7 +301,7 @@ async function main() {
         // Show pasted invisible characters (non-breaking or zero-width
         // spaces), e.g. "username\u200b", which otherwise look identical.
         const shown = cmd.replace(/[^\x21-\x7e]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
-        console.error(`clearcast: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
+        console.error(`fameboy: unknown command "${shown}"${shown !== cmd ? " (it contains hidden characters; retype it instead of pasting)" : ""}`);
         process.exitCode = 1;
       }
   }
@@ -307,7 +323,7 @@ tutorial: powerful, legitimate, and unforgiving.
     (delegated signer authorization), so the phrase never leaves the wallet.
 
 This client uses the phrase only in memory, to sign what this command needs
-(a KEY_ADD, and for clearcast username, the name claim). It never stores, prints or
+(a KEY_ADD, and for fameboy username, the name claim). It never stores, prints or
 sends the phrase. Afterwards it posts with its own app key, which can't
 transfer the account or add other keys.
 `;
@@ -315,17 +331,17 @@ transfer the account or add other keys.
 const APP_ACCOUNT_WARNING = `
 \x1b[1mThis saves an account's custody key on this computer. Read this first.\x1b[0m
 
-To let people sign in by approving in the Farcaster app, clearcast needs an
+To let people sign in by approving in the Farcaster app, fameboy needs an
 "app account": a Farcaster account that vouches for every key it asks people
 to approve. Its custody key signs each request, so it's saved here
 (mode 600). Anyone who copies that file controls the app account.
 
   - Use an account made for this, never your personal one.
-    clearcast new-account makes one.
+    fameboy new-account makes one.
   - People who sign in see this account's name as the app asking for access,
     and their casts show "via" it. Without a username, setup suggests a free
-    @<color>cast name, like @tealcast. Keep it or type your own.
-    One shared @clearcast can't work: every clearcast would need its key.
+    @fameboy<color> name, like @fameboyteal. Keep it or type your own.
+    There's no shared app account: every copy of fameboy would need its key.
 `;
 
 async function login(dryRun: boolean) {
@@ -342,6 +358,6 @@ async function login(dryRun: boolean) {
 }
 
 main().catch((e) => {
-  console.error(e instanceof NodeError ? `clearcast: ${e.message}` : e);
+  console.error(e instanceof NodeError ? `fameboy: ${e.message}` : e);
   process.exitCode = 1;
 });

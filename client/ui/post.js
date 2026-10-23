@@ -1,4 +1,4 @@
-// clearcast post mode: write a cast, @-mention people, attach up to two images.
+// fameboy post mode: write a cast, @-mention people, attach up to two images.
 // Images upload to your own node (fc-companion) and the cast links to them.
 // The counter counts bytes, the way Farcaster does: mentions are cut out of
 // the text before it's sent, so they're free.
@@ -196,19 +196,25 @@ async function shrink(file) {
   return blob && blob.size < file.size ? blob : file;
 }
 
-function upload(blob, att) {
+async function upload(blob, att) {
+  // Uploading needs a presence heartbeat, which names this browser.
+  const device = await mine.device((await kit.me())?.fid);
   return new Promise((resolve, reject) => {
     const x = new XMLHttpRequest();
     x.open("POST", "/api/images");
-    x.setRequestHeader("x-clearcast-token", kit.TOKEN);
+    x.setRequestHeader("x-fameboy-token", kit.TOKEN);
+    x.setRequestHeader("x-fameboy-device", device.id);
+    x.setRequestHeader("x-fameboy-status", device.status);
     x.setRequestHeader("content-type", "application/octet-stream");
     x.upload.onprogress = (e) => { if (e.lengthComputable) { att.progress = Math.min(9, Math.floor((e.loaded / e.total) * 10)); renderAtts(); } };
     x.onload = () => {
       let json = {};
       try { json = JSON.parse(x.responseText); } catch {}
-      x.status === 200 ? resolve(json.data) : reject(new Error(json.error ?? `upload failed (${x.status})`));
+      if (x.status !== 200) return reject(new Error(json.error ?? `upload failed (${x.status})`));
+      // Hosted: the upload waits for this browser to sign it (mine.js).
+      json.sign ? mine.key.answer(json).then((j) => resolve(j.data), reject) : resolve(json.data);
     };
-    x.onerror = () => reject(new Error("upload failed: is clearcast still running?"));
+    x.onerror = () => reject(new Error("upload failed: is fameboy still running?"));
     x.send(blob);
   });
 }
