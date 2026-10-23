@@ -10,7 +10,8 @@
     "brand:build": "node brand/scripts/build.mjs",
     "avatars:build": "node client/logo/scripts/build-avatars.cjs",
     "site:dev": "vite site --port 5173 --strictPort --open /next/",
-    "seed-card:render": "node brand/scripts/render-seed-card.mjs"
+    "seed-card:render": "node brand/scripts/render-seed-card.mjs",
+    "nav-thumbs:render": "node brand/scripts/render-nav-thumbs.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
