@@ -33,7 +33,7 @@ if (nav) {
     });
     // the hit layer covers the pile and every row, out past the widest name
     Object.assign(hit.style, { width: `${Math.min(innerWidth, right + 40)}px`, height: `${rows.at(-1).mid + H / 2 + 30}px` });
-    nav.style.setProperty('--dn-more-x', `${rows.at(-1).x}px`);
+    nav.style.setProperty('--dn-more-x', `${rows.at(-1).x + 20}px`);
     nav.style.setProperty('--dn-more-y', `${rows.at(-1).mid + H / 2 + 22}px`);
     nav.style.setProperty('--dn-n', n);
     order();
