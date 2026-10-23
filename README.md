@@ -2,6 +2,8 @@
 
 Run your own Farcaster: a Snapchain read node you control, and a small client that reads from it and posts through it. Three commands, no API keys from anyone. You furnish the compute.
 
+Website: [createfc.org](https://createfc.org) · Docs: [createfc.org/docs](https://createfc.org/docs/)
+
 ## Quickstart
 
 You need: a [Hetzner Cloud](https://console.hetzner.com) project with an API token, the [`hcloud` CLI](https://github.com/hetznercloud/cli) logged in to it (`hcloud context create fc-node`), an SSH key, and Node.js 22.18+.
@@ -26,7 +28,7 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 
 Then `fameboy ui` opens the client in your browser, on a home screen: your node's health, how busy the network is, what you missed since you last looked, and who else is on your node right now. It also shows who can post as you, which apps your feed comes from (hide the big one in a click), and the exact node calls behind every view. It's your own account, so it starts with a sign-in page: approve in the Farcaster app by scanning a QR code (once an app account is set up, see [Signing in](#signing-in)), or type a seed phrase, which stays on this computer. `fameboy login` does the same in a terminal. Prefer a terminal? `fameboy feed`, `fameboy casts <name>`, and `fameboy logout` to sign out.
 
-**Just want to try the client?** Point it at our demo node, up until 24 October, then run `fameboy ui`:
+**Just want to try the client?** Open [demo.createfc.org](https://demo.createfc.org): @fameboyclear, the copy we host on our own node. Sign in by approving in the Farcaster app; nothing to install. Or install fameboy on your computer, pointed at that same node, then run `fameboy ui`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381
@@ -87,7 +89,7 @@ Each person's app key is made in their browser and never leaves it; every write 
 | `provision/` | Command 0: Hetzner server, volume and firewall, and `hetzner-delete.sh` to remove them |
 | `node/` | Command 1: Docker, a streamed snapshot load that peaks at 556 GB instead of ~1.5 TB, the official `snapchain.sh`, and `fc-node status` |
 | `client/` | Command 2: `fameboy`, a browser client (`fameboy ui`) and CLI in TypeScript with no build step. Reads, writes, gasless app keys, usernames, and filtering by the app that posted |
-| `docs/` | Costs and design decisions |
+| `docs/` | The docs at [createfc.org/docs](https://createfc.org/docs/): how each command works, guides, costs. Design decisions are in `docs/adr/` |
 | `AGENTS.md` | Step-by-step instructions for an AI agent running the setup for you |
 
 ## Help test it

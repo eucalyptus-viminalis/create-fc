@@ -107,7 +107,7 @@
           </div>
           <form class="coupon" onsubmit="return false">
             <h2>Trial coupon · act today!</h2>
-            <p class="to">Paste this in your own terminal. About $1 pays for an afternoon to try it.*</p>
+            <p class="to">Paste this in your own terminal. About $1.30 to sync it and try it.*</p>
             <div class="cmd" data-cmd="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash">curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash<span class="hint">One per customer</span><span class="cmd-label" aria-hidden="true">Copy Command to Clipboard</span></div>
             <p class="yes"><span class="box" aria-hidden="true"></span>YES! I want my own node. I'll pay by the hour and quit anytime.</p>
             <!-- Hover the coupon (or focus this) to copy; a click anywhere on the coupon copies. -->
@@ -115,7 +115,7 @@
           </form>
         </div>
         <div class="foot">
-          <p class="fine">*Hetzner bills about $0.16 an hour for the server and its 1 TB disk, until you delete them: about $3.93 a day. About $1 to sync and try. One command stops the billing. If the usual server is sold out, the fallback costs about $0.20 an hour. Full details in <a href="/docs/Costs">the docs</a>.</p>
+          <p class="fine">*Hetzner bills about $0.16 an hour for the server and its 1 TB disk, until you delete them: about $4 a day. About $1.30 to sync and try. One command stops the billing. If the usual server is sold out, the fallback costs about $0.20 an hour. Full details in <a href="/docs/Costs">the docs</a>.</p>
           <span class="pg">Page 189</span>
         </div>
       </div>
@@ -235,7 +235,7 @@
         <div>
           <h4>Not included <em>(you supply these)</em></h4>
           <label class="item"><input type="checkbox" data-k="n1"><span class="box">( )</span><span class="t">A <a href="https://accounts.hetzner.com/signUp">Hetzner Cloud</a> account and <a href="https://docs.hetzner.com/cloud/api/getting-started/generating-api-token">API token</a><small>Read &amp; Write. New accounts may need ID verification first.</small></span></label>
-          <label class="item"><input type="checkbox" data-k="n2"><span class="box">( )</span><span class="t">Debit/credit card with $1 to sync and try, $3.99 a day to keep it running*</span></label>
+          <label class="item"><input type="checkbox" data-k="n2"><span class="box">( )</span><span class="t">Debit/credit card with $1.30 to sync and try, about $4 a day to keep it running*</span></label>
           <label class="item"><input type="checkbox" data-k="n3"><span class="box">( )</span><span class="t">A Farcaster account, or $0.20 of ETH on Optimism to register one</span></label>
 
           <h4>Parts list <em>(what's included in the Git kit; check each part exists and look it over)</em></h4>
@@ -339,7 +339,7 @@
       <div class="cmd sub" data-title="Command 2"><pre>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<span class="ip">&lt;address&gt;</span>:3381</pre><button type="button">Copy</button></div>
       <label class="item"><input type="checkbox" data-k="c2"><span class="box">( )</span><span class="t">Open the client. It opens in your browser, on a sign-in page.<small><code>fameboy</code> not found? Open a new terminal tab.</small></span></label>
       <div class="cmd sub" data-title="fameboy ui"><pre>fameboy ui</pre><button type="button">Copy</button></div>
-      <label class="item"><input type="checkbox" data-k="c4"><span class="box">( )</span><span class="t"><i>Optional.</i> Enable signing in with the Farcaster app on your phone. Give your node an app account, once, in your own terminal. It suggests a free <code>@fameboy&lt;color&gt;</code> name, which people see when they approve.<small>Its output includes the new account's seed phrase. Never run it through an AI assistant.</small></span></label>
+      <label class="item"><input type="checkbox" data-k="c4"><span class="box">( )</span><span class="t"><i>Optional.</i> Enable signing in with the Farcaster app on your phone. Give your node an app account, once, in your own terminal. It suggests a free <code>@fameboy&lt;color&gt;</code> name, which people see when they approve.<small>It asks for that account's seed phrase. Never run it through an AI assistant.</small></span></label>
       <div class="cmd sub" data-title="App account"><pre>ssh -t root@<span class="ip">&lt;address&gt;</span> fc-node app-account</pre><button type="button">Copy</button></div>
       <label class="item"><input type="checkbox" data-k="c3"><span class="box">( )</span><span class="t">Sign in. Approve in the Farcaster app if you enabled it, or type your seed phrase on the page. It stays on your computer.</span></label>
       <p class="box-note"><b>To share your node</b>Once it has an app account, anyone can sign in through your node. To limit it to friends, run <code>ssh root@<span class="ip">&lt;address&gt;</span> fc-node signin invite</code>, then <code>fc-node invite &lt;name&gt;</code> for each friend. They type the code on the sign-in page. See <a href="/docs/guide/share-your-node">Share your node</a>, or <a href="/docs/guide/host-fameboy">Host fameboy for others</a> to give them a web address instead.</p>
@@ -649,7 +649,7 @@
       <svg class="grain" preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg>
     </div>
           <div class="show" aria-hidden="true">
-      PARTS LIST . . . . . . . . . . . . . . . . . . . . 8-1<br>Server, CX43 . . . . . . . . . . . . . . . . . . . . 8-1<br>Volume, 1000 GB . . . . . . . . . . . . . . . . . . 8-1<br>Firewall Rules . . . . . . . . . . . . . . . . . . . 8-2<br>Snapchain, Shards 0–2 . . . . . . . . . . . . . . 8-2<br>Companion Service . . . . . . . . . . . . . . . . . 8-3<br>Image Host . . . . . . . . . . . . . . . . . . . . . . . 8-3<br>Client Package fameboy . . . . . . . . . . . . . 8-4<br>App Key . . . . . . . . . . . . . . . . . . . . . . . . . 8-4<br><br>SCHEMATIC LEGENDS . . . . . . . . . . . . . . . 8-5<br>Interconnect — Schematic . . . . . . . . . . . . 8-6<br>Gossip Ports 3381–3383 . . . . . . . . . . . . . 8-7<br>Uptime Ledger . . . . . . . . . . . . . . . . . . . . 8-7<br>Shard Layout . . . . . . . . . . . . . . . . . . . . . . 8-8<br>Snapshot Loader . . . . . . . . . . . . . . . . . . . 8-9<br>Signer Requests . . . . . . . . . . . . . . . . . . . 8-9
+      PARTS LIST . . . . . . . . . . . . . . . . . . . . 8-1<br>Server, CX43 . . . . . . . . . . . . . . . . . . . . 8-1<br>Volume, 1000 GB . . . . . . . . . . . . . . . . . . 8-1<br>Firewall Rules . . . . . . . . . . . . . . . . . . . 8-2<br>Snapchain, Shards 0–2 . . . . . . . . . . . . . . 8-2<br>Companion Service . . . . . . . . . . . . . . . . . 8-3<br>Image Host . . . . . . . . . . . . . . . . . . . . . . . 8-3<br>Client Package fameboy . . . . . . . . . . . . . 8-4<br>App Key . . . . . . . . . . . . . . . . . . . . . . . . . 8-4<br><br>SCHEMATIC LEGENDS . . . . . . . . . . . . . . . 8-5<br>Interconnect — Schematic . . . . . . . . . . . . 8-6<br>Node Ports 3381–3383 . . . . . . . . . . . . . . 8-7<br>Uptime Ledger . . . . . . . . . . . . . . . . . . . . 8-7<br>Shard Layout . . . . . . . . . . . . . . . . . . . . . . 8-8<br>Snapshot Loader . . . . . . . . . . . . . . . . . . . 8-9<br>Signer Requests . . . . . . . . . . . . . . . . . . . 8-9
     </div>
           <div class="print">
             <div class="running"><span>NDA Node Operator's Service Manual</span><span>Section 7</span></div>
