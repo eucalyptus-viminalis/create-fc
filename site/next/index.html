@@ -24,11 +24,12 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=JetBrains+Mono:wght@500;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/agent/agent.css">
+<link rel="stylesheet" href="sections/kit/kit.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
@@ -146,7 +147,175 @@
     <div class="out" aria-hidden="true"></div>
   </div>
 </section>
-<section class="doc doc-pending" id="kit" aria-label="Before you start and quickstart"><div><b>Before you start + quickstart · kit assembly manual</b>Port from <code>brand/mockups/kit-manual.html</code></div></section>
+<!-- Before you start + quickstart: a kit assembly manual (sections/kit/) -->
+<section class="doc doc-kit" id="kit" aria-label="Assembly manual: before you begin, and step-by-step assembly">
+  <div class="stack">
+
+  <!-- PAGE 2: BEFORE YOU BEGIN -->
+  <article class="sheet" aria-labelledby="kit-p2">
+    <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg></div>
+    <div class="pen" aria-hidden="true"></div>
+    <div class="print">
+      <div class="runhead"><img src="../img/create-fc-lockup.svg" alt="create-fc"><span>Assembly Manual · Model NDA-1</span><span class="pg">2</span></div>
+      <div class="rule2"></div>
+
+      <h2 id="kit-p2">Before you begin<small>Prepare the required tools</small></h2>
+      <div class="intro">
+        <p>A little preparation now will make the rest of the afternoon go smoothly. Look over the lists on this page and get each item ready before you begin assembly. If something is missing, this is the time to install it or sign up for it, not halfway through the assembly.</p>
+        <p>Everything in the <a href="https://github.com/eucalyptus-viminalis/create-fc">Git kit</a> is software. It includes the scripts for renting a server, building a Snapchain node, and a demo client implementation to test with. Prepare the tools and accounts below, and the kit will take care of the rest.</p>
+      </div>
+
+      <figure>
+        <div class="tools" aria-hidden="true">
+          <div><svg viewBox="0 0 120 64"><rect x="22" y="8" width="76" height="44" fill="none" stroke="#151515" stroke-width="2"/><path d="M12 56h96l-6 6H18z" fill="none" stroke="#151515" stroke-width="2"/><path d="M32 22l8 6-8 6M46 36h16" fill="none" stroke="#151515" stroke-width="2"/></svg>Computer &amp; terminal application</div>
+          <div><svg viewBox="0 0 120 64"><circle cx="40" cy="14" r="6" fill="none" stroke="#151515" stroke-width="2"/><circle cx="40" cy="50" r="6" fill="none" stroke="#151515" stroke-width="2"/><circle cx="80" cy="26" r="6" fill="none" stroke="#151515" stroke-width="2"/><path d="M40 20v24M80 32c0 10-40 6-40 12" fill="none" stroke="#151515" stroke-width="2"/></svg>git</div>
+          <div><svg viewBox="0 0 120 64"><path d="M60 6l24 14v26L60 60 36 46V20z" fill="none" stroke="#151515" stroke-width="2"/><text x="60" y="38" text-anchor="middle" font-family="Courier Prime" font-weight="700" font-size="13" fill="#151515">22.18</text></svg>Node.js</div>
+          <div><svg viewBox="0 0 120 64"><circle cx="40" cy="32" r="14" fill="none" stroke="#151515" stroke-width="2"/><circle cx="40" cy="32" r="5" fill="none" stroke="#151515" stroke-width="2"/><path d="M54 32h46M88 32v10M96 32v8" fill="none" stroke="#151515" stroke-width="2"/></svg>SSH key</div>
+        </div>
+        <figcaption>Pictorial 1 · Tools you will need</figcaption>
+      </figure>
+
+      <div class="cols">
+        <div>
+          <h4>Tools you will need <em>(you're expected to have these already)</em></h4>
+          <label class="item"><input type="checkbox" data-k="t1"><span class="box">( )</span><span class="t">A Mac or Linux computer with a terminal application</span></label>
+          <label class="item"><input type="checkbox" data-k="t2"><span class="box">( )</span><span class="t"><code>git</code><small>Check: <code>git --version</code></small></span></label>
+          <label class="item"><input type="checkbox" data-k="t3"><span class="box">( )</span><span class="t">Node.js 22.18 or newer<small>Check: <code>node -v</code></small></span></label>
+          <label class="item"><input type="checkbox" data-k="t4"><span class="box">( )</span><span class="t">An SSH key, or we'll help you make one<small>None? <code>ssh-keygen -t ed25519</code></small></span></label>
+          <label class="item"><input type="checkbox" data-k="t5"><span class="box">( )</span><span class="t">The <code>hcloud</code> tool<small>macOS: <code>brew install hcloud</code>. Linux: see <a href="https://github.com/hetznercloud/cli">hetznercloud/cli</a></small></span></label>
+
+          <h4>Optional <em>(recommended)</em></h4>
+          <label class="item"><input type="checkbox" data-k="o1"><span class="box">( )</span><span class="t">Farcaster app installed on your phone<small>Usage: Approve client sign-in without using seed phrase</small></span></label>
+        </div>
+        <div>
+          <h4>Not included <em>(you supply these)</em></h4>
+          <label class="item"><input type="checkbox" data-k="n1"><span class="box">( )</span><span class="t">A <a href="https://accounts.hetzner.com/signUp">Hetzner Cloud</a> account and <a href="https://docs.hetzner.com/cloud/api/getting-started/generating-api-token">API token</a><small>Read &amp; Write. New accounts may need ID verification first.</small></span></label>
+          <label class="item"><input type="checkbox" data-k="n2"><span class="box">( )</span><span class="t">Debit/credit card with $1 to sync and try, $3.99 a day to keep it running*</span></label>
+          <label class="item"><input type="checkbox" data-k="n3"><span class="box">( )</span><span class="t">A Farcaster account, or $0.20 of ETH on Optimism to register one</span></label>
+
+          <h4>Parts list <em>(what's included in the Git kit; check each part exists and look it over)</em></h4>
+          <table>
+            <thead><tr><th></th><th>Key</th><th>Part</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="c"><label class="item"><input type="checkbox" data-k="p1" aria-label="hetzner.sh"><span class="box">( )</span></label></td><td class="k">0</td><td><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/provision/hetzner.sh"><code>hetzner.sh</code></a></td><td>Rents the server</td></tr>
+              <tr><td class="c"><label class="item"><input type="checkbox" data-k="p2" aria-label="setup.sh"><span class="box">( )</span></label></td><td class="k">1</td><td><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/node/setup.sh"><code>setup.sh</code></a></td><td>Builds the node, and installs <a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/node/fc-node"><code>fc-node</code></a>, the gauge you read on the server</td></tr>
+              <tr><td class="c"><label class="item"><input type="checkbox" data-k="p3" aria-label="install.sh"><span class="box">( )</span></label></td><td class="k">2</td><td><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/install.sh"><code>install.sh</code></a></td><td>Installs a demo client to test your node</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>Preparation</h3>
+      <label class="item"><input type="checkbox" data-k="r1"><span class="box">( )</span><span class="t">Create a Hetzner Cloud project, and an API token in it with Read &amp; Write access.</span></label>
+      <label class="item"><input type="checkbox" data-k="r2"><span class="box">( )</span><span class="t">In your own terminal, connect <code>hcloud</code> to the project. Paste the token when it asks.</span></label>
+      <div class="cmd sub"><pre>hcloud context create fc-node</pre><button type="button">Copy</button></div>
+      <p class="box-note caution"><b>Caution</b>Type tokens and seed phrases yourself, in your own terminal. Never paste them into a chat or an AI assistant: anyone who can read the transcript can use them.</p>
+
+      <p style="font-size:13.5px;margin-top:14px">*Hetzner bills by the hour, about $0.16 (cx43 with a 1000 GB volume), until you delete the server. If cx43 is sold out the kit uses cpx41, about $0.20 an hour.</p>
+      <div class="foot"><span>NDA-1</span><span>Before you begin</span></div>
+    </div>
+  </article>
+
+  <!-- PAGE 3: STEP-BY-STEP ASSEMBLY -->
+  <article class="sheet" aria-labelledby="kit-p3">
+    <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg></div>
+    <div class="pen" aria-hidden="true"></div>
+    <div class="print">
+      <div class="runhead"><span class="pg">3</span><span>Assembly Manual · Model NDA-1</span><img src="../img/create-fc-lockup.svg" alt=""></div>
+      <div class="rule2"></div>
+
+      <h2 id="kit-p3">Step-by-step assembly</h2>
+      <p>The assembly is three commands. Steps 0 and 2 take a minute or two at your computer. In step 1 the node builds itself on the server for 6 to 8 hours, and you need only look in on it now and then. Read each step all the way through before you do it. When you've done it, mark it in the space provided: <code>(&#10003;)</code>. Your marks are saved on this computer, so you can come back to them.</p>
+
+      <figure>
+        <svg viewBox="0 0 760 170" role="img" aria-label="Your computer runs fameboy and talks to the node on your Hetzner server; the Farcaster app on your phone can approve sign-in.">
+          <g fill="none" stroke="#151515" stroke-width="2">
+            <rect x="40" y="40" width="150" height="90"/><path d="M24 136h182l-10 12H34z"/><rect x="54" y="54" width="122" height="62"/>
+            <rect x="520" y="22" width="190" height="34"/><rect x="520" y="62" width="190" height="34"/><rect x="520" y="102" width="190" height="34"/>
+            <circle cx="540" cy="39" r="4"/><circle cx="540" cy="79" r="4"/><circle cx="540" cy="119" r="4"/>
+            <path d="M600 39h90M600 79h90M600 119h90" stroke-dasharray="4 5"/>
+            <rect x="330" y="104" width="40" height="62" rx="5"/><path d="M344 158h12"/>
+            <path d="M190 72 H520" /><path d="M510 66l10 6-10 6M200 66l-10 6 10 6"/>
+            <path d="M350 104 V80" stroke-dasharray="3 4"/>
+          </g>
+          <g font-family="Archivo" font-weight="800" font-size="13" fill="#151515" letter-spacing=".5">
+            <text x="115" y="30" text-anchor="middle">YOUR COMPUTER</text>
+            <text x="115" y="90" text-anchor="middle" font-family="Courier Prime" font-weight="700">fameboy ui</text>
+            <text x="615" y="160" text-anchor="middle">HETZNER SERVER</text>
+            <text x="615" y="14" text-anchor="middle" font-family="Courier Prime" font-weight="700">fc-node · Snapchain</text>
+            <text x="384" y="140">FARCASTER APP</text>
+            <text x="384" y="155" font-family="Tinos" font-style="italic" font-weight="400">(optional)</text>
+            <text x="355" y="62" text-anchor="middle" font-family="Courier Prime" font-weight="700">:3381</text>
+          </g>
+          <g font-family="Archivo" font-weight="900" font-size="15" fill="#151515">
+            <circle cx="22" cy="40" r="11" fill="none" stroke="#151515" stroke-width="1.6"/><text x="22" y="45" text-anchor="middle">2</text>
+            <circle cx="738" cy="22" r="11" fill="none" stroke="#151515" stroke-width="1.6"/><text x="738" y="27" text-anchor="middle">0</text>
+            <circle cx="738" cy="102" r="11" fill="none" stroke="#151515" stroke-width="1.6"/><text x="738" y="107" text-anchor="middle">1</text>
+          </g>
+        </svg>
+        <figcaption>Pictorial 2 · What goes where (circled numbers are the steps)</figcaption>
+      </figure>
+
+      <div class="stepno"><b>0</b><h3 style="flex:1;margin:10px 0">The server<span class="time">Time: 30 seconds</span></h3></div>
+      <label class="item"><input type="checkbox" data-k="a1"><span class="box">( )</span><span class="t">Rent and start the server. When the server is up and running, hourly billing will begin.</span></label>
+      <div class="cmd sub"><pre>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="a2"><span class="box">( )</span><span class="t">Save the server address. When the server is up, its address will be printed. Write it down now so you have it handy in the next steps.</span></label>
+      <div class="blank"><label for="kit-ip">Server address:</label><input id="kit-ip" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="203.0.113.7" aria-describedby="kit-iphelp"><small id="kit-iphelp" style="font-size:13px">e.g. 203.0.113.7</small></div>
+
+      <div class="stepno"><b>1</b><h3 style="flex:1;margin:10px 0">The node<span class="time">Time: 6–8 hours, unattended</span></h3></div>
+      <label class="item"><input type="checkbox" data-k="b1"><span class="box">( )</span><span class="t">Let the server boot. Give it about a minute before you continue.</span></label>
+      <label class="item"><input type="checkbox" data-k="b2"><span class="box">( )</span><span class="t">Build the Snapchain node. The command returns in a few seconds and the build carries on by itself on the server, so you can close your terminal.</span></label>
+      <div class="cmd sub"><pre>ssh -o StrictHostKeyChecking=accept-new root@<span class="ip">&lt;address&gt;</span> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | bash'</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="b3"><span class="box">( )</span><span class="t">Check on the node. About every half hour, read the gauge and mark each stage as it passes.</span></label>
+      <div class="cmd sub"><pre>ssh root@<span class="ip">&lt;address&gt;</span> fc-node status</pre><button type="button">Copy</button></div>
+      <div class="sub">
+        <label class="item"><input type="checkbox" data-k="b4"><span class="box">( )</span><span class="t"><b>Loading the snapshot.</b> About 2 hours. The gauge shows each shard's progress.</span></label>
+        <label class="item"><input type="checkbox" data-k="b5"><span class="box">( )</span><span class="t"><b>Catching up.</b> About 4–5 hours. Reads already work, but the newest casts are missing until it's done.</span></label>
+        <label class="item"><input type="checkbox" data-k="b6"><span class="box">( )</span><span class="t"><b>In sync.</b> The node is ready.</span></label>
+      </div>
+      <p class="box-note caution"><b>Caution</b>Do not run the build command again while setup is running. If the gauge says setup has stopped, run it again and it will pick up where it left off.</p>
+
+      <div class="foot"><span>Step-by-step assembly</span><span>Continued on page 4</span></div>
+    </div>
+  </article>
+
+  <!-- PAGE 4: ASSEMBLY, CONTINUED -->
+  <article class="sheet" aria-labelledby="kit-p4">
+    <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg></div>
+    <div class="pen" aria-hidden="true"></div>
+    <div class="print">
+      <div class="runhead"><img src="../img/create-fc-lockup.svg" alt=""><span>Assembly Manual · Model NDA-1</span><span class="pg">4</span></div>
+      <div class="rule2"></div>
+      <h2 id="kit-p4" class="cont">Step-by-step assembly<small>(continued from page 3)</small></h2>
+
+      <div class="stepno"><b>2</b><h3 style="flex:1;margin:10px 0">The client<span class="time">Time: 1 minute</span></h3></div>
+      <p class="sub" style="font-size:15px"><i>You can do this step as soon as the node is catching up.</i></p>
+      <label class="item"><input type="checkbox" data-k="c1"><span class="box">( )</span><span class="t">Install the demo client. This puts fameboy on your computer and points it at your node.<small>To update fameboy later, run the same command again. Your sign-in is kept.</small></span></label>
+      <div class="cmd sub"><pre>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<span class="ip">&lt;address&gt;</span>:3381</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="c2"><span class="box">( )</span><span class="t">Open the client. It opens in your browser, on a sign-in page.<small><code>fameboy</code> not found? Open a new terminal tab.</small></span></label>
+      <div class="cmd sub"><pre>fameboy ui</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="c4"><span class="box">( )</span><span class="t"><i>Optional.</i> Enable signing in with the Farcaster app on your phone. Give your node an app account, once, in your own terminal. It suggests a free <code>@fameboy&lt;color&gt;</code> name, which people see when they approve.<small>Its output includes the new account's seed phrase. Never run it through an AI assistant.</small></span></label>
+      <div class="cmd sub"><pre>ssh -t root@<span class="ip">&lt;address&gt;</span> fc-node app-account</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="c3"><span class="box">( )</span><span class="t">Sign in. Approve in the Farcaster app if you enabled it, or type your seed phrase on the page. It stays on your computer.</span></label>
+      <p class="box-note"><b>To share your node</b>Once it has an app account, anyone can sign in through your node. To limit it to friends, run <code>ssh root@<span class="ip">&lt;address&gt;</span> fc-node signin invite</code>, then <code>fc-node invite &lt;name&gt;</code> for each friend. They type the code on the sign-in page.</p>
+
+      <h3>Initial tests</h3>
+      <label class="item"><input type="checkbox" data-k="d1"><span class="box">( )</span><span class="t">Test the terminal. Run the command below. It should list the latest casts from people you follow, read straight from your node.</span></label>
+      <div class="cmd sub"><pre>fameboy feed -n 5</pre><button type="button">Copy</button></div>
+      <label class="item"><input type="checkbox" data-k="d3"><span class="box">( )</span><span class="t">Test the browser client. On the home screen, check that <b>this node</b> shows your server's address and <b>network conditions</b> shows live activity.</span></label>
+      <label class="item"><input type="checkbox" data-k="d2"><span class="box">( )</span><span class="t">Cast your first message. Go to <b>compose</b>, write a cast and send it. It is sent through your node.</span></label>
+
+      <p class="box-note"><b>To remove from service</b>When you are finished, delete the server to stop the billing. The command lists what it will delete and asks before it does. Your app key stays on your computer.</p>
+      <div class="cmd"><pre>curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash</pre><button type="button">Copy</button></div>
+
+      <div class="tally"><span id="kit-count">0 of 0 marked</span><button id="kit-reset" type="button">Erase marks</button></div>
+      <p class="proceed">This completes the assembly. Proceed to the Membership Application.</p>
+      <div class="foot"><span>Step-by-step assembly</span><span>NDA-1</span></div>
+    </div>
+  </article>
+
+  </div>
+</section>
 <section class="doc doc-pending" id="explainers" aria-label="Explainers"><div><b>Explainers · Herbert Bayer booklet</b>Port from <code>brand/mockups/concepts-bayer.html</code></div></section>
 <section class="doc doc-pending" id="costs" aria-label="Costs"><div><b>Costs · slide chart</b>Port from <code>brand/mockups/costs-sliderule.html</code></div></section>
 <section class="doc doc-pending" id="troubleshooting" aria-label="Troubleshooting"><div><b>Troubleshooting · torn-out service manual page</b>Port from <code>brand/mockups/troubleshooting-scan.html</code></div></section>
@@ -274,6 +443,7 @@
 <script type="module" src="shared/sounds.js"></script>
 <script type="module" src="sections/hero/hero.js"></script>
 <script type="module" src="sections/agent/agent.js"></script>
+<script type="module" src="sections/kit/kit.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>
