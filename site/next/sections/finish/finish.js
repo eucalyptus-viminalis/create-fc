@@ -9,10 +9,12 @@ inkFilter('nda-green', '#24493b');
 fitPage($('nda-fit'));
 dust($('nda-sheet'), $('nda-dust'), 1966);
 
-// Where the register lives. A local `pnpm dev` in register/ while the site runs on localhost.
-const REGISTER = ['localhost', '127.0.0.1'].includes(location.hostname)
+// Where the register lives. A local `pnpm dev` in register/ while the site runs on localhost, unless
+// the address has ?live-register, which files with the real one (to test real e-mail before launch).
+const LIVE_REGISTER = document.querySelector('meta[name="nda-register"]')?.content || '';
+const REGISTER = ['localhost', '127.0.0.1'].includes(location.hostname) && !new URLSearchParams(location.search).has('live-register')
   ? `http://${location.hostname}:8787`
-  : document.querySelector('meta[name="nda-register"]')?.content || '';
+  : LIVE_REGISTER;
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const stampDate = d => `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
