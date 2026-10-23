@@ -794,21 +794,19 @@
         <div class="grid">
           <div class="sec ink">Part I · Operator</div>
 
-          <div class="cell c4" id="nda-c-contact">
+          <div class="cell c6" id="nda-c-contact">
             <label for="nda-contact">1. Farcaster ID (FID) or e-mail address <span class="req">*</span></label>
             <input type="text" id="nda-contact" name="contact" autocomplete="email" placeholder="e.g. 3, or your e-mail address" aria-describedby="nda-contact-hint nda-contact-err" required>
             <div class="err" id="nda-contact-err">Enter your FID (numbers only) or an e-mail address.</div>
             <div class="hint" id="nda-contact-hint">Your FID is the number on your Farcaster profile. Either one will reach you.</div>
           </div>
-          <div class="cell c2 shade">
-            <span class="lbl">1a. This is my</span>
-            <div class="kind" aria-hidden="true"><span><i class="mark" id="nda-k-fid"></i>FID</span><span><i class="mark" id="nda-k-mail"></i>E-mail</span></div>
-            <div class="hint" style="margin-top:8px">Ticked for you as you type.</div>
+          <div class="cell c4" id="nda-c-name">
+            <label for="nda-name">2. Operator name or handle <span class="hint">(as it should appear on your member card)</span></label>
+            <input type="text" id="nda-name" name="name" autocomplete="nickname" placeholder="anon" maxlength="40">
           </div>
-
-          <div class="cell c6" id="nda-c-name">
-            <label for="nda-name">2. Operator name or handle <span class="hint">(as it should appear on your member card; leave blank to sign as anon)</span></label>
-            <input type="text" id="nda-name" name="name" autocomplete="nickname" placeholder="@yourname" maxlength="40">
+          <div class="cell c2 shade">
+            <span class="lbl">2a. Anonymity</span>
+            <label class="box"><input type="checkbox" id="nda-anon" checked><span>I will remain anonymous</span></label>
           </div>
 
           <div class="sec ink">Part II · Certification</div>

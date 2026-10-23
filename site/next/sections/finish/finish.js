@@ -18,15 +18,9 @@ const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', '
 const stampDate = d => `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 $('nda-date').textContent = stampDate(new Date());   // always today; not something you fill in
 
-// Item 1 takes an FID or an e-mail address, and ticks 1a as you type. The register checks it again.
+// Item 1 takes an FID or an e-mail address. The register checks it again.
 const kindOf = v => /^\d{1,10}$/.test(v) && +v > 0 ? 'fid' : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? 'email' : null;
-function tick() {
-  const k = kindOf(contact.value.trim());
-  $('nda-k-fid').classList.toggle('on', k === 'fid');
-  $('nda-k-mail').classList.toggle('on', k === 'email');
-  if (k) $('nda-c-contact').classList.remove('bad');
-}
-contact.addEventListener('input', tick);
+contact.addEventListener('input', () => { if (kindOf(contact.value.trim())) $('nda-c-contact').classList.remove('bad'); });
 
 // Item 2 signs the form and names the card; left blank, you're "anon". Item 1 never appears on
 // either: it can be an e-mail address, and the card is public.
@@ -39,7 +33,15 @@ function fillCard() {
   $('nda-m-sig').textContent = operator();
   $('nda-m-no').textContent = 'Assigned on approval'; $('nda-m-date').textContent = 'Pending';
 }
-$('nda-name').addEventListener('input', fillCard);
+// 2a "I will remain anonymous" is ticked while item 2 is blank. Typing a name unticks it; ticking it
+// again clears the name. It isn't saved or sent: it only ever says whether item 2 is blank.
+const name = $('nda-name'), anon = $('nda-anon');
+name.addEventListener('input', () => { anon.checked = !name.value.trim(); fillCard(); });
+anon.addEventListener('change', () => {
+  if (anon.checked) { name.value = ''; name.dispatchEvent(new Event('input')); }   // the input event also clears the saved draft
+  else if (!name.value.trim()) name.focus();                                       // unticked with no name yet: go and type one
+});
+name.addEventListener('blur', () => { if (!name.value.trim()) anon.checked = true; });   // left without a name: still anonymous
 
 const submit = doc.querySelector('button.submit');
 const after = [...doc.querySelectorAll('.after')];
@@ -103,7 +105,7 @@ form.addEventListener('submit', async e => {
 });
 
 remember(form, 'nda-form-1');
-tick(); fillCard();
+anon.checked = !name.value.trim(); fillCard();
 
 // Already a member in this browser: show the issued card.
 try { const m = JSON.parse(localStorage.getItem('nda-member')); if (m?.no) issue(m, false); } catch {}

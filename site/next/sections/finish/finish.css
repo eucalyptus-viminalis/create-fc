@@ -53,10 +53,6 @@
 .doc-finish .cell.bad .err { display: block; }
 
 /* "Is this an FID or an e-mail?" boxes, ticked for you as you type */
-.doc-finish .kind { display: flex; gap: 14px; margin-top: 6px; font: 500 12px/1 "Archivo Narrow"; text-transform: uppercase; letter-spacing: .05em; }
-.doc-finish .kind span { display: inline-flex; gap: 5px; align-items: center; }
-.doc-finish .mark { display: inline-block; width: 12px; height: 12px; border: 1.3px solid var(--form); position: relative; }
-.doc-finish .mark.on::after { content: "X"; position: absolute; inset: -4px 0 0 1px; font: 700 14px/1 "Courier Prime"; color: var(--typed); transform: rotate(-4deg); }
 
 /* checkboxes: a printed square that gets a typed X */
 .doc-finish .box { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; padding: 4px 0; cursor: var(--cursor-pen); font: 400 14px/1.35 "Archivo Narrow"; }
