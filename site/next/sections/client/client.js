@@ -1,5 +1,5 @@
 // The client: fameboy as a 1995 magazine ad. Three screens, each a colour edition of fameboy
-// (editions.js); the centre one runs the real boot sequence (home.js boot()); "Try it now"
+// (editions.js); the centre one is the boot screen, lit; "Try it now"
 // links to the hosted @fameboyclear, by URL and QR code. From brand/mockups/client-ad/round-3.html.
 import { inkFilter } from '../../shared/paper.js';
 import './editions.js';
@@ -19,19 +19,16 @@ const BRISK = ["................","................","...##...........","..#..#.
 doc.querySelector('#cl-wx').innerHTML = BRISK.flatMap((r, y) => [...r].map((c, x) => c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1" fill="#1c1c1a"/>` : '')).join('');
 doc.querySelector('#cl-bars').innerHTML = [3,2,2,1,1,1,2,4,6,7,8,8,9,10,11,7,7,8,8,7,6,5,4,3].map((v, i) => `<i class="${i > 14 ? 'later' : ''}" style="height:${v * 9}%"></i>`).join('');
 
-// The loading screen, as in home.js boot(): the c blinks while the node answers, then the
-// name lights up 46 ms a letter. ?lit holds it lit (for screenshots).
-const L = [...doc.querySelectorAll('.boot .word span')], st = doc.querySelector('#cl-status');
-const wait = ms => new Promise(r => setTimeout(r, ms));
-const lit = () => { L.forEach(l => l.classList.add('on')); st.textContent = '91.99.76.223 · in sync'; };
-if (new URLSearchParams(location.search).has('lit') || matchMedia('(prefers-reduced-motion: reduce)').matches) lit();
-else (async function run() {
-  L.forEach(l => l.classList.remove('on')); st.textContent = 'connecting to this node';
-  for (let i = 0; i < 8; i++) { L[0].classList.toggle('on', i % 2 === 0); await wait(260); }
-  L[0].classList.add('on'); st.textContent = '91.99.76.223 · in sync';
-  for (let i = 1; i < L.length; i++) { await wait(46); L[i].classList.add('on'); }
-  await wait(4600); run();
-})();
+// The loading screen, printed as it looks once the node answers: the name lit, the node in sync.
+// (A documentation address, not a real node.)
+doc.querySelectorAll('.boot .word span').forEach(l => l.classList.add('on'));
+doc.querySelector('#cl-status').textContent = '203.0.113.7 · in sync';
+
+// A torn left edge, as on the hero: a point every 6–16px, each 3–15px in, the odd deeper bite.
+(() => { let seed = 1995; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const w = 760, h = 1000, edge = [];
+  for (let y = h; y > 0; y -= 6 + rnd() * 10) edge.push(`${(3 + rnd() * 12 + (rnd() < .08 ? 6 : 0)).toFixed(1)}px ${y.toFixed(0)}px`);
+  doc.querySelector('.page').style.setProperty('--torn', `polygon(8px 0, ${w}px 0, ${w}px ${h}px, ${edge.join(',')})`); })();
 
 // Dust and a hair or two, as the scanner glass caught them.
 (() => { let seed = 77; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
