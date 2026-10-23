@@ -5,12 +5,18 @@ hero:
   tagline: Run your own Farcaster node and the fameboy client, explained.
   actions:
     - theme: brand
+      text: How it works
+      link: /tutorial/hetzner
+    - theme: alt
       text: Share your node with friends
       link: /guide/share-your-node
     - theme: alt
       text: What it costs
       link: /Costs
 features:
+  - title: What each command does, and why
+    details: The server, the read node and the client, with real outputs and timings, and what to do when something looks wrong.
+    link: /tutorial/hetzner
   - title: Your node, your friends
     details: One node can serve a few people. They sign in by approving on their phone and see who else is on.
     link: /guide/share-your-node

@@ -12,5 +12,9 @@
   --vp-c-brand-3: #ecebe4;
   --vp-c-brand-soft: rgb(236 235 228 / 0.1);
   --vp-home-hero-name-color: #ecebe4;
+  /* Light buttons need dark text; VitePress defaults it to white. */
+  --vp-button-brand-text: #1c1c1a;
+  --vp-button-brand-hover-text: #1c1c1a;
+  --vp-button-brand-active-text: #1c1c1a;
 }
 .vp-doc a { text-underline-offset: 3px; }
