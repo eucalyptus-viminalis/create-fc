@@ -30,20 +30,5 @@ body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
 .colophon .links a:hover { border-bottom-color: currentColor; }
 .colophon p + p { margin-top: 4px; }
 
-/* Docs and GitHub in the bottom-right corner: dark rounds like the clipboard's sound button, the
-   name sliding out on hover. Under the clipboard (50) and the contents pile (60). */
-.corner { position: fixed; z-index: 40; right: 16px; bottom: 16px; display: grid; gap: 10px; }
-.corner .cb { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #1c1c1a; color: #e8e6db;
-  box-shadow: 0 0 0 1px rgb(232 230 219 / .22), 0 2px 6px rgb(0 0 0 / .35); transition: transform .15s, background .15s; }
-.corner .cb svg { width: 20px; height: 20px; }
-.corner .cb:hover, .corner .cb:focus-visible { background: #000; transform: translateY(-1px); }
-.corner .cb:focus-visible { outline: 2px solid #e8e6db; outline-offset: 2px; }
-.corner .tip { position: absolute; right: calc(100% + 8px); top: 50%; padding: 5px 9px; border-radius: 4px; background: #1c1c1a; color: #e8e6db; white-space: nowrap;
-  font: 500 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .04em; pointer-events: none;
-  opacity: 0; transform: translate(4px, -50%); transition: opacity .15s, transform .15s; }
-.corner .cb:hover .tip, .corner .cb:focus-visible .tip { opacity: 1; transform: translate(0, -50%); }
-/* phones: the clipboard sits in this corner, so the buttons stand just above it */
-@media (max-width: 700px) { .corner { bottom: 138px; right: 12px; gap: 8px; } .corner .cb { width: 36px; height: 36px; } .corner .cb svg { width: 18px; height: 18px; } }
-@media print { .corner { display: none; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
