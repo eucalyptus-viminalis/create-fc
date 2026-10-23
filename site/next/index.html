@@ -93,7 +93,7 @@
           </form>
         </div>
         <div class="foot">
-          <p class="fine">*Hetzner bills about $0.16 an hour for the server and its 1 TB disk, until you delete them: about $3.93 a day. About $1 to sync and try. One command stops the billing. If the usual server is sold out, the fallback costs about $0.20 an hour. Full details in the docs.</p>
+          <p class="fine">*Hetzner bills about $0.16 an hour for the server and its 1 TB disk, until you delete them: about $3.93 a day. About $1 to sync and try. One command stops the billing. If the usual server is sold out, the fallback costs about $0.20 an hour. Full details in <a href="/docs/Costs">the docs</a>.</p>
           <span class="pg">Page 189</span>
         </div>
       </div>
@@ -185,7 +185,7 @@
       <h2 id="kit-p2">Before you begin<small>Prepare the required tools</small></h2>
       <div class="intro">
         <p>A little preparation now will make the rest of the afternoon go smoothly. Look over the lists on this page and get each item ready before you begin assembly. If something is missing, this is the time to install it or sign up for it, not halfway through the assembly.</p>
-        <p>Everything in the <a href="https://github.com/eucalyptus-viminalis/create-fc">Git kit</a> is software. It includes the scripts for renting a server, building a Snapchain node, and a demo client implementation to test with. Prepare the tools and accounts below, and the kit will take care of the rest.</p>
+        <p>Everything in the <a href="https://github.com/eucalyptus-viminalis/create-fc">Git kit</a> is software. It includes the scripts for renting a server, building a Snapchain node, and a demo client implementation to test with. Prepare the tools and accounts below, and the kit will take care of the rest. To know what each command does and why, read <a href="/docs/tutorial/hetzner">How it works</a> in the docs.</p>
       </div>
 
       <figure>
@@ -233,6 +233,7 @@
       <label class="item"><input type="checkbox" data-k="r2"><span class="box">( )</span><span class="t">In your own terminal, connect <code>hcloud</code> to the project. Paste the token when it asks.</span></label>
       <div class="cmd sub" data-title="hcloud context"><pre>hcloud context create fc-node</pre><button type="button">Copy</button></div>
       <p class="box-note caution"><b>Caution</b>Type tokens and seed phrases yourself, in your own terminal. Never paste them into a chat or an AI assistant: anyone who can read the transcript can use them.</p>
+      <p class="box-note caution"><b>Caution</b>The kit is not sold as an npm package. <code>npm create fc</code> installs an unrelated package someone else published in 2022.</p>
 
       <p style="font-size:13.5px;margin-top:14px">*Hetzner bills by the hour, about $0.16 (cx43 with a 1000 GB volume), until you delete the server. If cx43 is sold out the kit uses cpx41, about $0.20 an hour.</p>
       <div class="foot"><span>NDA-1</span><span>Before you begin</span></div>
@@ -320,7 +321,7 @@
       <label class="item"><input type="checkbox" data-k="c4"><span class="box">( )</span><span class="t"><i>Optional.</i> Enable signing in with the Farcaster app on your phone. Give your node an app account, once, in your own terminal. It suggests a free <code>@fameboy&lt;color&gt;</code> name, which people see when they approve.<small>Its output includes the new account's seed phrase. Never run it through an AI assistant.</small></span></label>
       <div class="cmd sub" data-title="App account"><pre>ssh -t root@<span class="ip">&lt;address&gt;</span> fc-node app-account</pre><button type="button">Copy</button></div>
       <label class="item"><input type="checkbox" data-k="c3"><span class="box">( )</span><span class="t">Sign in. Approve in the Farcaster app if you enabled it, or type your seed phrase on the page. It stays on your computer.</span></label>
-      <p class="box-note"><b>To share your node</b>Once it has an app account, anyone can sign in through your node. To limit it to friends, run <code>ssh root@<span class="ip">&lt;address&gt;</span> fc-node signin invite</code>, then <code>fc-node invite &lt;name&gt;</code> for each friend. They type the code on the sign-in page.</p>
+      <p class="box-note"><b>To share your node</b>Once it has an app account, anyone can sign in through your node. To limit it to friends, run <code>ssh root@<span class="ip">&lt;address&gt;</span> fc-node signin invite</code>, then <code>fc-node invite &lt;name&gt;</code> for each friend. They type the code on the sign-in page. See <a href="/docs/guide/share-your-node">Share your node</a>, or <a href="/docs/guide/host-fameboy">Host fameboy for others</a> to give them a web address instead.</p>
 
       <h3>Initial tests</h3>
       <label class="item"><input type="checkbox" data-k="d1"><span class="box">( )</span><span class="t">Test the terminal. Run the command below. It should list the latest casts from people you follow, read straight from your node.</span></label>
@@ -587,7 +588,7 @@
 <section class="doc doc-costs" id="costs" aria-labelledby="nc-t">
   <h2 class="sr" id="nc-t">What it costs</h2>
   <div class="chart" id="nc-chart"></div>
-  <p class="note">About $1.30 to sync and try, about $4 a day, $105 a month. Billed by the hour until you delete it. <a href="../docs/Costs">Full breakdown</a></p>
+  <p class="note">About $1.30 to sync and try, about $4 a day, $105 a month. Billed by the hour until you delete it. <a href="/docs/Costs">Full breakdown</a></p>
 </section>
 <!-- Troubleshooting: a page torn out of a service manual (sections/troubleshooting/) -->
 <section class="doc doc-ts" id="troubleshooting" aria-labelledby="ts-t">
@@ -689,6 +690,7 @@
   <div class="sr"><h3>The four rules</h3><ol><li><b>Never share it.</b> Whoever holds the phrase holds every account made from it. Give it to another only if you mean to give them those accounts.</li><li><b>Keep it on paper.</b> Write it down and store it somewhere safe. Never photograph it, nor keep it in e-mail, notes or the cloud.</li><li><b>Know that no one will ask.</b> No genuine service, support desk or assistant needs your phrase. Whoever asks for it is after the accounts.</li><li><b>Type it only where you trust.</b> Into software you trust, on your own machine; better still, approve with your wallet and type it not at all.</li></ol><p>Should the phrase ever be exposed, move what its accounts hold at once, and use it no more.</p></div>
   <div class="take">
     <a class="dl" href="img/nda-seed-phrase-card.zip" download="seed-phrase-card.zip">Download</a>
+    <p class="more">Signing in to fameboy? Approve on your phone instead, and read <a href="/docs/tutorial/client#seed-phrases">what it does with a phrase</a> if you type one.</p>
   </div>
 </section>
 <!-- The client: fameboy, as a 1995 magazine ad (sections/client/) -->
@@ -718,7 +720,7 @@
 
     <div class="logo"><div class="caps" aria-hidden="true"><span class="keycap" data-color="teal"></span><span class="keycap" data-color="tangerine"></span><span class="keycap" data-color="orchid"></span><span class="keycap" data-color="lime"></span><span class="keycap" data-color="clear"></span></div><div class="w">fameboy</div><div class="tag">now in 470 colours.</div></div>
 
-    <p class="fine">*Follower scores are coming to fameboy; screen shown is a preview. @fameboyclear is the copy the create-fc project hosts on its own Snapchain node: no API keys, no one else's servers. Run your own copy, in your own colour, with the create-fc Git kit. Sound effects can be switched off with M.</p>
+    <p class="fine">*Follower scores are coming to fameboy; screen shown is a preview. @fameboyclear is the copy the create-fc project hosts on its own Snapchain node: no API keys, no one else's servers. Run your own copy, in your own colour, with the create-fc Git kit, and <a href="/docs/guide/host-fameboy">host it for your friends</a>. Sound effects can be switched off with M.</p>
     </div>
     <!-- outside .print: the screens were photographed, not printed, so the ink effect leaves them solid -->
     <!-- left: the weather report that opens the app -->
