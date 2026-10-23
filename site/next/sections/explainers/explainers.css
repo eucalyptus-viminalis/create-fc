@@ -1,0 +1,110 @@
+
+/* The concepts section as a booklet after Herbert Bayer: Bauhaus-era lowercase type,
+     asymmetric layouts on a hidden grid, heavy bars, diagonals, circles, red and black with
+     the occasional second colour, as in his 1950s World Geo-Graphic Atlas diagrams.
+     Printed, then photocopied: grain, uneven toner, a shadow at the spine.
+     Its own document; it doesn't share styles with the rest of the microsite. */
+  .doc-explainers {
+    --paper: #f2efe6; --ink: #161514; --red: #d2301f; --blue: #2c55a0; --ochre: #e0a422; --grey: #8c887e;
+    --desk: #c9c4b8;
+    --head: "Josefin Sans", "Futura", sans-serif; --body: "Archivo", "Helvetica Neue", sans-serif; --mono: "Space Mono", ui-monospace, monospace;
+  }
+  .doc-explainers *, .doc-explainers *::before, .doc-explainers *::after { margin: 0; padding: 0; }
+  .doc-explainers { background: var(--desk); color: var(--ink); font-family: var(--body); display: flex; flex-direction: column; align-items: center; padding-bottom: 24px; }
+  .doc-explainers button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  .doc-explainers :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+
+  /* desk */
+  .doc-explainers .desk { flex: 1; width: 100%; display: grid; place-items: center; padding: 36px 16px 8px; perspective: 2600px; }
+  .doc-explainers .book { position: relative; width: min(1080px, 100%); aspect-ratio: 2 / 1.414; transform: rotate(-.5deg); }
+  .doc-explainers .slot, .doc-explainers .leaf { position: absolute; top: 0; width: 50%; height: 100%; }
+  .doc-explainers .slot.l { left: 0; } .doc-explainers .slot.r { right: 0; }
+  .doc-explainers .slot:not(:empty), .doc-explainers .face { box-shadow: 0 1px 0 rgb(0 0 0 / .12), 0 18px 40px rgb(40 30 10 / .22); }
+  .doc-explainers .leaf { right: 0; transform-style: preserve-3d; transform-origin: left center; display: none; z-index: 5; }
+  .doc-explainers .leaf.back-side { left: 0; right: auto; transform-origin: right center; }
+  .doc-explainers .leaf.on { display: block; }
+  .doc-explainers .face { position: absolute; inset: 0; backface-visibility: hidden; }
+  .doc-explainers .face.b { transform: rotateY(180deg); }
+  @keyframes bayer-turnL { from { transform: rotateY(0) } .doc-explainers to { transform: rotateY(-180deg) } }
+  @keyframes bayer-turnR { from { transform: rotateY(0) } .doc-explainers to { transform: rotateY(180deg) } }
+  .doc-explainers .leaf.go-next { animation: bayer-turnL .7s cubic-bezier(.45,.05,.25,1) forwards; }
+  .doc-explainers .leaf.go-prev { animation: bayer-turnR .7s cubic-bezier(.45,.05,.25,1) forwards; }
+
+  /* a page */
+  .doc-explainers .page { position: relative; width: 100%; height: 100%; background: var(--paper); overflow: hidden; container-type: size; }
+  .doc-explainers .page::after { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .7;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .28 0 0 0 0 .22 0 0 0 .28 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(120% 90% at 50% 40%, transparent 60%, rgb(60 50 30 / .10)); }
+  .doc-explainers .slot.l .page::before, .doc-explainers .face.b .page::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 7%; background: linear-gradient(90deg, transparent, rgb(30 20 0 / .16)); pointer-events: none; z-index: 2; }
+  .doc-explainers .slot.r .page::before, .doc-explainers .face.a .page::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 7%; background: linear-gradient(270deg, transparent, rgb(30 20 0 / .18)); pointer-events: none; z-index: 2; }
+  .doc-explainers .page .in { position: absolute; inset: 7cqw 8cqw 6cqw; display: flex; flex-direction: column; }
+  .doc-explainers .page h3, .doc-explainers .page h2 { font-family: var(--head); font-weight: 700; text-transform: lowercase; letter-spacing: -.01em; line-height: .95; }
+  .doc-explainers .page p { font-size: max(11px, 3cqw); line-height: 1.45; }
+  .doc-explainers .page code { font-family: var(--mono); font-size: .9em; }
+  .doc-explainers .page svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .doc-explainers .page svg text { font-family: var(--head); font-weight: 600; }
+  .doc-explainers .page svg .m { font-family: var(--mono); font-weight: 400; }
+
+  /* concept page */
+  .doc-explainers .num { font-family: var(--head); font-weight: 700; font-size: 24cqw; line-height: .8; color: var(--red); letter-spacing: -.04em; }
+  .doc-explainers .concept h3 { font-size: 8.4cqw; margin-top: 2.4cqw; }
+  .doc-explainers .bar { height: 2.2cqw; background: var(--ink); margin: 3.4cqw 0 3cqw; width: 46%; }
+  .doc-explainers .concept .lede { font-weight: 600; }
+  .doc-explainers .concept figure { flex: 1; display: grid; align-items: center; margin: 2cqw 0; min-height: 0; }
+  .doc-explainers .concept figure svg { max-height: 100%; }
+  .doc-explainers .concept .note { color: #3b3935; font-size: max(10px, 2.6cqw); }
+  .doc-explainers .folio { position: absolute; bottom: 3.4cqw; font: 600 max(9px, 2.2cqw)/1 var(--head); letter-spacing: .14em; text-transform: lowercase; color: var(--grey); }
+  .doc-explainers .slot.l .folio, .doc-explainers .face.b .folio { left: 8cqw; } .doc-explainers .slot.r .folio, .doc-explainers .face.a .folio, .doc-explainers .one .folio { right: 8cqw; }
+  .doc-explainers .edge { position: absolute; top: 8cqw; right: 2.4cqw; writing-mode: vertical-rl; font: 600 max(9px, 2cqw)/1 var(--head); letter-spacing: .3em; text-transform: lowercase; color: var(--ink); }
+  /* even pages: number at the bottom, heading up top, bar on the right */
+  .doc-explainers .concept.flip .in { flex-direction: column-reverse; }
+  .doc-explainers .concept.flip .num { align-self: flex-end; }
+  .doc-explainers .concept.flip .bar { align-self: flex-end; }
+  .doc-explainers .concept.flip .head { text-align: right; }
+
+  /* cover */
+  .doc-explainers .cover { background: var(--paper); }
+  .doc-explainers .cover .in { inset: 0; }
+  .doc-explainers .cover .art { position: absolute; inset: 0; }
+  .doc-explainers .cover h2 { position: absolute; left: 8cqw; top: 54cqh; font-size: 13cqw; }
+  .doc-explainers .cover .sub { position: absolute; left: 8.6cqw; top: calc(54cqh + 30cqw); font: 300 4.6cqw/1.2 var(--head); text-transform: lowercase; }
+  .doc-explainers .cover .issuer { position: absolute; left: 8.6cqw; top: 7cqw; font: 600 max(9px, 2.3cqw)/1.5 var(--head); letter-spacing: .16em; text-transform: lowercase; }
+  .doc-explainers .cover .pub { position: absolute; right: 8cqw; bottom: 6cqw; font: 600 max(9px, 2.3cqw)/1.5 var(--head); letter-spacing: .16em; text-transform: lowercase; text-align: right; }
+
+  /* contents */
+  .doc-explainers .contents h3 { font-size: 10cqw; }
+  .doc-explainers .contents ol { list-style: none; margin-top: 7cqw; display: grid; gap: 2.4cqw; }
+  .doc-explainers .contents li a { display: grid; grid-template-columns: 11cqw 1fr auto; align-items: baseline; text-decoration: none; color: inherit; font: 600 max(11px, 3.5cqw)/1.1 var(--head); text-transform: lowercase; padding-bottom: 1.4cqw; border-bottom: .3cqw solid var(--ink); }
+  .doc-explainers .contents li a b { color: var(--red); font-weight: 700; }
+  .doc-explainers .contents li a span:last-child { font: 400 max(9px, 2.4cqw)/1 var(--mono); color: var(--grey); }
+  .doc-explainers .contents li a:hover { color: var(--red); }
+  .doc-explainers .contents .intro { margin-top: 5cqw; }
+
+  /* back cover */
+  .doc-explainers .back { background: var(--ink); color: var(--paper); }
+  .doc-explainers .back p { font-size: max(11px, 3.2cqw); }
+  .doc-explainers .back h3 { font-size: 9cqw; color: var(--paper); }
+  .doc-explainers .back .stamp { margin-top: auto; display: flex; align-items: center; gap: 3cqw; font: 600 max(9px, 2.3cqw)/1.5 var(--head); letter-spacing: .14em; text-transform: lowercase; }
+  .doc-explainers .back .stamp svg { width: 16cqw; }
+
+  /* controls */
+  .doc-explainers .controls { display: flex; align-items: center; gap: 14px; padding: 14px 16px 30px; font: 600 14px/1 var(--head); text-transform: lowercase; letter-spacing: .12em; }
+  .doc-explainers .controls button { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 20px; }
+  .doc-explainers .controls button:disabled { opacity: .25; cursor: default; }
+  .doc-explainers .controls .where { min-width: 150px; text-align: center; }
+  .doc-explainers .tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 520px; padding: 0 16px 8px; }
+  .doc-explainers .tabs button { width: 30px; height: 8px; background: rgb(22 21 20 / .2); }
+  .doc-explainers .tabs button.on { background: var(--red); }
+
+  /* phones: one page at a time */
+  @media (max-width: 760px) {
+    .doc-explainers .desk { padding-top: 20px; }
+    .doc-explainers .book { aspect-ratio: 1 / 1.414; width: min(520px, 100%); transform: none; }
+    .doc-explainers .slot { width: 100%; } .doc-explainers .slot.l { display: none; }
+    .doc-explainers .slot.r .page::before { display: none; }
+    .doc-explainers .slot.r .page { animation: bayer-slideIn .35s ease; }
+    @keyframes bayer-slideIn { from { opacity: 0; transform: translateX(var(--dx, 24px)); } }
+  }
+  @media (prefers-reduced-motion: reduce) { .leaf.go-next, .leaf.go-prev { animation-duration: 1ms; } .doc-explainers .slot.r .page { animation: none !important; } }
+  .doc-explainers .src { display: none; }

@@ -81,7 +81,8 @@
   /* Hovering the order covers it with a copy prompt; clicking anywhere but the boxes, signature
      and links copies it. The overlay lets clicks through, and hides while you're over a control. */
   .doc-agent .sheet { cursor: copy; }
-  .doc-agent .sheet :is(input, label, a) { cursor: pointer; }
+  .doc-agent .sheet :is(input, label) { cursor: var(--cursor-pen); }
+  .doc-agent .sheet a { cursor: pointer; }
   .doc-agent .copy-over { all: unset; box-sizing: border-box; position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
     background: rgb(28 28 26 / .10); color: var(--ink); opacity: 0; transition: opacity .15s; }
   .doc-agent .copy-over span { padding: 16px 26px 15px; font: 600 clamp(18px, 2.6vw, 26px)/1.1 "Oswald", sans-serif; letter-spacing: .12em; text-transform: uppercase; text-align: center; }

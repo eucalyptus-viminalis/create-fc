@@ -38,7 +38,9 @@
   .doc-kit .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; }
 
   /* "( )" steps. The tick is blue ballpoint, a little different each time. */
-  .doc-kit .item { display: grid; grid-template-columns: 30px 1fr; align-items: start; padding: 3px 0; cursor: pointer; }
+  .doc-kit .item { display: grid; grid-template-columns: 30px 1fr; align-items: start; padding: 3px 0; cursor: var(--cursor-pen); }
+  .doc-kit .item a { cursor: pointer; }
+  .doc-kit .blank input { cursor: var(--cursor-pen); }
   .doc-kit .item input { position: absolute; opacity: 0; pointer-events: none; }
   .doc-kit .box { position: relative; font: 700 16px/1.42 "Courier Prime", monospace; letter-spacing: -.08em; user-select: none; }
   /* Pen marks sit above the photocopy, outside its ink filter, so the blue stays crisp */

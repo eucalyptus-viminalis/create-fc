@@ -1,5 +1,5 @@
 // Kit manual: ( ) boxes ticked in blue ballpoint, a server address written on the blank and
-// filled into every command, Copy tabs on the commands. Marks are kept in this browser only.
+// filled into every command, Copy tabs that clip the command to the clipboard dock. Marks are kept in this browser only.
 import { inkFilter } from '../../shared/paper.js';
 
 const doc = document.getElementById('kit');
@@ -40,10 +40,11 @@ boxes.forEach(b => { b.checked = !!state[b.dataset.k]; b.addEventListener('chang
 ip.value = state.ip || '';
 ip.addEventListener('input', () => { state.ip = ip.value.trim(); save(state); render(); });
 doc.querySelector('#kit-reset').addEventListener('click', () => { state = {}; save(state); boxes.forEach(b => b.checked = false); ip.value = ''; render(); });
-doc.querySelectorAll('.cmd button').forEach(btn => btn.addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(btn.previousElementSibling.textContent); btn.textContent = 'Copied'; }
-  catch { btn.textContent = 'Select it'; }
-  setTimeout(() => btn.textContent = 'Copy', 1400);
+// Copy tabs: the command is snipped out of the page and clipped to the clipboard dock.
+const SNIP = { src: new URL('../../sounds/scissors-snip.wav', import.meta.url).href, start: 0, end: 0.15 };
+doc.querySelectorAll('.cmd button').forEach(btn => btn.addEventListener('click', () => {
+  const box = btn.closest('.cmd');
+  dock.copy({ text: btn.previousElementSibling.textContent, title: box.dataset.title || 'Command', from: box, paper: '#eeede6', sound: SNIP });
 }));
 render();
 

@@ -59,8 +59,8 @@
 .doc-finish .mark.on::after { content: "X"; position: absolute; inset: -4px 0 0 1px; font: 700 14px/1 "Courier Prime"; color: var(--typed); transform: rotate(-4deg); }
 
 /* checkboxes: a printed square that gets a typed X */
-.doc-finish .box { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; padding: 4px 0; cursor: pointer; font: 400 14px/1.35 "Archivo Narrow"; }
-.doc-finish .box input { all: unset; width: 14px; height: 14px; margin-top: 1px; border: 1.5px solid var(--form); display: grid; place-content: center; cursor: pointer; }
+.doc-finish .box { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; padding: 4px 0; cursor: var(--cursor-pen); font: 400 14px/1.35 "Archivo Narrow"; }
+.doc-finish .box input { all: unset; width: 14px; height: 14px; margin-top: 1px; border: 1.5px solid var(--form); display: grid; place-content: center; cursor: var(--cursor-pen); }
 .doc-finish .box input::after { content: "X"; font: 700 15px/1 "Courier Prime"; color: var(--typed); transform: translate(.5px, -1px) rotate(-4deg); opacity: 0; }
 .doc-finish .box input:checked::after { opacity: 1; }
 .doc-finish .box input:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
