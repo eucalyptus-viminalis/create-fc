@@ -126,7 +126,11 @@ form.addEventListener('submit', async e => {
     try { localStorage.setItem('nda-member', JSON.stringify(m)); } catch {}
     forgetDraft();   // what was sent is kept with the filing now
     issue(m);
-    say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.`, true);
+    // e-mail bulletins wait for the address to confirm (register/src/bulletins.js)
+    const b = data.bulletins?.state;
+    const more = b === 'sent' ? ' Check your e-mail to confirm bulletins.' : b === 'unsent' ? " Bulletins aren't on: the confirmation e-mail couldn't be sent." : '';
+    if (data.bulletins?.confirm) console.info('[dev] confirm bulletins:', data.bulletins.confirm);
+    say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.${more}`, true);
   } catch {
     submit.disabled = false;
     say("Couldn't reach the Authority. Check your connection and submit again.");

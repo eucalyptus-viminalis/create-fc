@@ -4,9 +4,11 @@ The Network Decentralization Authority's register: where the microsite's members
 
 | Route | What it does |
 | --- | --- |
-| `POST /apply` | Records an application and returns the member number. The same FID or e-mail applying again keeps its number and updates the card. |
+| `POST /apply` | Records a filing and returns a new member number. Filings never change each other, even with the same FID or e-mail: nothing on the form proves who owns them. |
 | `GET /m/:n` | A member's page, which is what a cast embed links to. Its preview image is the card. |
 | `GET /m/:n/card.png` | The member card, 1200×630. Rendered once per version, then cached. |
+| `GET`/`POST /confirm` | The link in a bulletin confirmation e-mail. Opening it shows a button; the button confirms. |
+| `GET`/`POST /unsubscribe` | The link that stops bulletins, for the bulletins themselves. |
 
 `POST /apply` takes JSON:
 
@@ -15,6 +17,14 @@ The Network Decentralization Authority's register: where the microsite's members
 ```
 
 `contact` is an FID or an e-mail address. It is stored in D1 and never shown anywhere. Member pages and cards show only the name, number, enrolled date and signature.
+
+## Bulletins
+
+Ticking bulletins with an e-mail address only sends a confirmation e-mail. Bulletins go only to addresses whose owner pressed the button behind that link (`subscribers.status = 'confirmed'`), and only links sent to the address can change that. So nobody can unsubscribe someone else, or subscribe a stranger, by filing the form. An address gets at most one confirmation e-mail a day, and the register sends at most 200 a day in all. FID bulletins aren't set up yet.
+
+The reply to `POST /apply` says what happened in `bulletins.state`: `sent`, `confirmed` or `unsent`. On localhost nothing is sent: the Worker logs the confirmation link and returns it as `bulletins.confirm`.
+
+E-mail goes out through Cloudflare Email Sending, which needs Workers Paid (3,000 e-mails a month included, then $0.35 per 1,000). Once per account, in the Cloudflare dashboard: **Compute → Email Service → Email Sending → Onboard Domain**, and pick createfc.org. It adds the DNS records it needs. The sender is `MAIL_FROM` in `wrangler.toml`.
 
 ## Run it locally
 
@@ -45,6 +55,14 @@ Put the `database_id` it prints into `wrangler.toml`, then:
 pnpm db:init:remote
 pnpm deploy
 ```
+
+**A register made before filings stopped overwriting each other** (contact was unique, and there was no `subscribers` table) needs this once, before deploying the new code:
+
+```bash
+pnpm db:migrate:remote
+```
+
+It keeps every member and number. (`pnpm db:migrate` does the same to the local database.)
 
 **Plan:** drawing a card takes about 300 ms of CPU. The Workers Free plan allows 10 ms per request, so card images need **Workers Paid** ($5/month). Applying and member pages fit in the free plan.
 

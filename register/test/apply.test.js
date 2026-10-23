@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { checkApplication, contactKind, memberNo, enrolledDate } from '../src/apply.js';
 import { cardSvg } from '../src/card.js';
+import { confirmationEmail } from '../src/bulletins.js';
 
 const good = { contact: '1234', name: '@fameboyteal', signature: 'Ada Operator', certify: { sync: true, cast: true }, bulletins: false };
 
@@ -40,4 +41,12 @@ test('typed values are escaped in the card image', () => {
   const svg = cardSvg({ name: '<script>&', number: 'No. 000001', enrolled: '23 OCT 2026', signature: '"x"' });
   assert.ok(!svg.includes('<script>'));
   assert.ok(svg.includes('&lt;script&gt;&amp;'));
+});
+
+test('the confirmation e-mail carries the link and comes from the Authority', () => {
+  const e = confirmationEmail({ to: 'ada@example.com', from: 'register@createfc.org', link: 'https://register.createfc.org/confirm?t=abc' });
+  assert.equal(e.to, 'ada@example.com');
+  assert.deepEqual(e.from, { email: 'register@createfc.org', name: 'Network Decentralization Authority' });
+  assert.ok(e.text.includes('https://register.createfc.org/confirm?t=abc'));
+  assert.ok(e.html.includes('href="https://register.createfc.org/confirm?t=abc"'));
 });
