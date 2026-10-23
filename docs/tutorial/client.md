@@ -32,25 +32,31 @@ Then everyone using your node can sign in this way, and you can give each friend
 
 **Use your seed phrase.** The same steps as `fameboy login`, offered only because the server listens on your computer alone. Read [Seed phrases](#seed-phrases) first.
 
-**Sign out** in the header deletes the app key from this computer.
+**Sign out** on the home screen deletes the app key from this computer. If you signed in with your seed phrase, it removes the key from Farcaster first.
 
 ### What it shows
 
-![fameboy's feed view: a compose box, @dwr's feed from the 79 accounts they follow, and a row of app chips with counts: @warpcast 364, @fireflyapp 9, @cassie 6 and more.](/tutorial/fameboy-feed.png)
+A bar along the bottom switches between views, by click or number key: **1** home, **2** inbox, **3** compose, **4** apps, **5** keys.
 
-**Feed.** Every cast carries a "via @app" label, and the chips above the feed show which apps it came from. Click a chip to hide that app, or "Hide the Farcaster app" to see everything else.
+![fameboy's home screen for @3070.eth: network conditions "calm" with today's messages a minute by the hour, 397 casts waiting from people they follow, the node in sync on three shards, and who else is on the node.](/tutorial/fameboy-home.png)
 
-![Who can post as @dwr: 3 keys held by @warpcast, @baseapp.base.eth and @neynar, all able to sign anything.](/tutorial/fameboy-keys.png)
+**Home.** How busy the network is compared with a usual day, what's waiting for you since your last visit, your node's sync status, and who else is using your node right now.
 
-**Who can post as you.** Every app key on an account, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. [Your app key](../guide/app-key) explains the one fameboy makes.
+![The inbox: a list of casts from people @3070.eth follows on the left, one cast open on the right, "via @fireflyapp" with a hide link, and a "hide @warpcast" button above the list.](/tutorial/fameboy-inbox.png)
 
-![Apps in @dwr's feed: 91% of the latest 400 casts came through @warpcast, 9 apps in total, as a bar chart.](/tutorial/fameboy-apps.png)
+**Inbox.** Casts from people you follow, likes on your casts and replies to you, from the last 7 days. Clear what you've read and save what you want to keep; both stay in your browser. Every cast says which app it came through ("via @app"), with a link to hide that app.
 
-**Apps in your feed.** The same data as the chips, as a chart. Click a bar to see only that app's casts.
+![Popular apps in @3070.eth's feed: 62% of the latest 400 casts came through @warpcast, then @fireflyapp at 7%, 41 apps in all, each with "only" and "hide" buttons.](/tutorial/fameboy-apps.png)
 
-![Your node view: address, Snapchain 0.14.3, in sync, three shards 0–4 s behind, and a table of every request the page made, with times and a Copy curl button.](/tutorial/fameboy-node.png)
+**Apps.** Which apps your feed comes through, as a chart. Show only one app's casts, or hide the Farcaster app (still called @warpcast) in one click. The inbox and home follow your choice.
 
-**Your node.** Sync status, and every request the page made to your node, each with a Copy curl button so you can run it yourself.
+![Keys for @3070.eth: 18 keys held by 12 apps, 17 able to sign anything. The @clearcast card is marked as holding this computer's key.](/tutorial/fameboy-keys.png)
+
+**Keys.** Every app key that can post as you, grouped by the app that asked for it. Old onchain keys can sign anything; gasless ones list what they're allowed to do and when they expire. The key this computer uses is marked. [Your app key](../guide/app-key) explains the one fameboy makes.
+
+![The requests panel open over the apps page: 1,313 calls to the node across 5 routes, castsByFid called 1,043 times, and signersByFid expanded into single requests, each with a copy curl button.](/tutorial/fameboy-requests.png)
+
+**Requests.** The tab above the bottom bar, on every page, opens every call the page made to your node, grouped by route. Each one has a copy curl button, so you can run it yourself and get the same answer.
 
 ## Reading from the terminal
 

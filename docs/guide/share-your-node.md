@@ -70,7 +70,7 @@ The companion listens on port 3390, which is open to the internet. With sign-in 
 - **It can't cost you anything.** If approving costs a fee, each person pays their own.
 - **It can't touch anyone's account.** Each person approves on their own phone, for their own account.
 - **It doesn't open your node any further.** Port 3381 is already public, so anyone can read from your node either way.
-- **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. fameboy's "apps in your feed" shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
+- **But your app's name goes on their posts.** Every cast made with a key your app account vouched for is recorded as coming from your app. fameboy's apps page shows it, and so can other clients. If a spammer signed in through your node, their spam would carry your app's name, and Farcaster could start treating your app account as spammy.
 
 Invite codes keep that to people you chose. Either way, each internet address gets 20 sign-in tries an hour, which also stops anyone guessing codes.
 
