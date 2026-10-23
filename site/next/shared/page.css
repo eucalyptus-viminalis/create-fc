@@ -15,6 +15,7 @@ body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
 
 /* External links (shared/links.js): a small ↗ after the text, in the link's own font and colour. */
 .ext-mark { display: inline-block; margin-left: .12em; font-size: .78em; line-height: 1; text-decoration: none; vertical-align: .18em; font-family: system-ui, sans-serif; font-weight: 600; }
+.ext-nw { white-space: nowrap; }
 .ext-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Cursors. Things you tick get a ballpoint pen, its tip at the hot spot; links keep the pointer. */

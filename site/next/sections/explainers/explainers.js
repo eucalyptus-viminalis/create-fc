@@ -13,7 +13,10 @@ src.querySelector('#bayer-cells').innerHTML = Array.from({ length: 11 }, (_, i) 
 const P = [...src.children];
 const book = $('bayer-book'), L = book.querySelector('.slot.l'), R = book.querySelector('.slot.r');
 const leaf = book.querySelector('.leaf'), FA = leaf.querySelector('.a'), FB = leaf.querySelector('.b');
-const tabs = $('bayer-tabs');
+const tabs = $('bayer-tabs'), toc = $('bayer-toc');
+// Contents: every page but the covers, numbered as in the booklet.
+toc.innerHTML = P.filter(p => !['explain-cover', 'explain-back'].includes(p.id)).map(p => { const [n, ...t] = p.dataset.name.split(' '); const num = /^\d+$/.test(n); return `<li><a href="#${p.id}" data-id="${p.id}">${num ? `<b>${n}</b><span>${t.join(' ')}</span>` : `<b></b><span>${p.dataset.name}</span>`}</a></li>`; }).join('');
+toc.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); go(indexOf(a.dataset.id)); if (book.getBoundingClientRect().top < 0) book.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 const narrow = matchMedia('(max-width: 760px)');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 // desk spreads: [left, right]; the cover sits alone on the right, the back cover alone on the left
@@ -27,21 +30,25 @@ const spreads = () => {
 let S = spreads(), at = 0, busy = false;
 const copy = p => { if (!p) return ''; const c = p.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); return c.outerHTML; };
 const put = (slot, p) => { slot.innerHTML = copy(p); };
-const label = () => S[at].filter(Boolean).map(p => p.dataset.name).join('  ·  ');
-function show(link = true) {
-  put(L, S[at][0]); put(R, S[at][1]);
-  $('bayer-where').textContent = label();
-  $('bayer-prev').disabled = at === 0;
-  $('bayer-next').disabled = at === S.length - 1;
-  tabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === at));
+// The controls, contents and address follow the page you asked for straight away, while it turns.
+function mark(i, link = true) {
+  const s = S[i];
+  $('bayer-where').textContent = s.filter(Boolean).map(p => p.dataset.name).join('  ·  ');
+  $('bayer-prev').disabled = i === 0;
+  $('bayer-next').disabled = i === S.length - 1;
+  tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+  toc.querySelectorAll('a').forEach(a => { const on = s.some(p => p && p.id === a.dataset.id); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
   // only once the reader has turned a page: the address names the page they're on
-  if (link) { const p = S[at][0] && S[at][0].id !== 'explain-contents' ? S[at][0] : S[at][1]; history.replaceState(null, '', '#' + p.id); }
+  if (link) { const p = s[0] && s[0].id !== 'explain-contents' ? s[0] : s[1]; history.replaceState(null, '', '#' + p.id); }
 }
+function show(link = true) { put(L, S[at][0]); put(R, S[at][1]); mark(at, link); }
+let finishTurn = null;
 function go(to) {
-  if (busy || to < 0 || to >= S.length || to === at) return;
+  if (busy) finishTurn();                // clicking again mid-turn finishes the turn at once and starts the next
+  if (to < 0 || to >= S.length || to === at) return;
   const fwd = to > at, from = S[at], next = S[to];
   if (narrow.matches || reduce.matches || Math.abs(to - at) > 1) { R.style.setProperty('--dx', fwd ? '24px' : '-24px'); at = to; return show(); }
-  busy = true;
+  busy = true; mark(to);
   if (fwd) {   // right leaf turns over to the left
     FA.innerHTML = copy(from[1]); FB.innerHTML = copy(next[0]);
     put(R, next[1]); leaf.className = 'leaf on go-next';
@@ -51,8 +58,8 @@ function go(to) {
   }
   // finish on animationend, or after the turn's length if the tab is in the background and never animates
   let done = false;
-  const finish = () => { if (done) return; done = true; leaf.className = 'leaf'; at = to; busy = false; show(); };
-  leaf.addEventListener('animationend', finish, { once: true }); setTimeout(finish, 800);
+  const finish = finishTurn = () => { if (done) return; done = true; leaf.className = 'leaf'; at = to; busy = false; show(); };
+  leaf.addEventListener('animationend', finish, { once: true }); setTimeout(finish, 520);
 }
 const buildTabs = () => {
   tabs.innerHTML = S.map(s => `<button type="button" aria-label="${s.filter(Boolean).map(p => p.dataset.name).join(', ')}"></button>`).join('');

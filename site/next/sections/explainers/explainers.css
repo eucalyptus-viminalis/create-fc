@@ -27,8 +27,8 @@
   .doc-explainers .face.b { transform: rotateY(180deg); }
   @keyframes bayer-turnL { from { transform: rotateY(0) } .doc-explainers to { transform: rotateY(-180deg) } }
   @keyframes bayer-turnR { from { transform: rotateY(0) } .doc-explainers to { transform: rotateY(180deg) } }
-  .doc-explainers .leaf.go-next { animation: bayer-turnL .7s cubic-bezier(.45,.05,.25,1) forwards; }
-  .doc-explainers .leaf.go-prev { animation: bayer-turnR .7s cubic-bezier(.45,.05,.25,1) forwards; }
+  .doc-explainers .leaf.go-next { animation: bayer-turnL .42s cubic-bezier(.25,.6,.3,1) forwards; }
+  .doc-explainers .leaf.go-prev { animation: bayer-turnR .42s cubic-bezier(.25,.6,.3,1) forwards; }
 
   /* a page */
   .doc-explainers .page { position: relative; width: 100%; height: 100%; background: var(--paper); overflow: hidden; container-type: size; }
@@ -106,5 +106,27 @@
     .doc-explainers .slot.r .page { animation: bayer-slideIn .35s ease; }
     @keyframes bayer-slideIn { from { opacity: 0; transform: translateX(var(--dx, 24px)); } }
   }
-  @media (prefers-reduced-motion: reduce) { .leaf.go-next, .leaf.go-prev { animation-duration: 1ms; } .doc-explainers .slot.r .page { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .doc-explainers .leaf.go-next, .doc-explainers .leaf.go-prev { animation-duration: 1ms; } .doc-explainers .slot.r .page { animation: none !important; } }
   .doc-explainers .src { display: none; }
+
+  /* Contents, always on show: a sidebar on wide screens, a strip above the booklet on narrow ones.
+     The page (or spread) you're on is marked in red. */
+  .doc-explainers { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .doc-explainers .bayer-main { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  .doc-explainers .toc { padding: 36px 16px 0; font-family: var(--head); text-transform: lowercase; }
+  .doc-explainers .toc-h { font: 700 15px/1 var(--head); letter-spacing: .14em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--ink); }
+  .doc-explainers .toc ol { list-style: none; display: grid; gap: 2px; }
+  .doc-explainers .toc a { display: grid; grid-template-columns: 26px 1fr; gap: 6px; align-items: baseline; padding: 5px 6px 4px; text-decoration: none; color: inherit; font: 600 14px/1.15 var(--head); border-left: 3px solid transparent; }
+  .doc-explainers .toc a b { color: var(--red); font-weight: 700; }
+  .doc-explainers .toc a:hover { background: rgb(22 21 20 / .06); }
+  .doc-explainers .toc a[aria-current] { border-left-color: var(--red); background: rgb(210 48 31 / .09); }
+  @media (min-width: 1100px) {
+    .doc-explainers { grid-template-columns: 230px minmax(0, 1fr); column-gap: 8px; padding-left: 16px; }
+    .doc-explainers .toc { position: sticky; top: 0; padding-top: 48px; }
+  }
+  @media (max-width: 1099px) {
+    .doc-explainers .toc { width: min(1080px, 100%); margin: 0 auto; padding-bottom: 4px; }
+    .doc-explainers .toc ol { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
+    .doc-explainers .toc a { grid-template-columns: auto auto; border-left: 0; border-bottom: 3px solid transparent; }
+    .doc-explainers .toc a[aria-current] { border-bottom-color: var(--red); }
+  }
