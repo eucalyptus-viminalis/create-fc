@@ -17,11 +17,21 @@ export default defineConfig({
   themeConfig: {
     logo: { light: "/create-fc-mark.svg", dark: "/create-fc-mark-white.svg", alt: "" },
     nav: [
+      { text: "How it works", link: "/tutorial/hetzner" },
       { text: "Guides", link: "/guide/share-your-node" },
       { text: "Costs", link: "/Costs" },
       { text: "create-fc", link: "https://createfc.org/" },
     ],
     sidebar: [
+      {
+        text: "How it works",
+        items: [
+          { text: "Before you start: Hetzner", link: "/tutorial/hetzner" },
+          { text: "Command 0: the server", link: "/tutorial/server" },
+          { text: "Command 1: the read node", link: "/tutorial/node" },
+          { text: "Command 2: the client", link: "/tutorial/client" },
+        ],
+      },
       { text: "Guides", items: [{ text: "Share your node with friends", link: "/guide/share-your-node" }, { text: "Host fameboy for others", link: "/guide/host-fameboy" }, { text: "Images in your casts", link: "/guide/images" }] },
       { text: "Explainers", items: [{ text: "Your app key", link: "/guide/app-key" }] },
       { text: "Reference", items: [{ text: "Costs", link: "/Costs" }] },
