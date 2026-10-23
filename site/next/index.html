@@ -24,13 +24,14 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/agent/agent.css">
 <link rel="stylesheet" href="sections/kit/kit.css">
 <link rel="stylesheet" href="sections/explainers/explainers.css">
+<link rel="stylesheet" href="sections/costs/costs.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
@@ -560,7 +561,12 @@
   </div>
 
 </section>
-<section class="doc doc-pending" id="costs" aria-label="Costs"><div><b>Costs · slide chart</b>Port from <code>brand/mockups/costs-sliderule.html</code></div></section>
+<!-- Costs: a printed slide chart (sections/costs/) -->
+<section class="doc doc-costs" id="costs" aria-labelledby="nc-t">
+  <h2 class="sr" id="nc-t">What it costs</h2>
+  <div class="chart" id="nc-chart"></div>
+  <p class="note">About $1.30 to sync and try, about $4 a day, $105 a month. Billed by the hour until you delete it. <a href="../docs/Costs">Full breakdown</a></p>
+</section>
 <section class="doc doc-pending" id="troubleshooting" aria-label="Troubleshooting"><div><b>Troubleshooting · torn-out service manual page</b>Port from <code>brand/mockups/troubleshooting-scan.html</code></div></section>
 <section class="doc doc-pending" id="seed" aria-label="Seed phrase safety"><div><b>Seed phrase safety · operator training card</b>Port from <code>brand/mockups/training-card.html</code></div></section>
 <section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
@@ -689,6 +695,7 @@
 <script type="module" src="sections/agent/agent.js"></script>
 <script type="module" src="sections/kit/kit.js"></script>
 <script type="module" src="sections/explainers/explainers.js"></script>
+<script type="module" src="sections/costs/costs.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>
