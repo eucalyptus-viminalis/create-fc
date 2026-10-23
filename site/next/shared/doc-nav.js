@@ -18,7 +18,7 @@ if (nav) {
     nav.style.setProperty('--dn-pile-l', '14px'); nav.style.setProperty('--dn-pile-t', '10px');
     nav.style.setProperty('--dn-pile-w', `${pw}px`); nav.style.setProperty('--dn-pile-h', `${ph}px`);
     nav.style.setProperty('--dn-count-x', `${px}px`); nav.style.setProperty('--dn-count-y', `${10 + ph - 4}px`);
-    const MORE = 76;   // room under the last paper for the Docs and GitHub buttons
+    const MORE = 92;   // room under the last paper for the Docs and GitHub buttons
     const step = Math.min(H * 1.25, (innerHeight - 40 - H - MORE) / (n - 1)), bend = phone ? 36 : 120;
     let right = 0;
     rows = cards.map((a, i) => {
