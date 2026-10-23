@@ -45,7 +45,7 @@
 /* kit.requests: the node calls behind this page, in a drawer above the bottom bar.
    A tab sits on the bar's top edge; it blinks once when new calls come in. */
 .rq { position: fixed; z-index: 45; bottom: var(--dock, 0px); left: 0; right: 0; pointer-events: none; }
-.rq > * { pointer-events: auto; }
+.rq > *, .rq .rq-tab { pointer-events: auto; } /* after all: unset, the tab would inherit none */
 .rq-tab { all: unset; box-sizing: border-box; cursor: pointer; position: absolute; bottom: 0; right: max(24px, calc((100vw - 1180px) / 2 + 24px));
   display: inline-flex; align-items: center; gap: 8px; font: 16px/1 var(--px); -webkit-font-smoothing: none; color: var(--g3); background: var(--g0);
   border: var(--b) solid var(--g3); border-bottom: 0; padding: 7px 10px 6px; }
