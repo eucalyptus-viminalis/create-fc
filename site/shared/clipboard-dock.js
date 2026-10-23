@@ -126,8 +126,6 @@
   @keyframes cbd-fade { from { opacity: 0; } }
   .cbd .page b { display: block; font: 700 11px/1 "Oswald", "Arial Narrow", sans-serif; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1.5px solid #1c1c1a; padding-bottom: 3px; margin-bottom: 4px; }
   .cbd .page i { display: block; height: 2px; background: #23253a; opacity: .45; margin: 4px 0; }
-  .cbd .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: rgb(255 255 255 / .55); letter-spacing: .14em; text-transform: uppercase; padding: 0 10px; }
-  .cbd .tag { display: block; margin: 7px 18px 0 6px; color: #3a3a35; text-align: center; letter-spacing: .1em; text-transform: uppercase; font-size: 10px; }
   .cbd .snd { all: unset; cursor: pointer; position: absolute; left: -26px; bottom: 8px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #1c1c1a; color: #e8e6db; font: 12px/1 sans-serif; }
   .cbd .snd:focus-visible { outline: 2px solid #8a63d2; outline-offset: 2px; }
   .cbd .peek { position: absolute; right: 136px; top: 50%; transform: translateY(-50%); width: min(340px, 70vw); background: #e8e6db; color: #1c1c1a; padding: 12px 14px; box-shadow: -6px 8px 18px rgb(0 0 0 / .25); display: none; }
@@ -152,14 +150,13 @@
   el.className = 'cbd'; el.setAttribute('aria-label', 'Clipboard');
   el.innerHTML = `
     <button class="board" type="button" aria-expanded="false" aria-label="Clipboard: nothing copied yet">
-      <span class="clip"></span><span class="slot"><span class="empty">Nothing on the clipboard</span></span>
+      <span class="clip"></span><span class="slot"></span>
     </button>
-    <span class="tag">Clipboard</span>
     <button class="snd" type="button"></button>
     <div class="peek" role="dialog" aria-label="On the clipboard"><h3></h3><p></p><button type="button" class="again">Copy again</button></div>
     <span class="sr" aria-live="polite"></span>`;
   document.body.append(el);
-  const board = el.querySelector('.board'), slot = el.querySelector('.slot'), peek = el.querySelector('.peek'), live = el.querySelector('.sr'), snd = el.querySelector('.snd'), tag = el.querySelector('.tag');
+  const board = el.querySelector('.board'), slot = el.querySelector('.slot'), peek = el.querySelector('.peek'), live = el.querySelector('.sr'), snd = el.querySelector('.snd');
   const paintSnd = () => { snd.textContent = soundOn() ? '♪' : '×'; snd.setAttribute('aria-label', soundOn() ? 'Sound on. Press to mute (m)' : 'Sound off. Press to turn on (m)'); };
   const toggleSound = () => { setSound(!soundOn()); paintSnd(); sfx.toggle(); };
   snd.addEventListener('click', toggleSound);
@@ -239,7 +236,6 @@
     slot.innerHTML = `<span class="page${fade ? ' fade' : ''}"${item.paper ? ` style="background:${item.paper}"` : ''}><b>${esc(item.title)}</b>${'<i></i>'.repeat(9)}</span>`;
     peek.querySelector('h3').textContent = item.title; peek.querySelector('p').textContent = item.text;
     board.setAttribute('aria-label', `Clipboard: ${item.title}. Press to see it`);
-    tag.textContent = 'On the clipboard · paste it';
     el.classList.remove('jaw'); el.classList.add('snap'); setTimeout(() => el.classList.remove('snap'), 140);
     setTimeout(() => el.classList.remove('catch'), 420);
     if (custom.clip) recording(custom.clip); else { sfx.clip(); sfx.got(); }
@@ -277,8 +273,8 @@
     page.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(-40px, -30px) rotate(-12deg) scale(.8)', opacity: 1, offset: .25 },
       { transform: 'translate(60px, 260px) rotate(160deg) scale(.25)', opacity: 0 }], { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 650, easing: 'cubic-bezier(.4, 0, .7, .2)' })
       .finished.then(() => {
-        slot.innerHTML = '<span class="empty">Nothing on the clipboard</span>';
-        board.setAttribute('aria-label', 'Clipboard: nothing copied yet'); tag.textContent = 'Clipboard';
+        slot.innerHTML = '';
+        board.setAttribute('aria-label', 'Clipboard: nothing copied yet');
       });
   }
   window.dock = { copy, toss, preload, use, play: name => { unlock(); sfx[name]?.(); } };
