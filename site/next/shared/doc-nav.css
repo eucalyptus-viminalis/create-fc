@@ -69,24 +69,5 @@
 .docnav .dn-hit { position: absolute; z-index: 30; left: 0; top: 0; display: none; cursor: pointer; }
 .docnav.open .dn-hit { display: block; }
 
-/* Under the last paper, once fanned out: Docs and GitHub, side by side, each name under its button.
-   Both open in a new tab, so each name carries a ↗.
-   Above the hit layer, so they take their own clicks. */
-.docnav .dn-more { position: absolute; z-index: 31; left: var(--dn-more-x); top: var(--dn-more-y); display: flex; gap: 14px;
-  opacity: 0; visibility: hidden; transform: translateY(-8px);
-  transition: opacity .15s, transform .2s, visibility 0s .2s; }
-.docnav.open .dn-more { opacity: 1; visibility: visible; transform: none;
-  transition: opacity .2s calc(var(--dn-n) * 28ms + 120ms), transform .3s cubic-bezier(.3,1.4,.5,1) calc(var(--dn-n) * 28ms + 120ms), visibility 0s; }
-.docnav .dn-btn { display: grid; justify-items: center; gap: 7px; width: 68px; color: #fff; text-decoration: none; pointer-events: auto; outline: none; }
-.docnav .dn-btn svg { box-sizing: content-box; width: 26px; height: 26px; padding: 13px; border-radius: 50%; background: #1c1c1a; color: #e8e6db;
-  box-shadow: 0 0 0 1px rgb(232 230 219 / .22), 0 3px 10px rgb(0 0 0 / .35); transition: transform .15s, background .15s; }
-.docnav .dn-btn span { display: flex; align-items: baseline; gap: 3px; padding: 4px 9px 5px; border-radius: 99px; background: rgb(22 22 20 / .88); font-size: 11px; white-space: nowrap; font-weight: 650; letter-spacing: .12em; text-transform: uppercase;
-  box-shadow: 0 2px 6px rgb(0 0 0 / .3); }
-.docnav .dn-btn:is(:hover, :focus-visible) svg { background: #000; transform: scale(1.12); }
-/* ↗: both open in a new tab */
-.docnav .dn-btn i { font-style: normal; font-family: system-ui, sans-serif; font-weight: 600; letter-spacing: 0; }
-.docnav .dn-btn:is(:hover, :focus-visible) span { background: #f2c94c; color: #1c1c1a; }
-.docnav .dn-btn:focus-visible svg { outline: 2px solid #f2c94c; outline-offset: 3px; }
-
 /* Phones: smaller papers, a gentler curve, less growth, so the names stay on screen. */
 @media (max-width: 600px) { .docnav { --dn-h: 50px; --dn-grow: 1.3; font-size: 12px; } }

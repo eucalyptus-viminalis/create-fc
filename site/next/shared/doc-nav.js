@@ -4,7 +4,6 @@ const nav = document.querySelector('.docnav');
 if (nav) {
   const pile = nav.querySelector('.dn-pile'), hit = nav.querySelector('.dn-hit'), spot = nav.querySelector('.dn-spot');
   const count = nav.querySelector('.dn-count'), cards = [...nav.querySelectorAll(':scope > a')];
-  const more = nav.querySelector('.dn-more');   // Docs and GitHub, under the last paper
   const docs = cards.map(a => document.getElementById(a.hash.slice(1)));
   const messy = [-3, 4, -6, 2, 7, -2, 5, -5, 1, -4, 3];   // how each paper lies in the pile
   const still = matchMedia('(prefers-reduced-motion: reduce)');
@@ -18,8 +17,7 @@ if (nav) {
     nav.style.setProperty('--dn-pile-l', '14px'); nav.style.setProperty('--dn-pile-t', '10px');
     nav.style.setProperty('--dn-pile-w', `${pw}px`); nav.style.setProperty('--dn-pile-h', `${ph}px`);
     nav.style.setProperty('--dn-count-x', `${px}px`); nav.style.setProperty('--dn-count-y', `${10 + ph - 4}px`);
-    const MORE = 92;   // room under the last paper for the Docs and GitHub buttons
-    const step = Math.min(H * 1.25, (innerHeight - 40 - H - MORE) / (n - 1)), bend = phone ? 36 : 120;
+    const step = Math.min(H * 1.25, (innerHeight - 40 - H) / (n - 1)), bend = phone ? 36 : 120;
     let right = 0;
     rows = cards.map((a, i) => {
       const img = a.querySelector('img'), w = img.naturalWidth / img.naturalHeight * H, t = i / (n - 1);
@@ -33,9 +31,6 @@ if (nav) {
     });
     // the hit layer covers the pile and every row, out past the widest name
     Object.assign(hit.style, { width: `${Math.min(innerWidth, right + 40)}px`, height: `${rows.at(-1).mid + H / 2 + 30}px` });
-    nav.style.setProperty('--dn-more-x', `${rows.at(-1).x + 20}px`);
-    nav.style.setProperty('--dn-more-y', `${rows.at(-1).mid + H / 2 + 22}px`);
-    nav.style.setProperty('--dn-n', n);
     order();
   }
 
@@ -117,11 +112,6 @@ if (nav) {
     a.addEventListener('focus', () => { open(); setHot(i); });
     a.addEventListener('click', e => { e.preventDefault(); go(i); });
   });
-  // the buttons under the fan: reaching them keeps it open and lets the last paper go dark
-  more.addEventListener('pointerenter', () => { clearTimeout(closeTimer); setHot(-1); });
-  more.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') closeTimer = setTimeout(close, 200); });
-  more.addEventListener('focusin', () => { open(); setHot(-1); });
-  more.addEventListener('mousedown', e => e.preventDefault());
   nav.addEventListener('focusout', e => { if (!nav.contains(e.relatedTarget)) close(); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { close(); pile.focus(); } });
 
