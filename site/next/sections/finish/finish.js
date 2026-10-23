@@ -45,6 +45,22 @@ anon.addEventListener('change', () => {
 });
 name.addEventListener('blur', () => { if (!name.value.trim()) anon.checked = true; });   // left without a name: still anonymous
 
+// Part IV: claiming the $5 reimbursement needs the node's address and an EVM address to pay.
+// Typing either one ticks item 5; the register checks both again.
+const claim = $('nda-claim'), node = $('nda-node'), payout = $('nda-payout');
+const nodeOk = v => /^(https?:\/\/)?[0-9a-z.:-]{4,253}(:\d{1,5})?\/?$/i.test(v) && /[.:]/.test(v);
+const payoutOk = v => /^0x[0-9a-fA-F]{40}$/.test(v);
+for (const [el, ok, cell] of [[node, nodeOk, 'nda-c-node'], [payout, payoutOk, 'nda-c-payout']]) {
+  el.addEventListener('input', () => {
+    if (el.value.trim()) claim.checked = true;
+    if (ok(el.value.trim())) $(cell).classList.remove('bad');
+  });
+}
+claim.addEventListener('change', () => {
+  if (claim.checked && !node.value.trim()) node.focus();
+  if (!claim.checked) for (const c of ['nda-c-node', 'nda-c-payout']) $(c).classList.remove('bad');
+});
+
 const submit = doc.querySelector('button.submit');
 const after = [...doc.querySelectorAll('.after')];
 for (const b of after) b.addEventListener('click', e => { if (b.hasAttribute('aria-disabled')) e.preventDefault(); });
@@ -59,6 +75,8 @@ function lock(m) {
   anon.checked = !name.value;
   form.elements.sync.checked = form.elements.cast.checked = true;
   if (f) form.elements.bulletins.checked = f.bulletins;
+  claim.checked = !!f?.claim;
+  node.value = f?.claim?.node || ''; payout.value = f?.claim?.payout || '';
   for (const el of form.querySelectorAll('input')) { if (el.type === 'text') el.readOnly = true; else el.disabled = true; }
   for (const el of form.querySelectorAll('.cell.bad')) el.classList.remove('bad');
   form.classList.add('filed');
@@ -94,18 +112,19 @@ function issue(m, animate = true) {
 }
 
 const say = (text, ok = false) => { status.className = 'status' + (ok ? ' ok' : ''); status.textContent = text; };
-const FIELD = { contact: 'nda-c-contact', certify: 'nda-c-cert', name: 'nda-c-name', signature: 'nda-c-name' };
+const FIELD = { contact: 'nda-c-contact', certify: 'nda-c-cert', name: 'nda-c-name', signature: 'nda-c-name', node: 'nda-c-node', payout: 'nda-c-payout' };
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const v = contact.value.trim(), k = kindOf(v);
   const certify = { sync: form.elements.sync.checked, cast: form.elements.cast.checked };
   const signature = operator();
-  const bad = { contact: !k, certify: !(certify.sync && certify.cast) };
+  const claimed = claim.checked ? { node: node.value.trim(), payout: payout.value.trim() } : null;
+  const bad = { contact: !k, certify: !(certify.sync && certify.cast), node: !!claimed && !nodeOk(claimed.node), payout: !!claimed && !payoutOk(claimed.payout) };
   for (const [f, isBad] of Object.entries(bad)) $(FIELD[f]).classList.toggle('bad', isBad);
   if (Object.values(bad).some(Boolean)) {
     say('Returned for correction: see the items marked in red.');
-    (bad.contact ? contact : form.querySelector('#nda-c-cert input:not(:checked)')).focus();
+    (bad.contact ? contact : bad.certify ? form.querySelector('#nda-c-cert input:not(:checked)') : bad.node ? node : payout).focus();
     return;
   }
   if (!REGISTER) return say("The Authority's office isn't open yet. Try again soon.");
@@ -114,7 +133,7 @@ form.addEventListener('submit', async e => {
   try {
     const res = await fetch(REGISTER + '/apply', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ contact: v, name: operator(), signature, certify, bulletins: form.elements.bulletins.checked }),
+      body: JSON.stringify({ contact: v, name: operator(), signature, certify, bulletins: form.elements.bulletins.checked, claim: claimed }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 422 && data.errors) {
@@ -123,7 +142,7 @@ form.addEventListener('submit', async e => {
       return say('Returned for correction: see the items marked in red.');
     }
     if (!res.ok) throw new Error(data.error || res.statusText);
-    const filed = { contact: v, name: name.value.trim(), bulletins: form.elements.bulletins.checked };
+    const filed = { contact: v, name: name.value.trim(), bulletins: form.elements.bulletins.checked, claim: claimed };
     const m = { ...data, filed };
     try { localStorage.setItem('nda-member', JSON.stringify(m)); } catch {}
     forgetDraft();   // what was sent is kept with the filing now
@@ -132,7 +151,8 @@ form.addEventListener('submit', async e => {
     const b = data.bulletins?.state;
     const more = b === 'sent' ? ' Check your e-mail to confirm bulletins.' : b === 'unsent' ? " Bulletins aren't on: the confirmation e-mail couldn't be sent." : '';
     if (data.bulletins?.confirm) console.info('[dev] confirm bulletins:', data.bulletins.confirm);
-    say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.${more}`, true);
+    const paid = claimed ? ' Your $5 claim is filed: it is paid once your node is seen in sync.' : '';
+    say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.${paid}${more}`, true);
   } catch {
     submit.disabled = false;
     say("Couldn't reach the Authority. Check your connection and submit again.");

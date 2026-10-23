@@ -825,12 +825,33 @@
             <label class="box"><input type="checkbox" name="bulletins"><span>Send me Authority bulletins: new releases, snapshot changes, and when nodes need an upgrade. Rarely. Unsubscribe any time.</span></label>
           </div>
 
+          <div class="sec ink">Part IV · Server reimbursement <span class="sec-r">First five operators</span></div>
+          <div class="cell c6 why">
+            <p><b>Why the Authority pays.</b> This kit is entered in Balaji's Farcaster client prize, and it only counts if other people run it. The first five operators to certify get <b>$5 USDC</b> to cover the server, whatever they thought of it. Paid once the Authority sees your node in sync.</p>
+            <div class="claim" id="nda-c-claim">
+              <span class="lbl">5. Claim (optional)</span>
+              <label class="box"><input type="checkbox" name="claim" id="nda-claim"><span>Send me $5 USDC</span></label>
+            </div>
+          </div>
+          <div class="cell c2" id="nda-c-node">
+            <label for="nda-node">6. Node address</label>
+            <input type="text" id="nda-node" name="node" placeholder="e.g. 203.0.113.7" autocomplete="off" spellcheck="false" aria-describedby="nda-node-err">
+            <div class="err" id="nda-node-err">Your node's IP, like 203.0.113.7.</div>
+            <div class="hint">So the Authority can see it in sync.</div>
+          </div>
+          <div class="cell c4" id="nda-c-payout">
+            <label for="nda-payout">7. Pay to</label>
+            <input type="text" id="nda-payout" name="payout" placeholder="0x…" autocomplete="off" spellcheck="false" aria-describedby="nda-payout-err">
+            <div class="err" id="nda-payout-err">0x and 40 letters or numbers.</div>
+            <div class="hint">Any EVM address you control.</div>
+          </div>
+
           <div class="cell c4" id="nda-c-sign">
-            <span class="lbl">5. Signature of operator</span>
+            <span class="lbl">8. Signature of operator</span>
             <div class="sig signed" id="nda-sign">anon</div>
           </div>
           <div class="cell c2">
-            <span class="lbl">6. Date</span>
+            <span class="lbl">9. Date</span>
             <div class="typed" id="nda-date"></div>
           </div>
 
@@ -844,7 +865,7 @@
         </div>
 
         <div class="privacy ink">
-          <p><b>Privacy statement.</b> The Authority asks for item 1 to reach you, and for nothing else on this form to be required. It is not sold or shared. An FID is public on Farcaster already; an e-mail address is kept only while you want bulletins.</p>
+          <p><b>Privacy statement.</b> The Authority asks for item 1 to reach you, and for nothing else on this form to be required. It is not sold or shared. An FID is public on Farcaster already; an e-mail address is kept only while you want bulletins. Items 6 and 7 are used only to check your node and pay you, and are never shown anywhere.</p>
           <p><b>Burden statement.</b> Public reporting burden for this collection is estimated to average 1 minute per response, considerably less than the 6 to 8 hours you just spent syncing a node.</p>
         </div>
 

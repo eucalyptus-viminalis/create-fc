@@ -1,5 +1,6 @@
 -- The Network Decentralization Authority's register (a new database: pnpm db:init / db:init:remote).
--- A register made before migrations/001 needs that file run once instead.
+-- A register made before migrations/001 needs that file run once instead, and one made before
+-- migrations/002 needs 002.
 
 -- One row per filing. id is the member number: sequential, never reused.
 -- contact is private (an FID or an e-mail address) and is never shown on member pages. It isn't
@@ -11,6 +12,8 @@ CREATE TABLE IF NOT EXISTS members (
   name       TEXT NOT NULL,
   signature  TEXT NOT NULL,
   bulletins  INTEGER NOT NULL DEFAULT 0,   -- whether this filing asked for bulletins
+  node       TEXT,                         -- Part IV, the $5 server reimbursement: the node's address (an IP or host name)
+  payout     TEXT,                         --   and the EVM address to pay. Both empty when there's no claim.
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

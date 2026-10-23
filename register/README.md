@@ -13,8 +13,11 @@ The Network Decentralization Authority's register: where the microsite's members
 `POST /apply` takes JSON:
 
 ```json
-{ "contact": "1234", "name": "@fameboyteal", "signature": "Ada Operator", "certify": { "sync": true, "cast": true }, "bulletins": false }
+{ "contact": "1234", "name": "@fameboyteal", "signature": "Ada Operator", "certify": { "sync": true, "cast": true }, "bulletins": false,
+  "claim": { "node": "203.0.113.7", "payout": "0x97547ffbA3F3e5a7553aA36948F618f39647F2Ea" } }
 ```
+
+`claim` is optional: Part IV, the $5 server reimbursement. `node` is the node's IP or host name (a pasted URL is trimmed to that), and `payout` is any EVM address. Both are needed to claim, and both stay in D1 like `contact`.
 
 `contact` is an FID or an e-mail address. It is stored in D1 and never shown anywhere. Member pages and cards show only the name, number, enrolled date and signature.
 
@@ -64,6 +67,14 @@ pnpm db:migrate:remote
 
 It keeps every member and number. (`pnpm db:migrate` does the same to the local database.)
 
+**A register made before Part IV** (no `node` and `payout` columns) needs this once, before deploying the new code:
+
+```bash
+pnpm db:migrate:002:remote
+```
+
+(`pnpm db:migrate:002` for the local database.)
+
 **Plan:** drawing a card takes about 300 ms of CPU. The Workers Free plan allows 10 ms per request, so card images need **Workers Paid** ($5/month). Applying and member pages fit in the free plan.
 
 ## Who has applied
@@ -73,3 +84,13 @@ pnpm wrangler d1 execute nda-register --remote --command "SELECT id, name, kind,
 ```
 
 Add `contact` to the columns to see FIDs and e-mail addresses.
+
+## Reimbursement claims
+
+The first five operators get $5 USDC for their server. To see every claim, oldest first:
+
+```bash
+pnpm claims:remote
+```
+
+Check each node is in sync (`curl http://<node>:3381/v1/info`, every shard's `blockDelay` in single digits), then pay its `payout` address.

@@ -1,5 +1,5 @@
 /* Finish: NDA Form 1, the Network Decentralization Authority's application for membership.
-   A 1960s government form photocopied in green ink onto buff A4, with a tear-off member card.
+   A 1960s government form photocopied in green ink onto long buff paper, with a tear-off member card.
    From brand/mockups/finish.html. Everything is scoped to .doc-finish. */
 .doc-finish {
   --paper: #ece6d2; --form: #24493b; --form-2: #4d6d5f; --typed: #23253a; --stamp: #6b4fc4; --red: #a8432c;
@@ -9,9 +9,10 @@
   color: var(--form); font: 400 14px/1.45 "Archivo Narrow", sans-serif; padding: 64px 16px 90px;
 }
 
-/* A4 at 96 dpi, scaled down to fit narrow windows (paper.js fitPage sets --s). */
-.doc-finish .fit { position: relative; max-width: 794px; margin: 0 auto; height: calc(1123px * var(--s, 1)); }
-.doc-finish .sheet { position: absolute; left: 50%; top: 0; width: 794px; height: 1123px; transform-origin: 50% 0;
+/* Scaled down to fit narrow windows (paper.js fitPage sets --s). */
+/* A4 wide and longer than A4: Part IV needed the room */
+.doc-finish .fit { position: relative; max-width: 794px; margin: 0 auto; height: calc(1290px * var(--s, 1)); }
+.doc-finish .sheet { position: absolute; left: 50%; top: 0; width: 794px; height: 1290px; transform-origin: 50% 0;
   transform: translateX(-50%) scale(var(--s, 1)) rotate(-.35deg);
   filter: drop-shadow(0 1px 0 rgb(0 0 0 / .08)) drop-shadow(6px 10px 14px rgb(0 0 0 / .22)); }
 .doc-finish .paper { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(255 255 255 / .22), rgb(255 255 255 / 0) 40%, rgb(80 70 45 / .08)), var(--paper); }
@@ -126,3 +127,10 @@
 .doc-finish .status.ok { color: var(--form); }
 
 @media (max-width: 640px) { .doc-finish { padding: 32px 12px 60px; } }
+
+/* Part IV, the server reimbursement */
+.doc-finish .sec-r { float: right; letter-spacing: .12em; opacity: .8; }
+.doc-finish .why { min-height: 0; display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; }
+.doc-finish .why p { margin: 0; font: 400 13.5px/1.4 "Archivo Narrow"; }
+.doc-finish .why .claim { padding-left: 14px; border-left: 1.5px solid var(--form); }
+.doc-finish .why .claim .lbl { display: block; font: var(--label); letter-spacing: .05em; text-transform: uppercase; }

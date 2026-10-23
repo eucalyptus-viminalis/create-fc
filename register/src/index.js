@@ -7,7 +7,8 @@
 //   GET|POST /confirm    the link in a bulletin confirmation e-mail (src/bulletins.js).
 //   GET|POST /unsubscribe  the link that stops bulletins.
 //
-// Only the name, number, enrolled date and signature are ever public. The contact stays in D1.
+// Only the name, number, enrolled date and signature are ever public. The contact, and a claim's node
+// and payout addresses, stay in D1.
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import wasm from '@resvg/resvg-wasm/index_bg.wasm';
 import courier from '@expo-google-fonts/courier-prime/700Bold/CourierPrime_700Bold.ttf';
@@ -50,9 +51,9 @@ async function apply(request, env) {
   // Every filing is a new member. Nothing on the form proves who owns an FID or e-mail address, so a
   // filing must never change one made before it.
   const row = await env.DB.prepare(
-    `INSERT INTO members (contact, kind, name, signature, bulletins) VALUES (?1, ?2, ?3, ?4, ?5)
+    `INSERT INTO members (contact, kind, name, signature, bulletins, node, payout) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
      RETURNING id, name, signature, created_at`,
-  ).bind(m.contact, m.kind, m.name, m.signature, m.bulletins ? 1 : 0).first();
+  ).bind(m.contact, m.kind, m.name, m.signature, m.bulletins ? 1 : 0, m.node, m.payout).first();
   const url = new URL(request.url), site = url.origin;
   // E-mail bulletins start only when the address confirms. (FID bulletins aren't set up yet.)
   const bulletins = m.bulletins && m.kind === 'email'
