@@ -1,25 +1,25 @@
 import { defineConfig } from "vitepress";
 
 // The create-fc docs. Published with the microsite by .github/workflows/pages.yml:
-// built into site/docs/, served at https://eucalyptus-viminalis.github.io/create-fc/docs/.
+// built into site/docs/, served at https://createfc.org/docs/.
 // For protocol concepts, link to Farcaster's own docs rather than re-explaining them.
 const REPO = "https://github.com/eucalyptus-viminalis/create-fc";
 
 export default defineConfig({
   title: "create-fc docs",
   description: "Run your own Farcaster: a Snapchain node and the fameboy client, explained.",
-  base: "/create-fc/docs/",
+  base: "/docs/",
   outDir: "../site/docs",
   cleanUrls: true,
   // Developer notes live here too but aren't for readers.
   srcExclude: ["adr/**", "quality-attributes.md"],
-  head: [["link", { rel: "icon", href: "/create-fc/docs/favicon.svg", type: "image/svg+xml" }]],
+  head: [["link", { rel: "icon", href: "/docs/favicon.svg", type: "image/svg+xml" }]],
   themeConfig: {
     logo: { light: "/create-fc-mark.svg", dark: "/create-fc-mark-white.svg", alt: "" },
     nav: [
       { text: "Guides", link: "/guide/share-your-node" },
       { text: "Costs", link: "/Costs" },
-      { text: "create-fc", link: "https://eucalyptus-viminalis.github.io/create-fc/" },
+      { text: "create-fc", link: "https://createfc.org/" },
     ],
     sidebar: [
       { text: "Guides", items: [{ text: "Share your node with friends", link: "/guide/share-your-node" }, { text: "Host fameboy for others", link: "/guide/host-fameboy" }, { text: "Images in your casts", link: "/guide/images" }] },

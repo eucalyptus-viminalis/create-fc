@@ -9,7 +9,7 @@
 // Copy rule: active voice, max 7 words a sentence.
 
 const { $, wait, esc, api, tone, toast } = kit;
-const DOCS = "https://eucalyptus-viminalis.github.io/create-fc/docs";
+const DOCS = "https://createfc.org/docs";
 
 
 // ------------------------------------------------------------------ sound
