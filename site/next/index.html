@@ -24,8 +24,8 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · seed: Arvo, Oswald, JetBrains Mono, Courier Prime · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · seed: IM Fell English, IM Fell English SC, Pinyon Script, Courier Prime · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Pinyon+Script&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/agent/agent.css">
@@ -657,112 +657,54 @@
     </div>
   </div>
 </section>
-<!-- Seed phrase safety: the operator training card (sections/seed/) -->
-<section class="doc doc-seed" id="seed" aria-labelledby="tc-t">
+<!-- Seed phrase safety: the qualification card, as a 1940s certificate (sections/seed/) -->
+<section class="doc doc-seed" id="seed" aria-labelledby="seed-t">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-    <!-- Card stock: lit fibre texture multiplied in, and slightly ragged edges. -->
-    <filter id="tc-paper" x="-2%" y="-2%" width="104%" height="104%">
-      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4" result="lo"/>
-      <feDisplacementMap in="SourceGraphic" in2="lo" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="edge"/>
-      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" seed="7" result="tooth"/>
-      <feDiffuseLighting in="tooth" surfaceScale="1.4" lighting-color="#fff" result="lit"><feDistantLight azimuth="235" elevation="58"/></feDiffuseLighting>
-      <feComponentTransfer in="lit" result="soft"><feFuncR type="linear" slope=".32" intercept=".7"/><feFuncG type="linear" slope=".32" intercept=".7"/><feFuncB type="linear" slope=".32" intercept=".7"/></feComponentTransfer>
-      <feTurbulence type="fractalNoise" baseFrequency=".012 .5" numOctaves="2" seed="11" result="fib"/>
-      <feColorMatrix in="fib" type="matrix" values="0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .25  0 0 0 -.7 .42" result="fibres"/>
-      <feBlend in="edge" in2="soft" mode="multiply" result="t"/>
-      <feComposite in="fibres" in2="t" operator="atop" result="tf"/>
-      <feComposite in="tf" in2="edge" operator="in"/>
-    </filter>
-    <!-- Letterpress ink: edges nudged by fine noise, a touch of spread. -->
-    <filter id="tc-ink" x="-2%" y="-5%" width="104%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="2" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feGaussianBlur in="d" stdDeviation=".22"/>
-    </filter>
-    <!-- Worn solid: a black bar with small voids where ink didn't take. -->
-    <filter id="tc-worn">
-      <feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="3" seed="9" result="n"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -16 13.6" result="holes"/>
-      <feComposite in="SourceGraphic" in2="holes" operator="in"/>
-    </filter>
-    <!-- Rubber stamp: patchy ink, rough edges. -->
-    <filter id="tc-stamp">
-      <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="5" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="3" result="p"/>
-      <feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.3" result="patch"/>
-      <feComposite in="d" in2="patch" operator="in"/>
-    </filter>
-    <!-- Typewriter: uneven strike. -->
-    <filter id="tc-type">
-      <feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="1" seed="13" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2" result="m"/>
-      <feComposite in="d" in2="m" operator="in"/>
-    </filter>
-    <!-- Graphite: grainy pencil stroke. -->
-    <filter id="tc-graphite">
-      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="21" result="n"/>
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 2.1" result="g"/>
-      <feComposite in="SourceGraphic" in2="g" operator="in"/>
-    </filter>
-    <symbol id="tc-placard" viewBox="0 0 200 200">
-      <g transform="rotate(45 100 100)"><rect x="32" y="32" width="136" height="136" fill="#8a63d2"/><rect x="40" y="40" width="120" height="120" fill="none" stroke="#1c1c1a" stroke-width="4"/></g>
-      <g fill="#1c1c1a"><circle cx="78" cy="86" r="17"/><circle cx="78" cy="86" r="7" fill="#8a63d2"/><rect x="92" y="82" width="48" height="9"/><rect x="122" y="91" width="8" height="12"/><rect x="133" y="91" width="7" height="8"/></g>
-      <text x="100" y="124" text-anchor="middle" font-family="Oswald" font-weight="600" font-size="15" letter-spacing="1.5" fill="#1c1c1a">MASTER KEY</text>
-      <text x="100" y="158" text-anchor="middle" font-family="Arvo" font-weight="700" font-size="24" fill="#1c1c1a">24</text>
-    </symbol>
+    <filter id="seed-type"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="1" seed="13" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="d"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2.2" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>
+    <symbol id="sigpath" viewBox="0 0 160 44"><path d="M6 32c6-14 14-26 18-24s-8 26-6 28 10-18 16-18-2 14 2 14 8-12 12-12 0 10 4 10 10-14 16-14-4 12 0 12 14-8 20-12m-62 6c20-5 50-10 74-12M120 22c4-4 8-6 10-4s-4 8 0 8 8-6 14-8" fill="none" stroke="#2a3170" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="orn" viewBox="0 0 22 22"><path d="M2 20V8c0-3 3-6 6-6h12M6 20v-9c0-2 2-4 4-4h10" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="4" cy="4" r="1.8" fill="currentColor"/></symbol>
   </defs></svg>
-  <div class="stage">
-    <div class="cardfit"><div class="card" id="tc-card" tabindex="0" role="button" aria-label="Training card. Press to turn it over"></div></div>
-    <div class="aside">
-      <h2>Card No. 4 · Seed phrases</h2>
-      <p>Every operator carries one. The front says what a seed phrase is; the back is four checks before you ever type one.</p>
-      <p>Turn it over, tick each check as it's true for you, and put your name on the operator line. It stays on this computer.</p>
-      <button class="flip" type="button">Turn the card over ↻</button>
+  <div class="pair">
+    <div class="slot">
+    <div class="card a" role="group" aria-label="Qualification card, front">
+          <div class="stock"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+          <div class="face">
+            <div class="p1 layer"><div class="frame"></div></div>
+            <div class="p2 layer"><svg class="corner" style="left:7px;top:7px"><use href="#orn"/></svg><svg class="corner" style="right:7px;top:7px;transform:scaleX(-1)"><use href="#orn"/></svg><svg class="corner" style="left:7px;bottom:7px;transform:scaleY(-1)"><use href="#orn"/></svg><svg class="corner" style="right:7px;bottom:7px;transform:scale(-1)"><use href="#orn"/></svg></div>
+            <div class="in">
+              <div class="p1"><div class="org">The Network Decentralization Authority</div></div>
+              <div class="p2"><div class="orn"><i></i>✦<i></i></div></div>
+              <div class="p1"><div class="this">This is to certify that</div></div>
+              <div class="name"><span class="typed" contenteditable="true" spellcheck="false" role="textbox" aria-label="Your name" data-ph="your name"></span></div>
+              <div class="p2"><div class="script">is duly qualified in</div></div>
+              <div class="p1"><h2 class="course" id="seed-t">Seed Phrase Handling</h2><div class="small">having read and understood the four rules overleaf</div></div>
+              <div class="foot">
+                <div class="p1"><div style="min-height:20px"><span class="typed date" style="font-size:15px"></span></div><div class="line">Date</div></div>
+                <div style="position:relative"><svg class="sig" width="130" height="36" style="left:20px;bottom:18px"><use href="#sigpath"/></svg><div class="p1"><div style="height:22px"></div><div class="line">Administrator, Key Safety &amp; Accident Prevention</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="slot">
+    <div class="card a" role="group" aria-label="Qualification card, back: the four rules">
+          <div class="stock"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+          <div class="face back">
+            <div class="p1 layer"><div class="frame"></div></div>
+            <div class="in">
+              <div class="p1"><h3>The Four Rules</h3></div>
+              <div class="p2"><div class="orn" style="margin:0 0 6px"><i></i>✦<i></i></div></div>
+              <div class="p1"><ol>
+                <li><span><b>Use an account made for the purpose,</b> never your principal one. <code>fameboy new-account</code> registers one for about $0.20 of ETH.</span></li>
+                <li><span><b>Read before you paste.</b> Trust only software whose code you have read: for fameboy, <code>client/src/keys.ts</code>.</span></li>
+                <li><span><b>Prefer the telephone.</b> Approve in the Farcaster app, and the phrase never leaves it.</span></li>
+                <li><span><b>Never through an assistant.</b> Type phrases in your own terminal; through an AI, they land in its transcript.</span></li>
+              </ol></div>
+            </div>
+          </div>
+        </div>
     </div>
   </div>
-  <template id="tc-front">
-  <div class="paper"></div>
-  <div class="show"></div>
-  <div class="content">
-    <div class="bar ink"><span>Network Decentralization Authority</span><b class="misreg">Card No. 4</b></div>
-    <div class="ink"><h2 id="tc-t">Seed Phrase Handling</h2><div class="sub">Operator training card · carry with you</div></div>
-    <div class="front-body">
-      <p class="ink">A seed phrase is the master key to an account. Whoever has it can post as you, move your FID and take your funds. Treat it like <code>rm -rf</code>.</p>
-      <svg class="placard ink misreg" aria-hidden="true"><use href="#tc-placard"/></svg>
-    </div>
-    <span class="serial ink">FORM NDA-4 · PRINTED 10-26</span>
-  </div>
-</template>
-  <template id="tc-back">
-  <div class="paper"></div>
-  <div class="show"></div>
-  <div class="content">
-    <div class="bar ink"><span>Before you type a phrase</span><b class="misreg">Check all four</b></div>
-    <ol class="checks">
-      <li><span class="box ink"><svg class="pencil" viewBox="0 0 30 30"><path d="M5 15c3 2 5 5 6 8 3-8 8-15 15-20" fill="none" stroke="#3a3a40" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#tc-graphite)"/></svg></span><span class="ink"><b>An account made for this.</b> Not your main one: <code>fameboy new-account</code>.</span></li>
-      <li><span class="box ink"><svg class="pencil" viewBox="0 0 30 30"><path d="M4 16c3 1 6 4 7 7 4-9 9-15 15-19" fill="none" stroke="#3a3a40" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#tc-graphite)"/></svg></span><span class="ink"><b>Read the code first.</b> <code>client/src/keys.ts</code>: in memory, never written or sent.</span></li>
-      <li><span class="box ink"><svg class="pencil" viewBox="0 0 30 30"><path d="M6 14c2 2 4 5 5 9 3-7 9-14 14-19" fill="none" stroke="#3a3a40" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#tc-graphite)"/></svg></span><span class="ink"><b>Approve on your phone instead</b> whenever you can.</span></li>
-      <li><span class="box ink"><svg class="pencil" viewBox="0 0 30 30"><path d="M5 15c3 2 5 4 6 8 4-8 8-14 15-20" fill="none" stroke="#3a3a40" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#tc-graphite)"/></svg></span><span class="ink"><b>Your own terminal.</b> Never through an AI's shell.</span></li>
-    </ol>
-    <div class="sigs">
-      <div class="ink">Operator<span class="typed" contenteditable="true" spellcheck="false" role="textbox" aria-label="Operator name" data-key="operator"></span></div>
-      <div class="ink">Instructor
-        <svg class="signature" viewBox="0 0 150 46" aria-hidden="true"><path d="M6 34c6-14 14-26 18-24s-8 26-6 28 10-18 16-18-2 14 2 14 8-12 12-12 0 10 4 10 10-14 16-14-4 12 0 12 14-8 20-12m-60 4c18-4 46-10 70-12" fill="none" stroke="#2b2f4d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" filter="url(#tc-ink)"/></svg>
-      </div>
-      <div class="ink">Date<span class="typed date"></span></div>
-    </div>
-    <svg class="stamp" viewBox="0 0 120 120" aria-hidden="true">
-      <g fill="none" stroke="#5d43d6"><circle cx="60" cy="60" r="55" stroke-width="4"/><circle cx="60" cy="60" r="44" stroke-width="1.6"/></g>
-      <defs><path id="tc-arcTop" d="M18 60a42 42 0 0 1 84 0"/><path id="tc-arcBot" d="M14 60a46 46 0 0 0 92 0"/></defs>
-      <text font-family="Oswald" font-weight="600" font-size="11" letter-spacing="2.4" fill="#5d43d6"><textPath href="#tc-arcTop" startOffset="50%" text-anchor="middle">NETWORK DECENTRALIZATION</textPath></text>
-      <text font-family="Oswald" font-weight="600" font-size="11" letter-spacing="3" fill="#5d43d6"><textPath href="#tc-arcBot" startOffset="50%" text-anchor="middle">AUTHORITY</textPath></text>
-      <text x="60" y="58" text-anchor="middle" font-family="Oswald" font-weight="600" font-size="17" letter-spacing="1.5" fill="#5d43d6">QUALIFIED</text>
-      <text x="60" y="74" text-anchor="middle" font-family="Oswald" font-weight="500" font-size="9" letter-spacing="1.8" fill="#5d43d6">SEED PHRASE · 24</text>
-    </svg>
-  </div>
-</template>
 </section>
 <section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
 
