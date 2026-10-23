@@ -24,15 +24,55 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Libre+Franklin:wght@700;800;900&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=JetBrains+Mono:wght@500;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600&display=swap">
 <link rel="stylesheet" href="shared/page.css">
+<link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
 <main>
 
-<section class="doc doc-pending" id="hero" aria-label="Hero"><div><b>Hero · mail-order coupon</b>Port from <code>brand/mockups/hero-coupon.html</code> (Hero 5)</div></section>
+<!-- Hero: a mail-order ad torn out of a magazine (sections/hero/) -->
+<section class="doc doc-hero" id="hero" aria-labelledby="hero-t">
+  <div class="hero">
+    <div class="page">
+      <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+      <div class="show" aria-hidden="true"></div>
+      <div class="ground" aria-hidden="true"></div>
+      <div class="rule" aria-hidden="true"></div>
+      <div class="print">
+        <header class="mast"><img src="../img/create-fc-lockup.svg" alt="create-fc"><span class="issue">Network Decentralization Authority · Special Offer</span></header>
+        <div class="top">
+          <div>
+            <p class="q">Tired of reading Farcaster through someone else's servers?</p>
+            <h1 id="hero-t">Now! Your <u>own</u><br>Farcaster</h1>
+            <p class="kick">For less than a cup of coffee a day!*</p>
+          </div>
+          <div class="burst"><svg viewBox="-150 -150 300 300" aria-hidden="true"><polygon points="148.0,0.0 116.2,20.5 139.1,50.6 102.2,59.0 113.4,95.1 75.8,90.4 74.0,128.2 40.4,110.9 25.7,145.8 0.0,118.0 -25.7,145.8 -40.4,110.9 -74.0,128.2 -75.8,90.4 -113.4,95.1 -102.2,59.0 -139.1,50.6 -116.2,20.5 -148.0,0.0 -116.2,-20.5 -139.1,-50.6 -102.2,-59.0 -113.4,-95.1 -75.8,-90.4 -74.0,-128.2 -40.4,-110.9 -25.7,-145.8 -0.0,-118.0 25.7,-145.8 40.4,-110.9 74.0,-128.2 75.8,-90.4 113.4,-95.1 102.2,-59.0 139.1,-50.6 116.2,-20.5"/></svg><div><span class="only">ONLY</span><span class="price"><sup>$</sup>3.99<sup>*</sup></span><span class="per">A DAY</span></div></div>
+        </div>
+        <div class="gap"></div>
+        <div class="row">
+          <div class="how">
+            <h2>It's this easy</h2>
+            <ol><li><code>hetzner.sh</code> rents the server</li><li><code>setup.sh</code> syncs the node</li><li><code>install.sh</code> puts a demo client on your computer</li></ol>
+            <div class="guar"><b>Cancel anytime</b>Change your mind? One command deletes everything, and the billing stops that very hour.</div>
+          </div>
+          <form class="coupon" onsubmit="return false">
+            <h2>Trial coupon · act today!</h2>
+            <p class="to">Paste this in your own terminal. About $1 pays for an afternoon to try it.*</p>
+            <button type="button" class="cmd" title="Click to copy" data-cmd="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash">curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash<span class="hint">Click to copy · supplies unlimited</span></button>
+            <label class="yes"><input type="checkbox" name="yes"> YES! I want my own node. I'll pay by the hour and quit anytime.</label>
+          </form>
+        </div>
+        <div class="foot">
+          <p class="fine">*Hetzner bills about $0.16 an hour for the server and its 1 TB disk, until you delete them: about $3.84 a day. About $1 to sync and try. One command stops the billing. If the usual server is sold out, the fallback costs about $0.20 an hour. Full details in the docs.</p>
+          <span class="pg">Page 189</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 <section class="doc doc-pending" id="agent" aria-label="Agent prompt"><div><b>Agent prompt · service work order</b>Port from <code>brand/mockups/work-order.html</code></div></section>
 <section class="doc doc-pending" id="kit" aria-label="Before you start and quickstart"><div><b>Before you start + quickstart · kit assembly manual</b>Port from <code>brand/mockups/kit-manual.html</code></div></section>
 <section class="doc doc-pending" id="explainers" aria-label="Explainers"><div><b>Explainers · Herbert Bayer booklet</b>Port from <code>brand/mockups/concepts-bayer.html</code></div></section>
@@ -154,7 +194,9 @@
 </section>
 
 </main>
+<script src="shared/clipboard-dock.js" defer></script>
 <script type="module" src="shared/paper.js"></script>
+<script type="module" src="sections/hero/hero.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>

@@ -101,7 +101,11 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/apply') {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request, env) });
-      if (request.method === 'POST') return apply(request, env);
+      if (request.method === 'POST') {
+        // Errors keep the CORS headers, so the form can tell the visitor instead of the browser hiding it.
+        try { return await apply(request, env); }
+        catch (e) { console.error(e); return json({ error: "The register couldn't record that. Try again." }, 500, cors(request, env)); }
+      }
       return json({ error: 'POST the form here.' }, 405);
     }
     const m = url.pathname.match(/^\/m\/(\d{1,9})(\/card\.png)?$/);
