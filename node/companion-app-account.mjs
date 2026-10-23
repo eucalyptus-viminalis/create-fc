@@ -128,7 +128,8 @@ if (!username) {
   const suggestion = await pickFameboyName({ fid: found.fid, log: (s) => console.log(s) });
   const name = await chooseName(suggestion, found.fid);
   if (name) console.log(`
-Claim @${name} from your own computer (it asks for this account's seed phrase):
+Claim @${name} from your own computer (it asks for this account's seed phrase).
+It also sets the matching keycap as the picture:
   fameboy username ${name}`);
   else console.log("Claim one later from your own computer: fameboy username <name>");
 }
