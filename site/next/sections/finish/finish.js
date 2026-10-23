@@ -144,3 +144,8 @@ anon.checked = !name.value.trim(); fillCard();
 
 // Already a member in this browser: show the issued card.
 try { const m = JSON.parse(localStorage.getItem('nda-member')); if (m?.no) issue(m, false); } catch {}
+
+// On localhost, say which register the form files with, since only the live one sends e-mail.
+if (LOCAL) say(REGISTER === LIVE_REGISTER
+  ? 'Testing: this files with the LIVE register (real member numbers, real e-mail).'
+  : 'Testing: this files with the local register (no e-mail). Add ?live-register to the address to use the live one.', true);
