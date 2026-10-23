@@ -88,7 +88,7 @@
 
   /* controls */
   /* back and forward, side by side */
-  .doc-explainers .controls { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 14px 16px 30px; font: 600 14px/1 var(--head); text-transform: lowercase; letter-spacing: .12em; }
+  .doc-explainers .controls { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 28px 16px 30px; font: 600 14px/1 var(--head); text-transform: lowercase; letter-spacing: .12em; }
   .doc-explainers .controls button { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 20px; }
   .doc-explainers .controls button:disabled { opacity: .25; cursor: default; }
   .doc-explainers .tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 520px; padding: 0 16px 8px; }

@@ -30,6 +30,7 @@ const flip = new PageFlip(book, {
 });
 flip.loadFromHTML(pages);
 
+
 // Contents (sidebar), dots, label and arrows all follow the page you're on.
 const toc = $('bayer-toc'), tabs = $('bayer-tabs');
 const name = p => p.dataset.name;
