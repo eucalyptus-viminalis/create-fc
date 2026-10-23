@@ -34,22 +34,23 @@ const defs = (() => {
 })();
 
 // Photocopied ink: the edges wobble, toner is patchy and specks drop out. One filter per colour.
-export function inkFilter(name, color) {
+// opts lightens the effect: wobble, specks (higher = fewer dropouts), plate (wet-ink opacity), spread.
+export function inkFilter(name, color, { wobble = 0.9, specks = 4.25, plate = 0.5, spread = 0.35, bleed = 0.5, drift = 1.6 } = {}) {
   if (document.getElementById('ink-' + name)) return;
   defs.insertAdjacentHTML('beforeend', `
     <filter id="ink-${name}" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB">
       <feTurbulence type="turbulence" baseFrequency="0.018" numOctaves="1" seed="2" result="wobble"/>
-      <feDisplacementMap in="SourceGraphic" in2="wobble" scale="0.9" xChannelSelector="R" yChannelSelector="G" result="sheet"/>
+      <feDisplacementMap in="SourceGraphic" in2="wobble" scale="${wobble}" xChannelSelector="R" yChannelSelector="G" result="sheet"/>
       <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="speck"/>
-      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 -6 0 4.25" result="holes"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 -6 0 ${specks}" result="holes"/>
       <feComposite in="sheet" in2="holes" operator="in" result="worn"/>
       <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -0.4 -0.4 -0.4 0 1.15" result="dark"/>
       <feComposite in="dark" in2="SourceAlpha" operator="in" result="linework"/>
       <feTurbulence type="turbulence" baseFrequency="0.008" numOctaves="2" seed="7" result="drift"/>
-      <feDisplacementMap in="linework" in2="drift" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="wet"/>
-      <feMorphology in="wet" operator="dilate" radius="0.35" result="gain"/>
-      <feGaussianBlur in="gain" stdDeviation="0.5" result="bleed"/>
-      <feFlood flood-color="${color}" flood-opacity=".5"/>
+      <feDisplacementMap in="linework" in2="drift" scale="${drift}" xChannelSelector="R" yChannelSelector="G" result="wet"/>
+      <feMorphology in="wet" operator="dilate" radius="${spread}" result="gain"/>
+      <feGaussianBlur in="gain" stdDeviation="${bleed}" result="bleed"/>
+      <feFlood flood-color="${color}" flood-opacity="${plate}"/>
       <feComposite in2="bleed" operator="in" result="plate"/>
       <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="21" result="mottle"/>
       <feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 2.2 0 0 -0.6" result="heavy"/>
