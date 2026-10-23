@@ -1,0 +1,16 @@
+/* The page itself: a stack of documents, each on its own stretch of desk.
+   Everything inside a document belongs to that document's own stylesheet (sections/<name>/). */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
+
+/* Each document is a full-width band. Sections set their own desk background and padding. */
+.doc { position: relative; min-height: 60vh; }
+
+/* A document that hasn't been ported from its mockup yet. */
+.doc-pending { display: grid; place-content: center; padding: 64px 16px; background: #3a3833; color: #d9d6cb; text-align: center;
+  font: 500 15px/1.5 ui-monospace, Menlo, monospace; border-top: 1px dashed #5a574f; }
+.doc-pending b { display: block; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #a8a596; margin-bottom: 6px; }
+.doc-pending code { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

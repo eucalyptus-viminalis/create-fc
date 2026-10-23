@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>create-fc · Run your own Farcaster</title>
+<!-- The next microsite, built here while the current one stays live at ../.
+     Not linked from anywhere yet, and kept out of search engines until it replaces the old page.
+
+     Every section is a separate document (developer/create-fc Microsite.md): a photocopied coupon,
+     a work order, a kit manual... Each one lives in sections/<name>/ with its own CSS and JS,
+     scoped to its own .doc-<name> class, and ported from its mockup in brand/mockups/.
+     shared/ holds only what every document needs: the paper and ink filters, dust and A4 scaling.
+
+     To port a section: replace its .doc-pending placeholder with the markup, add its <link> and
+     <script type="module">, load its fonts below, and prefix its ids so they can't collide.
+     Run the page with `pnpm site:dev` (http://localhost:5173/next/). -->
+<meta name="robots" content="noindex">
+<meta name="description" content="Three commands to a self-hosted Snapchain read node and a Farcaster client that reads from it and posts through it. No API keys.">
+<!-- The register (register/, a Cloudflare Worker) that NDA Form 1 is sent to. Set after `pnpm deploy` there. -->
+<meta name="nda-register" content="">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fonts, by section. finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Libre+Franklin:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="shared/page.css">
+<link rel="stylesheet" href="sections/finish/finish.css">
+</head>
+<body>
+<main>
+
+<section class="doc doc-pending" id="hero" aria-label="Hero"><div><b>Hero · mail-order coupon</b>Port from <code>brand/mockups/hero-coupon.html</code> (Hero 5)</div></section>
+<section class="doc doc-pending" id="agent" aria-label="Agent prompt"><div><b>Agent prompt · service work order</b>Port from <code>brand/mockups/work-order.html</code></div></section>
+<section class="doc doc-pending" id="kit" aria-label="Before you start and quickstart"><div><b>Before you start + quickstart · kit assembly manual</b>Port from <code>brand/mockups/kit-manual.html</code></div></section>
+<section class="doc doc-pending" id="explainers" aria-label="Explainers"><div><b>Explainers · Herbert Bayer booklet</b>Port from <code>brand/mockups/concepts-bayer.html</code></div></section>
+<section class="doc doc-pending" id="costs" aria-label="Costs"><div><b>Costs · slide chart</b>Port from <code>brand/mockups/costs-sliderule.html</code></div></section>
+<section class="doc doc-pending" id="troubleshooting" aria-label="Troubleshooting"><div><b>Troubleshooting · torn-out service manual page</b>Port from <code>brand/mockups/troubleshooting-scan.html</code></div></section>
+<section class="doc doc-pending" id="seed" aria-label="Seed phrase safety"><div><b>Seed phrase safety · operator training card</b>Port from <code>brand/mockups/training-card.html</code></div></section>
+<section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
+
+<!-- Finish: NDA Form 1 (sections/finish/) -->
+<section class="doc doc-finish" id="finish" aria-labelledby="nda-t">
+  <div class="fit" id="nda-fit">
+    <article class="sheet" id="nda-sheet">
+      <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g id="nda-dust"></g></svg></div>
+
+      <form class="print" id="nda-form" novalidate>
+        <div class="top ink" aria-hidden="true">
+          <span>Network Decentralization Authority<br>Office of Node Operators</span>
+          <span class="r">NDA Form 1<br>(Rev. 10-26)</span>
+        </div>
+
+        <header class="title ink">
+          <svg viewBox="0 0 194 124" fill="currentColor" aria-hidden="true"><use href="#cfc-mark"/></svg>
+          <div>
+            <h2 id="nda-t">Application for Membership</h2>
+            <p>Certified Node Operators only</p>
+          </div>
+        </header>
+
+        <p class="congrats"><b>Congratulations, Operator.</b> Your node is in sync and your first message went out through it. That makes you a certified full-stack Farcaster node operator. To enroll with the Network Decentralization Authority alongside your fellow operators, complete this form.</p>
+        <p class="instr ink">Type or print. Items marked <span class="req">*</span> are required.</p>
+
+        <div class="grid">
+          <div class="sec ink">Part I · Operator</div>
+
+          <div class="cell c4" id="nda-c-contact">
+            <label for="nda-contact">1. Farcaster ID (FID) or e-mail address <span class="req">*</span></label>
+            <input type="text" id="nda-contact" name="contact" autocomplete="email" placeholder="e.g. 3, or your e-mail address" aria-describedby="nda-contact-hint nda-contact-err" required>
+            <div class="err" id="nda-contact-err">Enter your FID (numbers only) or an e-mail address.</div>
+            <div class="hint" id="nda-contact-hint">Your FID is the number on your Farcaster profile. Either one will reach you.</div>
+          </div>
+          <div class="cell c2 shade">
+            <span class="lbl">1a. This is my</span>
+            <div class="kind" aria-hidden="true"><span><i class="mark" id="nda-k-fid"></i>FID</span><span><i class="mark" id="nda-k-mail"></i>E-mail</span></div>
+            <div class="hint" style="margin-top:8px">Ticked for you as you type.</div>
+          </div>
+
+          <div class="cell c6">
+            <label for="nda-name">2. Operator name or handle <span class="hint">(as it should appear on your member card)</span></label>
+            <input type="text" id="nda-name" name="name" autocomplete="nickname" placeholder="@yourname" maxlength="40">
+          </div>
+
+          <div class="sec ink">Part II · Certification</div>
+          <div class="cell c6" id="nda-c-cert">
+            <span class="lbl">3. I certify that <span class="req">*</span></span>
+            <label class="box"><input type="checkbox" name="sync" required><span>My node reached <b>"in sync"</b> (<code>fc-node status</code> says so).</span></label>
+            <label class="box"><input type="checkbox" name="cast" required><span>I cast my first message through it, from fameboy.</span></label>
+            <div class="err">Both, please. That's what makes an operator.</div>
+          </div>
+
+          <div class="sec ink">Part III · Correspondence</div>
+          <div class="cell c6">
+            <span class="lbl">4. Bulletins (optional)</span>
+            <label class="box"><input type="checkbox" name="bulletins"><span>Send me Authority bulletins: new releases, snapshot changes, and when nodes need an upgrade. Rarely. Unsubscribe any time.</span></label>
+          </div>
+
+          <div class="cell c4" id="nda-c-sign">
+            <label for="nda-sign">5. Signature of operator <span class="req">*</span></label>
+            <input type="text" id="nda-sign" name="signature" class="sig" autocomplete="name" placeholder="Type your name" maxlength="60" required aria-describedby="nda-sign-err">
+            <div class="err" id="nda-sign-err">Sign to apply.</div>
+          </div>
+          <div class="cell c2">
+            <label for="nda-date">6. Date</label>
+            <input type="date" id="nda-date" name="date">
+          </div>
+
+          <div class="cell c6 shade agency">
+            <span class="lbl">For Authority use only · Do not write in this space</span>
+            <div class="stamps" aria-hidden="true">
+              <div class="stamp recv" id="nda-s-recv">Received<small id="nda-s-recv-date"></small></div>
+              <div class="stamp appr" id="nda-s-appr">Approved<small>Network Decentralization Authority</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="privacy ink">
+          <p><b>Privacy statement.</b> The Authority asks for item 1 to reach you, and for nothing else on this form to be required. It is not sold or shared. An FID is public on Farcaster already; an e-mail address is kept only while you want bulletins.</p>
+          <p><b>Burden statement.</b> Public reporting burden for this collection is estimated to average 1 minute per response, considerably less than the 6 to 8 hours you just spent syncing a node.</p>
+        </div>
+
+        <div class="tear" aria-hidden="true"><i>✂</i><span>Detach along dotted line and carry with you</span></div>
+
+        <div class="cardwrap">
+          <div class="card" id="nda-card" role="group" aria-label="Member card">
+            <div class="ch ink"><b>Network Decentralization<br>Authority · Member</b><svg viewBox="0 0 194 124" fill="currentColor" aria-hidden="true"><use href="#cfc-mark"/></svg></div>
+            <dl>
+              <dt>Operator</dt><dd id="nda-m-name"></dd>
+              <dt>Member no.</dt><dd id="nda-m-no"></dd>
+              <dt>Enrolled</dt><dd id="nda-m-date"></dd>
+            </dl>
+            <div class="cf ink"><span>Bearer is a certified node operator</span><span class="sig" id="nda-m-sig"></span></div>
+            <div class="seal" aria-hidden="true">Certified<br>Node<br>Operator</div>
+          </div>
+          <div class="cardnote">
+            <b>Your member card</b>
+            Issued upon approval of this form. Detach and carry it, or share a picture of it with the operators you invite.
+          </div>
+        </div>
+      </form>
+    </article>
+  </div>
+
+  <div class="desk">
+    <button class="submit" type="submit" form="nda-form">Submit to the Authority</button>
+    <a class="after cast" id="nda-cast" href="#" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1" title="Available once your form is approved">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 3h16v18h-3v-8.2a5 5 0 0 0-10 0V21H4z"/></svg>Cast your card</a>
+    <button class="after plain" type="button" id="nda-print" aria-disabled="true" title="Available once your form is approved">Print card</button>
+  </div>
+  <div class="status" id="nda-status" role="status" aria-live="polite"></div>
+</section>
+
+</main>
+<script type="module" src="shared/paper.js"></script>
+<script type="module" src="sections/finish/finish.js"></script>
+</body>
+</html>

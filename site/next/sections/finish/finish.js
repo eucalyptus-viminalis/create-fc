@@ -1,0 +1,105 @@
+// Finish: NDA Form 1. Sends the application to the register (register/, a Cloudflare Worker),
+// which records it and returns the next member number; then the page is stamped and the card issued.
+import { inkFilter, dust, fitPage, remember } from '../../shared/paper.js';
+
+const doc = document.getElementById('finish');
+const $ = id => doc.querySelector('#' + id);
+const form = $('nda-form'), contact = $('nda-contact'), status = $('nda-status');
+inkFilter('nda-green', '#24493b');
+fitPage($('nda-fit'));
+dust($('nda-sheet'), $('nda-dust'), 1966);
+
+// Where the register lives. A local `pnpm dev` in register/ while the site runs on localhost.
+const REGISTER = ['localhost', '127.0.0.1'].includes(location.hostname)
+  ? `http://${location.hostname}:8787`
+  : document.querySelector('meta[name="nda-register"]')?.content || '';
+
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const stampDate = d => `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+const today = new Date();
+$('nda-date').valueAsDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+// Item 1 takes an FID or an e-mail address, and ticks 1a as you type. The register checks it again.
+const kindOf = v => /^\d{1,10}$/.test(v) && +v > 0 ? 'fid' : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? 'email' : null;
+function tick() {
+  const k = kindOf(contact.value.trim());
+  $('nda-k-fid').classList.toggle('on', k === 'fid');
+  $('nda-k-mail').classList.toggle('on', k === 'email');
+  if (k) $('nda-c-contact').classList.remove('bad');
+}
+contact.addEventListener('input', tick);
+
+// The card fills in as the form does; the number, date and seal wait for approval.
+const card = $('nda-card');
+function fillCard() {
+  $('nda-m-name').textContent = $('nda-name').value.trim() || $('nda-sign').value.trim();
+  $('nda-m-sig').textContent = $('nda-sign').value.trim();
+  if (!card.classList.contains('issued')) { $('nda-m-no').textContent = 'Assigned on approval'; $('nda-m-date').textContent = 'Pending'; }
+}
+for (const id of ['nda-name', 'nda-sign']) $(id).addEventListener('input', fillCard);
+
+const submit = doc.querySelector('button.submit');
+const after = [...doc.querySelectorAll('.after')];
+for (const b of after) b.addEventListener('click', e => { if (b.hasAttribute('aria-disabled')) e.preventDefault(); });
+$('nda-print').addEventListener('click', e => { if (!e.currentTarget.hasAttribute('aria-disabled')) print(); });
+
+// Stamp the page and issue the card from what the register sent back.
+function issue(m, animate = true) {
+  $('nda-s-recv-date').textContent = m.enrolled;
+  $('nda-s-recv').classList.add('on');
+  setTimeout(() => $('nda-s-appr').classList.add('on'), animate ? 380 : 0);
+  card.classList.add('issued');
+  $('nda-m-name').textContent = m.name;
+  $('nda-m-sig').textContent = m.signature;
+  $('nda-m-no').textContent = m.no;
+  $('nda-m-date').textContent = m.enrolled;
+  submit.textContent = 'Filed ✓'; submit.disabled = true;
+  for (const b of after) { b.removeAttribute('aria-disabled'); b.removeAttribute('title'); b.removeAttribute('tabindex'); }
+  $('nda-cast').href = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(`I run my own Farcaster node. Network Decentralization Authority, member ${m.no}.`)
+    + '&embeds[]=' + encodeURIComponent(m.page);
+}
+
+const say = (text, ok = false) => { status.className = 'status' + (ok ? ' ok' : ''); status.textContent = text; };
+const FIELD = { contact: 'nda-c-contact', certify: 'nda-c-cert', signature: 'nda-c-sign' };
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = contact.value.trim(), k = kindOf(v);
+  const certify = { sync: form.elements.sync.checked, cast: form.elements.cast.checked };
+  const signature = $('nda-sign').value.trim();
+  const bad = { contact: !k, certify: !(certify.sync && certify.cast), signature: signature.length < 2 };
+  for (const [f, isBad] of Object.entries(bad)) $(FIELD[f]).classList.toggle('bad', isBad);
+  if (Object.values(bad).some(Boolean)) {
+    say('Returned for correction: see the items marked in red.');
+    (bad.contact ? contact : bad.certify ? form.querySelector('#nda-c-cert input:not(:checked)') : $('nda-sign')).focus();
+    return;
+  }
+  if (!REGISTER) return say("The Authority's office isn't open yet. Try again soon.");
+
+  submit.disabled = true; say('Filing with the Authority…', true);
+  try {
+    const res = await fetch(REGISTER + '/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contact: v, name: $('nda-name').value.trim(), signature, certify, bulletins: form.elements.bulletins.checked }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 422 && data.errors) {
+      for (const f of Object.keys(data.errors)) $(FIELD[f])?.classList.add('bad');
+      submit.disabled = false;
+      return say('Returned for correction: see the items marked in red.');
+    }
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    try { localStorage.setItem('nda-member', JSON.stringify(data)); } catch {}
+    issue(data);
+    say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.`, true);
+  } catch {
+    submit.disabled = false;
+    say("Couldn't reach the Authority. Check your connection and submit again.");
+  }
+});
+
+remember(form, 'nda-form-1');
+tick(); fillCard();
+
+// Already a member in this browser: show the issued card.
+try { const m = JSON.parse(localStorage.getItem('nda-member')); if (m?.no) issue(m, false); } catch {}
