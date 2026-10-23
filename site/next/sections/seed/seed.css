@@ -52,3 +52,16 @@
   .doc-seed .a .back b { font-weight: 400; font-style: italic; }
   .doc-seed .a code { font: 400 .9em/1 "Courier Prime", monospace; }
 .doc-seed .a .back .exposed { margin: 8px 0 0; padding-top: 6px; border-top: 1px solid var(--ink1); font: italic 400 11.5px/1.3 "IM Fell English"; color: var(--ink2); text-align: center; }
+
+/* On the site the cards are images (photographed from card.html), lying on the desk, with a Download button. */
+.doc-seed .pair img { display: block; width: 100%; height: auto; }
+.doc-seed .pair:has(img) .slot { width: min(520px, 100%); height: auto; }
+.doc-seed .pair:has(img) .slot img { transform: rotate(var(--tilt, 0deg)); filter: drop-shadow(0 1px 1px rgb(40 30 10 / .25)) drop-shadow(0 16px 22px rgb(40 30 10 / .28)); }
+.doc-seed .take { max-width: 1120px; margin: 40px auto 0; display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: center; font: italic 400 15px/1.4 "IM Fell English", Georgia, serif; color: #3d3a33; }
+.doc-seed .take a { color: inherit; }
+.doc-seed .dl { display: inline-flex; align-items: center; gap: 8px; font: 400 17px/1 "IM Fell English SC", Georgia, serif; font-style: normal; letter-spacing: .12em; color: #f1e9d2 !important; text-decoration: none;
+  background: #1d1a16; padding: 12px 22px 11px; border-radius: 3px; box-shadow: 0 2px 0 #b0302a, 0 6px 14px rgb(0 0 0 / .2); }
+.doc-seed .dl::before { content: "↓"; font-family: system-ui, sans-serif; font-size: 15px; }
+.doc-seed .dl:hover { background: #b0302a; box-shadow: 0 2px 0 #1d1a16, 0 6px 14px rgb(0 0 0 / .2); }
+.doc-seed .dl:focus-visible, .doc-seed .take a:focus-visible { outline: 2px dashed #b0302a; outline-offset: 4px; }
+.doc-seed .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

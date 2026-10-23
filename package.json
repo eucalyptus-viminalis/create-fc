@@ -9,7 +9,8 @@
     "docs:preview": "vitepress preview docs --host 0.0.0.0",
     "brand:build": "node brand/scripts/build.mjs",
     "avatars:build": "node client/logo/scripts/build-avatars.cjs",
-    "site:dev": "vite site --port 5173 --strictPort --open /next/"
+    "site:dev": "vite site --port 5173 --strictPort --open /next/",
+    "seed-card:render": "node brand/scripts/render-seed-card.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -19,6 +20,7 @@
   "devDependencies": {
     "@fontsource/jetbrains-mono": "5.2.5",
     "opentype.js": "1.3.4",
+    "playwright": "1.63.0",
     "vite": "8.3.3",
     "vitepress": "1.6.4"
   }
