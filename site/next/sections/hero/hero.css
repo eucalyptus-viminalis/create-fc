@@ -1,7 +1,7 @@
 /* Hero: a back-page mail-order ad, printed in a magazine and torn out, lying on the desk.
    From brand/mockups/hero-coupon.html (Hero 5). Everything is scoped to .doc-hero. */
 .doc-hero {
-  --paper: #e2e0d4; --ink: #1c1c1a; --accent: #8a63d2; --accent-ink: #5d43d6; --burst-ink: #ecebe2; --ground: #b3b1a6; --tick: #3d4256;
+  --paper: #e2e0d4; --ink: #1c1c1a; --accent: #8a63d2; --accent-ink: #5d43d6; --burst-ink: #ecebe2; --tick: #3d4256;
   --mast-font: 500 12px/1 "Oswald", sans-serif;
   --body-font: 400 clamp(15px, 1.55vw, 17px)/1.35 "Arvo", serif;
   --small-font: 400 13.5px/1.45 "Arvo", serif; --fine-font: 400 12px/1.5 "Arvo", serif;
@@ -18,7 +18,6 @@
 /* the next page's print showing through */
 .doc-hero .show { position: absolute; inset: 60px 70px; transform: scaleX(-1); opacity: .035; filter: blur(.6px); pointer-events: none; user-select: none; overflow: hidden;
   font: 600 14px/2 "Libre Franklin", sans-serif; color: #000; columns: 3; column-gap: 40px; }
-.doc-hero .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 118px; background: var(--ground); clip-path: polygon(0 0, 31% 0, 100% 62%, 100% 100%, 0 100%); }
 .doc-hero .rule { position: absolute; inset: 18px; border: 2.5px solid var(--ink); pointer-events: none; }
 .doc-hero .rule::before { content: ""; position: absolute; inset: 5px; border: 1.2px solid var(--ink); }
 .doc-hero .print { position: relative; filter: url(#ink-black); padding: clamp(30px, 4.6vw, 54px) clamp(30px, 5.5vw, 68px) clamp(26px, 3.6vw, 40px); }
@@ -92,7 +91,6 @@
 @media (max-width: 760px) {
   .doc-hero .hero { transform: none; }
   .doc-hero .show { display: none; }
-  .doc-hero .ground { height: 260px; }
   .doc-hero .mast .issue { display: none; }
   .doc-hero .top { flex-direction: column; align-items: flex-start; }
   .doc-hero .burst { width: 190px; }
