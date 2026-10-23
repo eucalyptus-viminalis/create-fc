@@ -62,7 +62,7 @@ Network Decentralization Authority · create-fc`;
 // The confirm and unsubscribe links. GET shows a button; POST (the button) makes the change.
 const ACTIONS = {
   confirm: { ask: 'Send Authority bulletins to this address?', button: 'Yes, send me bulletins', set: 'confirmed',
-    done: "Confirmed. You'll get Authority bulletins at this address, rarely. Each one has a link to stop them." },
+    done: "Confirmed. You'll get Authority bulletins at this address on rare occasions. A link will be included in each email to unsubscribe." },
   unsubscribe: { ask: 'Stop Authority bulletins to this address?', button: 'Stop bulletins', set: 'unsubscribed',
     done: "Done. This address won't get any more bulletins." },
 };
