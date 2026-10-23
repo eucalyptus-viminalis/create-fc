@@ -40,9 +40,9 @@ Anyone who copies that file can post as you until the key is removed. Treat it l
 
 There are two different things you might want:
 
-- **Sign out of this computer:** **sign out** on the home screen, or `fameboy logout`. This deletes the file (on a hosted fameboy, the key in your browser). The key itself still exists on Farcaster.
+- **Sign out of this computer:** `fameboy logout` deletes the file (on a hosted fameboy, **sign out** deletes the key in your browser). The key itself still exists on Farcaster.
 - **Remove the key from Farcaster:** so it can never post again, even from a copy.
-  - Signed in with your seed phrase: run `fameboy revoke`. It removes the key, then signs you out.
+  - Signed in with your seed phrase: **sign out** on the home screen, or `fameboy revoke`. Either removes the key, then signs you out.
   - Approved on your phone: remove fameboy from your connected apps in the Farcaster app's settings.
 
 ## Learn more
