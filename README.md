@@ -92,6 +92,6 @@ Each person's app key is made in their browser and never leaves it; every write 
 
 ## Help test it
 
-The first 5 people who run the three commands get $5 USDC to cover the server, whatever they think of it. Want to do it together? Message [@3070.eth](https://farcaster.xyz/3070.eth) for a 30-minute session.
+The first 5 people who run the three commands get $5 USDC to cover the server, whatever they think of it: claim it in Part IV of the [membership form](https://createfc.org/membership/) once your node is in sync. Want to do it together? Message [@3070.eth](https://farcaster.xyz/3070.eth) for a 30-minute session.
 
 MIT licensed.

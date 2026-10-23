@@ -7,7 +7,8 @@
 #                                  their phone: saves an account's custody key on this server
 #   fc-node client [domain|sslip|off]
 #                                  host fameboy here for people who don't run their own:
-#                                  https://fameboy.<ip>.sslip.io, or your own domain
+#                                  https://<app account's name>.<ip>.sslip.io (fameboy.<ip>… without
+#                                  one), or your own domain
 #   fc-node signin [open|invite]   who can sign in by phone: anyone (open, the default)
 #                                  or only people with an invite code
 #   fc-node invite [note]          make an invite code for a friend
