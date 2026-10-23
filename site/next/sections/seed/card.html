@@ -12,7 +12,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Pinyon+Script&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="seed.css">
-<style>* { box-sizing: border-box; } body { margin: 0; } .doc-seed .pair { --s: 1; }</style>
+<style>* { box-sizing: border-box; } body { margin: 0; } .doc-seed .pair { --s: 1; }
+  /* this card: faded inks, and smoother stock (less tooth, a softer tone) */
+  .doc-seed .a { --ink1: #3a342c; --ink2: #b9574d; --paper: #f2ebd8; }
+  .doc-seed .p1, .doc-seed .p2 { opacity: .86; }
+  .doc-seed .stock rect[filter="url(#paper-tooth)"] { opacity: .2; }
+  .doc-seed .stock rect[filter="url(#paper-blotch)"] { opacity: .3; }
+  .doc-seed .sig { opacity: .75; }</style>
 </head>
 <body>
 <section class="doc-seed" id="seed">
@@ -66,9 +72,10 @@
 </section>
 <script type="module">
   import { inkFilter, dust } from '../../shared/paper.js';
-  inkFilter('seed-1', '#1d1a16', { wobble: .8, specks: 4.6, plate: .42, spread: .3, bleed: .45, drift: 1.4 });
-  inkFilter('seed-2', '#b0302a', { wobble: .8, specks: 4.6, plate: .35, spread: .3, bleed: .45, drift: 1.4 });
-  document.querySelectorAll('.card').forEach((c, k) => dust(c, c.querySelector('.dust'), 31 + k * 17, 26));
+  // washed-out, inky: few dropouts, a wetter plate that spreads and bleeds, and faded ink
+  inkFilter('seed-1', '#3a342c', { wobble: .7, specks: 5.6, plate: .6, spread: .45, bleed: .7, drift: 1.8 });
+  inkFilter('seed-2', '#b9574d', { wobble: .7, specks: 5.6, plate: .5, spread: .45, bleed: .7, drift: 1.8 });
+  document.querySelectorAll('.card').forEach((c, k) => dust(c, c.querySelector('.dust'), 31 + k * 17, 8));
   // ?flat lays the cards straight, for photographing one at a time
   if (location.search.includes('flat')) document.querySelectorAll('.slot').forEach(s => { s.style.setProperty('--tilt', '0deg'); s.style.marginTop = '0'; });
   document.fonts.ready.then(() => document.body.dataset.ready = '1');
