@@ -11,7 +11,8 @@
     "avatars:build": "node client/logo/scripts/build-avatars.cjs",
     "site:dev": "vite site --port 5173 --strictPort --open /next/",
     "seed-card:render": "node brand/scripts/render-seed-card.mjs",
-    "nav-thumbs:render": "node brand/scripts/render-nav-thumbs.mjs"
+    "nav-thumbs:render": "node brand/scripts/render-nav-thumbs.mjs",
+    "share:render": "node brand/scripts/render-share.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
