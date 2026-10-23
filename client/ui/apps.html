@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="fameboy-token" content="__FAMEBOY_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>apps · fameboy</title>
+  <link rel="icon" href="/fameboy-small.svg" type="image/svg+xml" />
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/kit.css" />
+  <link rel="stylesheet" href="/apps.css" />
+</head>
+<body class="ready">
+<div id="app">
+  <header class="pg-top">
+    <h1>popular apps</h1>
+    <span class="dim" id="sub">which apps your feed comes through</span>
+  </header>
+  <div id="view"><div class="loading">building your feed from your node<span class="blink">_</span> The first time takes a few seconds.</div></div>
+</div>
+
+<nav class="bar" aria-label="Modes" data-modes="apps">
+  <div class="in">
+    <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>o</kbd> only · <kbd>h</kbd> hide · <kbd>i</kbd> inbox · <kbd>`</kbd> requests</span>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<script src="/mine.js"></script>
+<script src="/kit.js"></script>
+<script src="/apps.js"></script>
+</body>
+</html>

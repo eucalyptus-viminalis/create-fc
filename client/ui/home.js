@@ -167,8 +167,10 @@ async function loadWaiting() {
     // Opening home counts as a visit (it ends after 30 minutes away).
     const { since } = await mine.visit(me.fid, { count: true });
     const [w, st] = await Promise.all([api(`/api/waiting?since=${since}`), mine.inbox(me.fid)]);
+    // Casts through apps hidden on the apps page don't count.
+    const f = kit.appFilter.get();
     const count = (view) => {
-      const left = w[view].filter((x) => !((st.cleared[view] ?? {})[x.id]));
+      const left = w[view].filter((x) => !((st.cleared[view] ?? {})[x.id]) && (view !== "casts" || kit.appFilter.keeps(x.app, f)));
       return { waiting: left.length, fresh: left.filter((x) => Date.parse(x.time) > since).length };
     };
     const d = { since: w.since, following: w.following, casts: count("casts"), likes: count("likes"), replies: count("replies"), followers: count("followers") };
@@ -177,7 +179,7 @@ async function loadWaiting() {
     const row = (view, n, one, many, fresh) =>
       `<li><button data-open="${view}"><span class="count">${fmt(n)}</span><span>${n === 1 ? one : many}</span><span class="go">${fresh ? `<span class="fresh" title="new since your last visit"></span>${fmt(fresh)} new ` : ""}→</span></button></li>`;
     $("#since").innerHTML = `<ul class="waits">
-        ${row("casts", d.casts.waiting, "cast from people you follow", "casts from people you follow", d.casts.fresh)}
+        ${row("casts", d.casts.waiting, `cast from people you follow${kit.appFilter.on(f) ? ` (${kit.appFilter.describe(f)})` : ""}`, `casts from people you follow${kit.appFilter.on(f) ? ` (${kit.appFilter.describe(f)})` : ""}`, d.casts.fresh)}
         ${row("likes", d.likes.waiting, "like on your casts", "likes on your casts", d.likes.fresh)}
         ${row("replies", d.replies.waiting, "reply to you", "replies to you", d.replies.fresh)}
         ${row("followers", d.followers.waiting, "new follower", "new followers", d.followers.fresh)}
@@ -379,7 +381,7 @@ addEventListener("keydown", (e) => {
   else if (k === "escape" || k === "b") back();
   else if (k === "o") togglePresence();
   else if (k === "m") { S.sound = !S.sound; kit.setSound(S.sound); $("#snd").textContent = S.sound ? "on" : "off"; }
-  else if (/^[1-4]$/.test(k)) { select(+k - 1); open(); }
+  else if (/^[1-9]$/.test(k) && +k <= modes.length) { select(+k - 1); open(); }
 });
 
 // Game controllers: d-pad or left stick to choose, A to go, B to go back.
