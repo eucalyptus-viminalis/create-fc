@@ -1,9 +1,11 @@
-// Troubleshooting: the chart of faults, the table of faults with dot leaders, a torn binding edge
-// and dust on the scan. Commands copy to the clipboard dock. From brand/mockups/troubleshooting-scan.html.
+// Troubleshooting: a gatefold torn from a 1970s service manual. Closed, the cover (index, block
+// diagram, test points); click it and it swings open on its fold into a landscape spread carrying
+// the whole chart. Commands copy to the clipboard dock. From brand/mockups/troubleshooting-pages.html (2).
 import { inkFilter, dust } from '../../shared/paper.js';
 
 const doc = document.getElementById('troubleshooting');
-const sheet = doc.querySelector('#ts-sheet');
+const stage = doc.querySelector('#ts-gate'), rig = stage.querySelector('.rig');
+const cover = doc.querySelector('#ts-sheet'), leaf = doc.querySelector('#ts-leaf');
 inkFilter('ts', '#1b1a17');
 
 const STEPS = [['0', 'Renting the Server — Command 0'], ['1', 'Syncing the Node — Command 1'], ['2', 'Installing the Client — Command 2'], ['s', 'Signing In and Posting']];
@@ -39,26 +41,59 @@ doc.querySelector('#ts-rows').innerHTML = STEPS.map(([k, name]) =>
     <td data-h="Remedy">${esc(f.fix)}${f.cmd ? `<span class="cmd" tabindex="0" role="button" title="Click to copy" data-title="Fault ${f.no}">${esc(f.cmd)}</span>` : ''}${f.note ? `<span class="note">${esc(f.note)}</span>` : ''}${f.norm ? '<br><span class="norm">Normal Operation</span>' : ''}</td>
   </tr>`).join('')).join('');
 
-// Click a command (or press Enter on it) to snip it out and clip it to the clipboard dock.
-const SNIP = { src: new URL('../../sounds/scissors-snip.wav', import.meta.url).href, start: 0, end: 0.15 };
-const copy = c => dock.copy({ text: c.textContent, title: c.dataset.title, from: c.closest('td'), paper: '#f3f1e8', sound: SNIP });
-doc.addEventListener('click', e => { const c = e.target.closest('.cmd'); if (c) copy(c); });
-doc.addEventListener('keydown', e => { const c = e.target.closest('.cmd'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); copy(c); } });
+// The cover's inside is the spread's left half: a copy of the chart (the real one sits under it).
+const clone = doc.querySelector('#ts-spread').cloneNode(true);
+clone.removeAttribute('id'); clone.querySelectorAll('[id]').forEach(e => { e.dataset.id = e.id; e.removeAttribute('id'); });
+clone.querySelectorAll('a, [tabindex]').forEach(e => e.setAttribute('tabindex', '-1'));
+doc.querySelector('#ts-clone').append(clone);
 
-// The table of faults jumps to the row and lights it, without changing the page's address.
+// Fixed paper, scaled to fit. Closed, the cover sits in the middle; open, the whole spread does.
+// On a phone the open spread is held at the cover's size and you swipe across it.
+const W = 1632, H = 1056, PAGE = 816;
+function fit() {
+  const avail = stage.clientWidth, open = stage.classList.contains('open');
+  const pan = open && avail < 760;
+  stage.classList.toggle('pan', pan);
+  const s = pan ? Math.min(1, avail / PAGE) : Math.min(1, avail / (open ? W : PAGE));
+  rig.style.setProperty('--s', s);
+  rig.style.setProperty('--shift', open || pan ? '0px' : `${-PAGE / 2 * s}px`);
+  stage.style.height = `${H * s + (open ? 0 : 10)}px`;
+}
+new ResizeObserver(fit).observe(stage);
+
+const unfoldBtn = doc.querySelector('.unfold');
+function setOpen(open) {
+  stage.classList.toggle('open', open);
+  unfoldBtn.setAttribute('aria-expanded', open);
+  fit();
+  if (!open) stage.scrollLeft = 0;
+}
+leaf.addEventListener('click', e => { if (!stage.classList.contains('open') && !e.target.closest('a, .cmd')) setOpen(true); });
+doc.querySelector('.fold').addEventListener('click', () => { setOpen(false); doc.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+
+// Index entries open the fold-out at their row and light it.
 doc.querySelector('#ts-toc').addEventListener('click', e => {
-  const a = e.target.closest('a'); if (!a) return; e.preventDefault();
-  const row = doc.querySelector(a.getAttribute('href')); if (!row) return;
+  const a = e.target.closest('a'); if (!a) return; e.preventDefault(); e.stopPropagation();
+  const id = a.getAttribute('href').slice(1);
   doc.querySelectorAll('tr.lit').forEach(r => r.classList.remove('lit'));
-  row.classList.add('lit'); row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  doc.querySelectorAll(`#${id}, [data-id="${id}"]`).forEach(r => r.classList.add('lit'));
+  const was = stage.classList.contains('open'); setOpen(true);
+  setTimeout(() => doc.querySelector('#' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), was ? 0 : 900);
 });
 
-// The torn binding edge: a ragged clip-path down the left side, the same on every visit.
+// Click a command (or press Enter on it) to snip it out and clip it to the clipboard dock.
+const SNIP = { src: new URL('../../sounds/scissors-snip.wav', import.meta.url).href, start: 0, end: 0.15 };
+const copy = c => dock.copy({ text: c.textContent, title: c.dataset.title, from: c.closest('td, li') || c, paper: '#f3f1e8', sound: SNIP });
+doc.addEventListener('click', e => { const c = e.target.closest('.cmd'); if (c && !c.closest('#ts-clone')) { e.stopPropagation(); copy(c); } });
+doc.addEventListener('keydown', e => { const c = e.target.closest('.cmd'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); copy(c); } });
+
+// The torn binding edge down the cover's left side, the same on every visit.
 function tear() {
   let seed = 1971; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const h = sheet.offsetHeight, pts = ['14px 0', '100% 0', '100% 100%', '10px 100%'];
+  const h = cover.offsetHeight, pts = ['14px 0', '100% 0', '100% 100%', '10px 100%'];
   const left = []; for (let y = h; y > 0; y -= 6 + rnd() * 10) left.push(`${(2 + rnd() * 13 + (rnd() < .08 ? 6 : 0)).toFixed(1)}px ${y.toFixed(0)}px`);
-  sheet.style.setProperty('--torn', `polygon(${pts.join(',')},${left.join(',')})`);
+  cover.style.setProperty('--torn', `polygon(${pts.join(',')},${left.join(',')})`);
 }
-new ResizeObserver(tear).observe(sheet); tear();
-dust(sheet, sheet.querySelector('.dust'), 77, 46);
+tear();
+doc.querySelectorAll('.dust').forEach((g, k) => dust(g.closest('.sheet, .spread'), g, 77 + k * 13, 46));
+fit();

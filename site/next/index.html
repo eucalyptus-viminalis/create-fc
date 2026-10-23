@@ -570,23 +570,50 @@
 </section>
 <!-- Troubleshooting: a page torn out of a service manual (sections/troubleshooting/) -->
 <section class="doc doc-ts" id="troubleshooting" aria-labelledby="ts-t">
-  <article class="sheet" id="ts-sheet">
-    <div class="paper" aria-hidden="true">
+  <!-- A gatefold. Closed: the cover page (index, block diagram, test points). Open: it swings over
+       to the left on its fold and the whole chart runs across the landscape spread. -->
+  <div class="stage" id="ts-gate">
+    <div class="rig">
+      <!-- the inside: one 1632-wide spread, shown here as its right half -->
+      <div class="base sheet"><div class="half r">
+        <div class="spread" id="ts-spread">
+          <div class="paper" aria-hidden="true">
       <svg class="grain" preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg>
     </div>
-    <!-- the reverse page, faintly through the paper -->
-    <div class="show" aria-hidden="true">
+          <div class="print">
+            <div class="running"><span>NDA Node Operator's Service Manual</span><span>Section 7</span></div>
+            <table>
+              <caption>Trouble-Shooting Chart · Fold-Out 7-2</caption>
+              <thead><tr><th scope="col">No.</th><th scope="col">Symptom</th><th scope="col">Probable Cause</th><th scope="col">Remedy</th></tr></thead>
+              <tbody id="ts-rows"></tbody>
+            </table>
+            <div class="after">
+        <div>
+          <h4>If Trouble Persists</h4>
+          <p>File a report with the step and the exact output at <a href="https://github.com/eucalyptus-viminalis/create-fc/issues">github.com/eucalyptus-viminalis/create-fc</a>, or message <b>@3070.eth</b> for a 30-minute session on your own machine.</p>
+        </div>
+        <div class="warn"><b>CAUTION</b>Never give a seed phrase, recovery phrase or API token to a person, a chat, or an AI assistant. Anyone who can read it can use it.</div>
+      </div>
+            <div class="foot"><span>Fold along line · Printed in U.S.A.</span><span class="pg">7-2</span><span class="r">NDA 26-1171 · 10/26</span></div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="leaf" id="ts-leaf">
+        <!-- the cover -->
+        <article class="face front sheet letter" id="ts-sheet">
+          <div class="paper" aria-hidden="true">
+      <svg class="grain" preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg>
+    </div>
+          <div class="show" aria-hidden="true">
       PARTS LIST . . . . . . . . . . . . . . . . . . . . 8-1<br>Server, CX43 . . . . . . . . . . . . . . . . . . . . 8-1<br>Volume, 1000 GB . . . . . . . . . . . . . . . . . . 8-1<br>Firewall Rules . . . . . . . . . . . . . . . . . . . 8-2<br>Snapchain, Shards 0–2 . . . . . . . . . . . . . . 8-2<br>Companion Service . . . . . . . . . . . . . . . . . 8-3<br>Image Host . . . . . . . . . . . . . . . . . . . . . . . 8-3<br>Client Package fameboy . . . . . . . . . . . . . 8-4<br>App Key . . . . . . . . . . . . . . . . . . . . . . . . . 8-4<br><br>SCHEMATIC LEGENDS . . . . . . . . . . . . . . . 8-5<br>Interconnect — Schematic . . . . . . . . . . . . 8-6<br>Gossip Ports 3381–3383 . . . . . . . . . . . . . 8-7<br>Uptime Ledger . . . . . . . . . . . . . . . . . . . . 8-7<br>Shard Layout . . . . . . . . . . . . . . . . . . . . . . 8-8<br>Snapshot Loader . . . . . . . . . . . . . . . . . . . 8-9<br>Signer Requests . . . . . . . . . . . . . . . . . . . 8-9
     </div>
-
-    <div class="print">
-      <div class="running"><span>NDA Node Operator's Service Manual</span><span>Section 7</span></div>
-      <h2 id="ts-t">Trouble-Shooting</h2>
-      <div class="model">Model NDA-1 Node · Fameboy Receiver</div>
-
-      <div class="toc" id="ts-toc"></div>
-
-      <figure>
+          <div class="print">
+            <div class="running"><span>NDA Node Operator's Service Manual</span><span>Section 7</span></div>
+            <h2 id="ts-t">Trouble-Shooting</h2>
+            <div class="model">Model NDA-1 Node · Fameboy Receiver</div>
+            <div class="toc" id="ts-toc"></div>
+            <figure>
         <svg viewBox="0 0 700 150" role="img" aria-label="Block diagram: your computer connects over SSH to the server running Snapchain; the fameboy client reads from and writes to it. Test points TP1 to TP3.">
           <g fill="none" stroke="#1b1a17" stroke-width="1.6">
             <rect x="10" y="30" width="170" height="70"/><rect x="265" y="30" width="170" height="70"/><rect x="520" y="30" width="170" height="70"/>
@@ -607,25 +634,27 @@
         </svg>
         <figcaption>Figure 7-1. Block Diagram With Test Points</figcaption>
       </figure>
-
-      <table>
-        <caption>Trouble-Shooting Chart</caption>
-        <thead><tr><th scope="col">No.</th><th scope="col">Symptom</th><th scope="col">Probable Cause</th><th scope="col">Remedy</th></tr></thead>
-        <tbody id="ts-rows"></tbody>
-      </table>
-
-      <div class="after">
-        <div>
-          <h4>If Trouble Persists</h4>
-          <p>File a report with the step and the exact output at <a href="https://github.com/eucalyptus-viminalis/create-fc/issues">github.com/eucalyptus-viminalis/create-fc</a>, or message <b>@3070.eth</b> for a 30-minute session on your own machine.</p>
-        </div>
-        <div class="warn"><b>CAUTION</b>Never give a seed phrase, recovery phrase or API token to a person, a chat, or an AI assistant. Anyone who can read it can use it.</div>
+            <div class="howto">
+              <h4>How to Use This Chart</h4>
+              <p>Find what you see in the index above and note its fault number, then unfold Chart 7-2 and read across: symptom, probable cause, remedy. Begin at the test point nearest the trouble.</p>
+              <ol class="tp">
+                <li><b>TP1</b> Your computer<span class="cmd" tabindex="0" role="button" title="Click to copy" data-title="Test point 1">hcloud context active</span></li>
+                <li><b>TP2</b> The server<span class="cmd" tabindex="0" role="button" title="Click to copy" data-title="Test point 2">ssh root@&lt;ip&gt; fc-node status</span></li>
+                <li><b>TP3</b> The client<span class="cmd" tabindex="0" role="button" title="Click to copy" data-title="Test point 3">fameboy ui</span></li>
+              </ol>
+            </div>
+            <button class="unfold" type="button" aria-expanded="false" aria-controls="ts-spread">Unfold for Trouble-Shooting Chart 7-2 ▸</button>
+            <div class="foot"><span>Printed in U.S.A.</span><span class="pg">7-1</span><span class="r">NDA 26-1171 · 10/26</span></div>
+          </div>
+          <div class="tab" aria-hidden="true">Unfold ▸ Chart 7-2</div>
+        </article>
+        <!-- the cover's inside: the spread's left half (a copy; the real chart is the one above) -->
+        <div class="face back sheet"><div class="half l" id="ts-clone" aria-hidden="true"></div></div>
       </div>
-
-      <div class="foot"><span>Printed in U.S.A.</span><span class="pg">7-1</span><span class="r">NDA 26-1171 · 10/26</span></div>
+      <div class="crease" aria-hidden="true"></div>
+      <button class="fold" type="button">Fold it back ✕</button>
     </div>
-
-  </article>
+  </div>
 </section>
 <section class="doc doc-pending" id="seed" aria-label="Seed phrase safety"><div><b>Seed phrase safety · operator training card</b>Port from <code>brand/mockups/training-card.html</code></div></section>
 <section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
