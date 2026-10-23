@@ -87,10 +87,10 @@
   .doc-explainers .back .stamp svg { width: 16cqw; }
 
   /* controls */
-  .doc-explainers .controls { display: flex; align-items: center; gap: 14px; padding: 14px 16px 30px; font: 600 14px/1 var(--head); text-transform: lowercase; letter-spacing: .12em; }
+  /* back and forward, side by side */
+  .doc-explainers .controls { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 14px 16px 30px; font: 600 14px/1 var(--head); text-transform: lowercase; letter-spacing: .12em; }
   .doc-explainers .controls button { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--paper); font-size: 20px; }
   .doc-explainers .controls button:disabled { opacity: .25; cursor: default; }
-  .doc-explainers .controls .where { min-width: 150px; text-align: center; }
   .doc-explainers .tabs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 520px; padding: 0 16px 8px; }
   .doc-explainers .tabs button { width: 30px; height: 8px; background: rgb(22 21 20 / .2); }
   .doc-explainers .tabs button.on { background: var(--red); }
@@ -105,7 +105,7 @@
      The page (or spread) you're on is marked in red. */
   .doc-explainers { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; }
   .doc-explainers .bayer-main { display: flex; flex-direction: column; align-items: center; min-width: 0; }
-  .doc-explainers .toc { padding: 36px 16px 0; font-family: var(--head); text-transform: lowercase; }
+  .doc-explainers .toc { min-width: 0; padding: 36px 16px 0; font-family: var(--head); text-transform: lowercase; }
   .doc-explainers .toc-h { font: 700 15px/1 var(--head); letter-spacing: .14em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 3px solid var(--ink); }
   .doc-explainers .toc ol { list-style: none; display: grid; gap: 2px; }
   .doc-explainers .toc a { display: grid; grid-template-columns: 26px 1fr; gap: 6px; align-items: baseline; padding: 5px 6px 4px; text-decoration: none; color: inherit; font: 600 14px/1.15 var(--head); border-left: 3px solid transparent; }
@@ -118,7 +118,7 @@
   }
   @media (max-width: 1099px) {
     .doc-explainers .toc { width: min(1080px, 100%); margin: 0 auto; padding-bottom: 4px; }
-    .doc-explainers .toc ol { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
+    .doc-explainers .toc ol { min-width: 0; grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
     .doc-explainers .toc a { grid-template-columns: auto auto; border-left: 0; border-bottom: 3px solid transparent; }
     .doc-explainers .toc a[aria-current] { border-bottom-color: var(--red); }
   }

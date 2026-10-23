@@ -48,7 +48,6 @@ function visible(i) {
 let linked = false;
 function mark(i) {
   const on = visible(i);
-  $('bayer-where').textContent = on.map(k => name(pages[k])).join('  ·  ');
   $('bayer-prev').disabled = i === 0;
   $('bayer-next').disabled = on.at(-1) >= pages.length - 1;
   tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', on.includes(k)));
