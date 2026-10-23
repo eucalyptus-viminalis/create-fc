@@ -118,6 +118,7 @@
 /* greyed out until the form is approved */
 .doc-finish .after[aria-disabled] { background: #b9b7ad; color: #77756c; box-shadow: none; border-color: #9a988f; cursor: not-allowed; }
 .doc-finish button.revoke { margin-left: auto; color: var(--red); border-color: var(--red); }
+.doc-finish button[hidden] { display: none; }   /* button.plain's all: unset would otherwise undo [hidden] */
 /* filed: the form is locked to what was sent */
 .doc-finish form.filed :is(input, .box) { cursor: default; }
 .doc-finish form.filed input:focus-visible { background: none; }
