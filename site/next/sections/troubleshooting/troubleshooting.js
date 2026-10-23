@@ -7,7 +7,7 @@ const doc = document.getElementById('troubleshooting');
 const stage = doc.querySelector('#ts-gate'), rig = stage.querySelector('.rig');
 const cover = doc.querySelector('#ts-sheet'), leaf = doc.querySelector('#ts-leaf');
 // a cleaner impression than the other documents: small type in a dense chart has to stay readable
-inkFilter('ts', '#1b1a17', { wobble: 0.45, specks: 5.4, plate: 0.28, spread: 0.2, bleed: 0.3, drift: 0.9 });
+inkFilter('ts', '#1b1a17', { wobble: 0.7, specks: 4.75, plate: 0.4, spread: 0.28, bleed: 0.4, drift: 1.25 });
 
 const STEPS = [['0', 'Renting the Server — Command 0'], ['1', 'Syncing the Node — Command 1'], ['2', 'Installing the Client — Command 2'], ['s', 'Signing In and Posting']];
 const F = [
