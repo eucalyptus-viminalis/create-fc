@@ -1,7 +1,9 @@
 // A clipboard on the right edge of the window that holds whatever you last copied.
 // Copying sends a paper copy of the document into it with a genie effect, with
 // paper and scissor sounds synthesized in the browser. Usage:
-//   dock.copy({ text, title: 'Service order', from: element, paper: '#e8e6db', onLift })
+//   dock.copy({ text, title: 'Service order', from: element, paper: '#e8e6db', onLift, sound })
+// `sound` is 'tear' (default), 'cut' or 'snip' (synthesized), or a recording: { src, start, end } in seconds.
+// dock.use({ fly, clip }) swaps the synthesized flight whoosh and clip snap for recordings.
 // `paper` colours the flying copy; `onLift` runs as it leaves, so the page can reveal the sheet underneath.
 // `from` is the element the copy flies out of. Click the clipboard to see what's on it
 // and copy it again. "m" turns sound on and off (shared with fameboy: cc-sound).
@@ -48,6 +50,26 @@
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
   }
+  // Recorded sounds: a stretch of an audio file, fetched and decoded once, played through the same switch.
+  const recordings = new Map();
+  const load = src => {
+    if (!recordings.has(src)) recordings.set(src, fetch(src).then(r => r.arrayBuffer()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no))).catch(() => null));
+    return recordings.get(src);
+  };
+  async function recording({ src, start = 0, end, volume = 1, at = 0 }) {
+    if (!audible()) return;
+    const buf = await load(src); if (!buf || !audible()) return;
+    const n = ac.createBufferSource(), g = ac.createGain();
+    n.buffer = buf; g.gain.value = volume;
+    n.connect(g).connect(ac.destination);
+    n.start(ac.currentTime + at, start, end ? end - start : undefined);
+  }
+  // Fetch a recording ahead of time, so the first copy doesn't wait for it.
+  // Recordings that replace the synthesized flight and clip sounds: dock.use({ fly, clip }).
+  const custom = {};
+  function use(sounds) { Object.assign(custom, sounds); for (const r of Object.values(sounds)) preload(r.src); }
+  const preload = src => { const go = () => { unlock(); if (ac) load(src); }; addEventListener('pointerdown', go, { once: true }); addEventListener('keydown', go, { once: true }); };
+
   const sfx = {
     // scissors: two blades closing, snip-snip, each a sharp click with a little ring
     snip: (at = 0) => [0, 0.13].forEach(d => { burst(at + d, 0.035, 'highpass', 4200, 0.8, 0.5, [[0, 1], [0.15, .6], [1, 0]]); ping(at + d + 0.004, 6200 + Math.random() * 600, 0.05, 0.03); burst(at + d + 0.012, 0.02, 'bandpass', 2400, 3, 0.25); }),
@@ -220,7 +242,7 @@
     tag.textContent = 'On the clipboard · paste it';
     el.classList.remove('jaw'); el.classList.add('snap'); setTimeout(() => el.classList.remove('snap'), 140);
     setTimeout(() => el.classList.remove('catch'), 420);
-    sfx.clip(); sfx.got();
+    if (custom.clip) recording(custom.clip); else { sfx.clip(); sfx.got(); }
   }
   async function copy(item) {
     unlock();
@@ -228,16 +250,20 @@
     catch { live.textContent = 'Could not copy. Select the text and copy it yourself.'; return; }
     held = item; live.textContent = `${item.title} copied to the clipboard.`;
     el.classList.remove('open'); board.setAttribute('aria-expanded', 'false');
+    // A recorded sound ({ src, start, end }) plays first (the cutting); the clipboard gets ready and the copy lifts off as it finishes.
+    const rec = typeof item.sound === 'object' ? item.sound : null;
+    const recWait = rec ? Math.max(0, ((rec.end ?? 0) - (rec.start ?? 0)) * 1000 - 120) : 0;
+    if (rec) { recording(rec); await new Promise(r => setTimeout(r, recWait)); }
     const from = item.from?.getBoundingClientRect();
     // the clipboard squares up and the clip opens, ready to take it
     el.classList.add('catch', 'jaw'); sfx.unclip();
     // Reduce motion: no flight, the copy fades onto the clipboard instead. ?motion=full forces the flight.
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches && new URLSearchParams(location.search).get('motion') !== 'full';
-    if (!from || still || from.width < 40) { (item.sound === 'cut' ? sfx.cut() : item.sound === 'snip' ? sfx.snip() : (sfx.snip(), sfx.tear(0.22))); item.onLift?.(); setTimeout(() => land(item, true), item.sound === 'snip' ? 260 : 620); return; }
+    if (!from || still || from.width < 40) { (rec ? 0 : item.sound === 'cut' ? sfx.cut() : item.sound === 'snip' ? sfx.snip() : (sfx.snip(), sfx.tear(0.22))); item.onLift?.(); setTimeout(() => land(item, true), rec ? 200 : item.sound === 'snip' ? 260 : 620); return; }
     // fly a copy no taller than the window, so the funnel stays on screen
     const src = { left: from.left, top: Math.max(from.top, 8), width: from.width, height: Math.min(from.height, innerHeight - 16 - Math.max(from.top, 8)) };
     const s = item.sound || 'tear';
-    if (s === 'tear') { sfx.snip(); sfx.tear(0.22); sfx.fly(0.5); } else if (s === 'cut') { sfx.cut(); sfx.fly(0.5); } else { sfx.snip(); sfx.fly(0.24); }
+    if (custom.fly) recording({ ...custom.fly, at: 0.26 }); else if (rec) sfx.fly(0.15); else if (s === 'tear') { sfx.snip(); sfx.tear(0.22); sfx.fly(0.5); } else if (s === 'cut') { sfx.cut(); sfx.fly(0.5); } else { sfx.snip(); sfx.fly(0.24); }
     await new Promise(r => setTimeout(r, 260));                  // let the clipboard square up before aiming at it
     const to = slot.getBoundingClientRect();
     item.onLift?.();   // only now does the page show what was under it, as the copy takes off
@@ -255,5 +281,5 @@
         board.setAttribute('aria-label', 'Clipboard: nothing copied yet'); tag.textContent = 'Clipboard';
       });
   }
-  window.dock = { copy, toss, play: name => { unlock(); sfx[name]?.(); } };
+  window.dock = { copy, toss, preload, use, play: name => { unlock(); sfx[name]?.(); } };
 })();

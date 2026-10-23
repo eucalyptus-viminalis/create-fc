@@ -13,4 +13,9 @@ body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
 .doc-pending b { display: block; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #a8a596; margin-bottom: 6px; }
 .doc-pending code { color: #fff; }
 
+/* Credits under the last document. */
+.colophon { padding: 22px 16px 28px; color: #a8a596; font: 400 12px/1.5 ui-monospace, Menlo, monospace; text-align: center; }
+.colophon p { margin: 0 auto; max-width: 80ch; }
+.colophon a { color: #d9d6cb; }
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
