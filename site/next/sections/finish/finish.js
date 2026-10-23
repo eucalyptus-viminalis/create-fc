@@ -48,6 +48,31 @@ const after = [...doc.querySelectorAll('.after')];
 for (const b of after) b.addEventListener('click', e => { if (b.hasAttribute('aria-disabled')) e.preventDefault(); });
 $('nda-print').addEventListener('click', e => { if (!e.currentTarget.hasAttribute('aria-disabled')) print(); });
 
+// Once filed, the form shows what was sent and can't be changed: editing it afterwards would only
+// make it disagree with the card. Filings from before the answers were kept show item 1 as on file.
+function lock(m) {
+  const f = m.filed;
+  contact.value = f ? f.contact : '';
+  if (!f) contact.placeholder = 'On file with the Authority';
+  name.value = f ? f.name : (m.name === 'anon' ? '' : m.name);
+  anon.checked = !name.value;
+  form.elements.sync.checked = form.elements.cast.checked = true;
+  if (f) form.elements.bulletins.checked = f.bulletins;
+  for (const el of form.querySelectorAll('input')) { if (el.type === 'text') el.readOnly = true; else el.disabled = true; }
+  for (const el of form.querySelectorAll('.cell.bad')) el.classList.remove('bad');
+  form.classList.add('filed');
+}
+
+// Testing on localhost: "Revoke membership" forgets this browser's filing and draft, so the form can
+// be filed again. The register keeps its record: filing again with the same item 1 gets the same number.
+const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
+const forgetDraft = () => { try { for (const k of Object.keys(localStorage)) if (k.startsWith('nda-form-1:')) localStorage.removeItem(k); } catch {} };
+$('nda-revoke').addEventListener('click', () => {
+  try { localStorage.removeItem('nda-member'); } catch {}
+  forgetDraft();
+  location.reload();
+});
+
 // Stamp the page and issue the card from what the register sent back.
 function issue(m, animate = true) {
   $('nda-s-recv-date').textContent = m.enrolled;
@@ -60,6 +85,8 @@ function issue(m, animate = true) {
   $('nda-m-no').textContent = m.no;
   $('nda-m-date').textContent = m.enrolled;
   submit.textContent = 'Filed ✓'; submit.disabled = true;
+  lock(m);
+  $('nda-revoke').hidden = !LOCAL;
   for (const b of after) { b.removeAttribute('aria-disabled'); b.removeAttribute('title'); b.removeAttribute('tabindex'); }
   $('nda-cast').href = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(`I run my own Farcaster node. Network Decentralization Authority, member ${m.no}.`)
     + '&embeds[]=' + encodeURIComponent(m.page);
@@ -95,8 +122,11 @@ form.addEventListener('submit', async e => {
       return say('Returned for correction: see the items marked in red.');
     }
     if (!res.ok) throw new Error(data.error || res.statusText);
-    try { localStorage.setItem('nda-member', JSON.stringify(data)); } catch {}
-    issue(data);
+    const filed = { contact: v, name: name.value.trim(), bulletins: form.elements.bulletins.checked };
+    const m = { ...data, filed };
+    try { localStorage.setItem('nda-member', JSON.stringify(m)); } catch {}
+    forgetDraft();   // what was sent is kept with the filing now
+    issue(m);
     say(`Approved. Welcome to the Authority, ${data.name}. You are member ${data.no}.`, true);
   } catch {
     submit.disabled = false;
