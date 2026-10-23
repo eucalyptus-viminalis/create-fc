@@ -81,7 +81,7 @@ async function page(request, env, n) {
   if (!row) return new Response('No such member.', { status: 404 });
   const m = publicMember(row), origin = new URL(request.url).origin, img = `${origin}/m/${n}/card.png`;
   const title = `${m.name}, member ${m.no} · Network Decentralization Authority`;
-  const site = env.SITE_URL || 'https://eucalyptus-viminalis.github.io/create-fc/';
+  const site = env.SITE_URL || 'https://createfc.org/';
   return new Response(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>

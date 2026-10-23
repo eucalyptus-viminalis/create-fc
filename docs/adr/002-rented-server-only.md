@@ -27,7 +27,7 @@ The tutorial covers one route: **rent a server with command 0, set it up with co
 ## Consequences
 
 - One path to document, test and troubleshoot. The fresh-box test covers all of it.
-- People who'd rather not pay Hetzner have no documented alternative. That's acceptable: a full test costs about $4, and the [demo node](https://eucalyptus-viminalis.github.io/create-fc/#try) lets anyone try the client for free.
+- People who'd rather not pay Hetzner have no documented alternative. That's acceptable: a full test costs about $4, and the [demo node](https://createfc.org/#try) lets anyone try the client for free.
 - If someone asks for their own hardware later, write a new ADR. It needs a tested Linux path, a decision on macOS, and a measured answer to whether a node behind NAT syncs and relays well enough.
 
 ## Provenance

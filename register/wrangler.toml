@@ -11,8 +11,8 @@ fallthrough = true
 
 [vars]
 # Pages allowed to send NDA Form 1. Add the local dev server you use for the microsite.
-ALLOWED_ORIGINS = "https://eucalyptus-viminalis.github.io,http://localhost:5173,http://127.0.0.1:5173"
-SITE_URL = "https://eucalyptus-viminalis.github.io/create-fc/"
+ALLOWED_ORIGINS = "https://createfc.org,https://eucalyptus-viminalis.github.io,http://localhost:5173,http://127.0.0.1:5173"
+SITE_URL = "https://createfc.org/"
 
 [[d1_databases]]
 binding = "DB"
