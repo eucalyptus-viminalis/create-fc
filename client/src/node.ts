@@ -64,10 +64,17 @@ export class NodeError extends Error {}
 // Each record says what was called, when (unix ms) and how long it took.
 export type CallRecord = { call: string; at: number; ms: number };
 const callLog = new AsyncLocalStorage<CallRecord[]>();
+// Recording inside a recording (the feed, built inside a request) also hands
+// its calls to the outer one, so the request still lists them.
 export async function recordCalls<T>(fn: () => Promise<T>): Promise<{ result: T; calls: CallRecord[] }> {
   const calls: CallRecord[] = [];
-  const result = await callLog.run(calls, fn);
-  return { result, calls };
+  const outer = callLog.getStore();
+  try {
+    const result = await callLog.run(calls, fn);
+    return { result, calls };
+  } finally {
+    outer?.push(...calls);
+  }
 }
 
 export async function get<T>(

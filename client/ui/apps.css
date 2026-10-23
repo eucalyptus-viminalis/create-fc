@@ -1,0 +1,36 @@
+/* Popular apps: which apps your feed comes through. Builds on home.css. */
+
+.pg-top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-bottom: 12px; }
+.pg-top h1 { font: 48px/0.9 var(--px); margin: 0; -webkit-font-smoothing: none; }
+.span12 { grid-column: 1 / -1; }
+.empty { padding: 40px 20px; text-align: center; color: var(--g2); }
+.loading { padding: 40px 20px; color: var(--g2); }
+
+.top .big { font: 48px/1 var(--px); -webkit-font-smoothing: none; }
+.top p, .how p { margin: 8px 0 0; }
+.top b { font-weight: 400; background: var(--g3); color: var(--g0); padding: 0 4px; }
+
+.tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.tools .dim { font-size: 16px; }
+
+.apps { list-style: none; margin: 0 -14px -16px; padding: 0; }
+.apps li { display: grid; grid-template-columns: 30px minmax(150px, 240px) minmax(0, 1fr) 52px 52px auto; gap: 12px; align-items: center; padding: 7px 14px; border-top: 2px dashed var(--g1); }
+.apps li.sel { box-shadow: inset 4px 0 0 var(--g3); }
+.apps .pf { width: 30px; height: 30px; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: grid; place-items: center; font: 14px var(--px); -webkit-font-smoothing: none; }
+.apps .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apps .track { height: 16px; outline: 2px dotted var(--g1); outline-offset: -2px; }
+.apps .track i { display: block; height: 100%; background: var(--g3); }
+.apps .pct { font: 16px var(--px); -webkit-font-smoothing: none; text-align: right; }
+.apps .n { text-align: right; font-size: 16px; }
+.apps .acts { display: flex; gap: 8px; }
+.apps .acts .k-btn { min-width: 64px; }
+.apps li.off .name, .apps li.off .pct { color: var(--g2); }
+.apps li.off .track i { background: var(--g1); }
+.apps li.off .pf { opacity: .45; }
+
+@media (max-width: 900px) {
+  .pg-top h1 { font-size: 32px; }
+  .apps li { grid-template-columns: 30px minmax(0, 1fr) 46px; }
+  .apps .track, .apps .n { display: none; }
+  .apps .acts { grid-column: 2 / -1; }
+}

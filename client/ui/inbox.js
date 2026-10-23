@@ -95,17 +95,40 @@ function header(title, sub, fresh) {
 function castsShown() {
   if (!C.data) return [];
   if (C.tab === "saved") return C.data.saved.map((s) => ({ ...s.cast, saved: true }));
-  return C.data.casts.filter((c) => (C.tab === "cleared") === c.cleared);
+  return C.data.casts.filter((c) => (C.tab === "cleared") === c.cleared && kit.appFilter.keeps(c.app?.fid));
 }
+// The apps filter (set on the apps page, or here): which apps' casts show.
+function appTools(d) {
+  const f = kit.appFilter.get();
+  if (kit.appFilter.on(f)) return `<span class="appf">${esc(kit.appFilter.describe(f))} · <a href="/apps">apps</a></span>${kit.button("show all apps", { look: "quiet", attrs: "data-apps-all" })}`;
+  return d.casts.some((c) => c.app?.fid === kit.FARCASTER_APP) ? kit.button("hide @warpcast", { look: "quiet", attrs: `data-hide-app="${kit.FARCASTER_APP}" data-name="warpcast" title="Hide casts posted with the Farcaster app"` }) : "";
+}
+function hideApp(fid, name) {
+  const f = kit.appFilter.get();
+  f.only = null;
+  if (!f.hide.includes(fid)) f.hide.push(fid);
+  if (name) f.names[fid] = name;
+  kit.appFilter.set(f);
+  C.checked.clear();
+  toast(`Hid casts via @${name ?? fid}. Show all apps to undo.`);
+  renderCasts();
+}
+document.addEventListener("click", (e) => {
+  const h = e.target.closest?.("[data-hide-app]");
+  if (h) return hideApp(Number(h.dataset.hideApp), h.dataset.name);
+  if (e.target.closest?.("[data-apps-all]")) { kit.appFilter.clear(); toast("Showing every app."); renderCasts(); }
+});
 function renderCasts() {
   const d = C.data, shown = castsShown();
-  const waitingN = d.casts.filter((c) => !c.cleared).length;
-  header("casts", "from people you follow · last 7 days", d.casts.filter((c) => c.fresh && !c.cleared).length);
+  const f = kit.appFilter.get(), visible = d.casts.filter((c) => kit.appFilter.keeps(c.app?.fid, f));
+  const waitingN = visible.filter((c) => !c.cleared).length;
+  header("casts", `from people you follow · last 7 days${kit.appFilter.on(f) ? ` · ${kit.appFilter.describe(f)}` : ""}`, visible.filter((c) => c.fresh && !c.cleared).length);
   if (!shown.some((c) => c.hash === C.focus)) C.focus = shown[0]?.hash ?? null;
   const n = C.checked.size;
-  $("#tools").innerHTML = `${seg([["new", `waiting ${waitingN}`], ["cleared", `cleared ${d.casts.length - waitingN}`], ["saved", `★ saved ${d.saved.length}`]], C.tab)}
+  $("#tools").innerHTML = `${seg([["new", `waiting ${waitingN}`], ["cleared", `cleared ${visible.length - waitingN}`], ["saved", `★ saved ${d.saved.length}`]], C.tab)}
     ${C.tab === "cleared" ? fixed("bring back", n, 'data-bulk="unclear"') : fixed("clear", n, 'data-bulk="clear"')}
     ${fixed("★ save", n, 'data-bulk="save"')}
+    ${appTools(d)}
     <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
   const c = shown.find((x) => x.hash === C.focus);
   // Keep the list where it was: re-rendering would otherwise jump it to the top.
@@ -133,7 +156,7 @@ function readPane(c) {
   const u = c.author?.username;
   return `
     ${kit.button("← list", { cls: "mobile-back", attrs: 'data-back style="display:none;margin-bottom:12px"' })}
-    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via ${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
+    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via @${esc(c.app.name)} <button class="link" data-hide-app="${c.app.fid}" data-name="${esc(c.app.name)}" title="Hide casts posted with @${esc(c.app.name)}">hide</button>` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta">${counts ? `<span>↩ ${counts.replies}</span><span>⟲ ${counts.recasts}</span><span>♥ ${counts.likes + (C.liked.has(c.hash) ? 1 : 0)}</span>` : `<span>counting<span class="blink">_</span></span>`}

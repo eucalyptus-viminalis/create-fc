@@ -25,7 +25,7 @@ type Shape = (casts: Message[]) => Promise<{ hash: string; fid: number; time: st
 type ProfileOf = (fid: number) => Promise<Profile>;
 
 // Casts from people you follow, the last 7 days. `feed` is the GUI's feed.
-export async function castsView(fid: number, since: number, feed: { casts: { hash: string; fid: number; time: string }[] }) {
+export async function castsView<C extends { hash: string; fid: number; time: string }>(fid: number, since: number, feed: { casts: C[] }) {
   const week = Date.now() - WEEK_MS;
   const casts = feed.casts
     .filter((c) => c.fid !== fid && Date.parse(c.time) > week)
@@ -102,12 +102,13 @@ export async function followersView(fid: number, since: number, profileOf: Profi
 // The home tile: every item in each view, as id and time. The browser takes
 // out what it has cleared and counts the rest. Ids match what it clears:
 // cast hash (casts, replies), "<cast hash>:<liker fid>" (likes), fid (followers).
-export async function waiting(fid: number, since: number, feed: { following: number; casts: { hash: string; fid: number; time: string }[] }, shape: Shape, profileOf: ProfileOf) {
+// Casts also say which app they came through (its fid), for the apps filter.
+export async function waiting(fid: number, since: number, feed: { following: number; casts: { hash: string; fid: number; time: string; app?: { fid: number } }[] }, shape: Shape, profileOf: ProfileOf) {
   const [c, l, r, f] = await Promise.all([castsView(fid, since, feed), likesView(fid, since, profileOf), repliesView(fid, since, shape), followersView(fid, since, profileOf)]);
   return {
     since: c.since,
     following: feed.following,
-    casts: c.casts.map((x) => ({ id: x.hash, time: x.time })),
+    casts: c.casts.map((x) => ({ id: x.hash, time: x.time, app: x.app?.fid })), // app: so the page can leave out apps you hid
     likes: l.groups.flatMap((g) => g.likes).map((x) => ({ id: x.id, time: x.time })),
     replies: r.groups.flatMap((g) => g.replies).map((x) => ({ id: x.hash, time: x.time })),
     followers: f.followers.map((x) => ({ id: String(x.fid), time: x.time })),

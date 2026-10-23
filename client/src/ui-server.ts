@@ -590,6 +590,8 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
       if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token);
       if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token);
+      if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token);
+      if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token);
       if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
       if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));

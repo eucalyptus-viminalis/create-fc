@@ -1,0 +1,38 @@
+/* Keys: who can post as you. Builds on home.css. */
+
+.pg-top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-bottom: 12px; }
+.pg-top h1 { font: 48px/0.9 var(--px); margin: 0; -webkit-font-smoothing: none; }
+.span4 { grid-column: span 4; }
+.empty { padding: 40px 20px; text-align: center; color: var(--g2); }
+.loading { padding: 40px 20px; color: var(--g2); }
+.big { font: 48px/1 var(--px); -webkit-font-smoothing: none; }
+.grid p { margin: 6px 0 0; color: var(--g2); }
+
+.kapps { display: grid; gap: 16px; margin-top: 22px; }
+.kapp { padding: 12px 14px; }
+.kapp.mine { box-shadow: 5px 5px 0 var(--g3), 0 0 0 3px var(--g0), 0 0 0 6px var(--g3); }
+.khead { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.khead .pf { width: 40px; height: 40px; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: grid; place-items: center; font: 16px var(--px); -webkit-font-smoothing: none; }
+.kname { min-width: 0; }
+.kname .here { font: 14px var(--px); -webkit-font-smoothing: none; background: var(--g3); color: var(--g0); padding: 2px 5px 1px; margin-left: 6px; white-space: nowrap; }
+.power { font: 16px/1 var(--px); -webkit-font-smoothing: none; border: 2px solid var(--g3); padding: 6px 8px 5px; white-space: nowrap; }
+.power.all { background: var(--g3); color: var(--g0); }
+.kapp details { margin-top: 10px; border-top: 2px dashed var(--g1); padding-top: 6px; }
+.kapp summary { cursor: pointer; color: var(--g2); font-size: 16px; }
+.kapp summary:hover { color: var(--g3); }
+.kapp table { width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 4px; }
+.kapp td { padding: 3px 8px 3px 0; border-bottom: 1px dotted var(--g1); vertical-align: top; }
+.kapp td.key { font-family: var(--vt); white-space: nowrap; }
+.kapp td.d { white-space: nowrap; color: var(--g2); }
+.kapp tr.me td { color: var(--g3); }
+.kapp tr.me b { font-weight: 400; font: 14px var(--px); -webkit-font-smoothing: none; }
+.foot { margin-top: 22px; font-size: 16px; }
+
+@media (max-width: 900px) {
+  .pg-top h1 { font-size: 32px; }
+  .span4 { grid-column: 1 / -1; }
+  .khead { grid-template-columns: 40px minmax(0, 1fr); }
+  .power { grid-column: 2; justify-self: start; }
+  .kapp td.d:nth-child(3), .kapp td.d:nth-child(4) { display: none; }
+}
+.kapp td:nth-child(2) { width: 100%; }
