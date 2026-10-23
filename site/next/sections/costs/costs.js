@@ -6,9 +6,11 @@ const host = document.getElementById('nc-chart');
 const DEFS = `<!-- paper: fibre multiplied over the fill -->
     <filter id="nc-paper" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".85 .5" numOctaves="3" seed="7" result="n"/><feColorMatrix in="n" values="0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .22 0 0 0 .55 -.1" result="g"/><feComposite in="g" in2="SourceGraphic" operator="in" result="gi"/><feBlend in="SourceGraphic" in2="gi" mode="multiply"/></filter>
     <!-- die-cut edge: a little wobble -->
-    <filter id="nc-edge" x="-2%" y="-3%" width="104%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="2.6"/></filter>
+    <filter id="nc-edge" x="-2%" y="-3%" width="104%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="2" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6"/></filter>
     <!-- letterpress: ragged type edges -->
-    <filter id="nc-ink" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="5" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale=".45"/></filter>
+    <!-- letterpress: ink pressed into card. A slow, slight wobble (no jagged edges), a hair of spread,
+         and toner that's a little uneven, so solid type has grain without breaking up -->
+    <filter id="nc-ink" x="-3%" y="-10%" width="106%" height="120%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".18" numOctaves="2" seed="5" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale=".9" xChannelSelector="R" yChannelSelector="G" result="d"/><feMorphology in="d" operator="dilate" radius=".15" result="spread"/><feGaussianBlur in="spread" stdDeviation=".18" result="soft"/><feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="9" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -1.0 0 0 0 1.38" result="mottle"/><feComposite in="soft" in2="mottle" operator="in"/></filter>
     <linearGradient id="nc-winShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".38"/><stop offset=".14" stop-color="#000" stop-opacity="0"/><stop offset=".9" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></linearGradient>
     <linearGradient id="nc-glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".22"/></linearGradient>
     <linearGradient id="nc-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4d6d3"/><stop offset=".5" stop-color="#8f9290"/><stop offset="1" stop-color="#b9bbb8"/></linearGradient>
@@ -62,7 +64,7 @@ function slideChart(host, T) {
   const ink = T.ink, onBand = T.band ? T.sleeve : ink;
   const box = (y1, y2, rows) => { const hgt = (y2 - y1) / rows.length; return rows.map((r, i) => `<rect x="868" y="${y1 + i * hgt}" width="96" height="${hgt}" fill="none" stroke="${ink}" stroke-width="1.6"/>` + t(916, y1 + i * hgt + hgt / 2 + 1, r[0], `text-anchor="middle" dominant-baseline="central" font-family="Jost" font-weight="700" font-size="${r[1] || 13}" letter-spacing=".4" fill="${r[2] || ink}"`)).join(''); };
   const rivet = (x, y) => `<circle cx="${x}" cy="${y}" r="7.5" fill="#6e6c64"/><circle cx="${x}" cy="${y}" r="5.5" fill="#a8a69c"/><circle cx="${x - 1.3}" cy="${y - 1.5}" r="2" fill="#e2e0d6"/>`;
-  let sleeve = `<rect x="20" y="20" width="960" height="430" rx="22" fill="${T.sleeve}" filter="url(#nc-paper)"/>`;
+  let sleeve = `<g filter="url(#nc-edge)"><rect x="20" y="20" width="960" height="430" rx="22" fill="${T.sleeve}" filter="url(#nc-paper)"/></g>`;   // die-cut edge
   if (T.band) sleeve += `<path d="M20 42 a22 22 0 0 1 22 -22 H958 a22 22 0 0 1 22 22 V100 H20 Z" fill="${T.band}"/>`;
   // windows' cut edges catch shadow; drawn on top of the slide, under the print
   const shade = ([x1, y1, x2, y2]) => `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="url(#nc-winShade)"/><rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="3" fill="none" stroke="rgb(0 0 0 / .35)" stroke-width="1.2"/>`;
@@ -92,7 +94,7 @@ function slideChart(host, T) {
 
   host.innerHTML = `<svg class="obj" viewBox="0 0 1000 470" role="slider" tabindex="0" aria-label="Node cost calculator: how long you keep the node" aria-valuemin="1" aria-valuemax="730" xmlns="http://www.w3.org/2000/svg">
     <defs>${DEFS}${mask}<clipPath id="c-${host.id}"><rect x="20" y="20" width="960" height="430" rx="22"/></clipPath></defs>
-    <g filter="url(#nc-edge)">
+    <g>
       <g clip-path="url(#c-${host.id})"><g class="slide">${slide}</g></g>
       ${shade(W1)}${shade(W2)}
       <g mask="url(#m-${host.id})">${sleeve}${print}</g>
