@@ -24,10 +24,11 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=JetBrains+Mono:wght@500;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=JetBrains+Mono:wght@500;700&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
+<link rel="stylesheet" href="sections/agent/agent.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
@@ -73,7 +74,75 @@
     </div>
   </div>
 </section>
-<section class="doc doc-pending" id="agent" aria-label="Agent prompt"><div><b>Agent prompt · service work order</b>Port from <code>brand/mockups/work-order.html</code></div></section>
+<!-- Agent prompt: a carbon-copy service work order (sections/agent/) -->
+<section class="doc doc-agent" id="agent" aria-labelledby="wo-t">
+  <div class="set">
+    <article class="sheet">
+      <div class="paper" aria-hidden="true"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg></div>
+
+      <div class="stub" aria-hidden="true"><span>Detach and keep</span><span class="perf" style="flex:1"></span><span>Stub No. 0417</span></div>
+
+      <form class="print" id="wo-form" onsubmit="return false">
+        <header class="head">
+          <img src="../img/create-fc-lockup.svg" alt="create-fc">
+          <h2 id="wo-t">Service Order<small>Network Decentralization Authority</small></h2>
+          <div class="no">Order No.<b>0417</b></div>
+        </header>
+
+        <div class="row r2">
+          <div class="cell"><span class="lab">Customer</span><span class="typed">Node operator (you)</span></div>
+          <div class="cell"><span class="lab">Date</span><span class="typed" id="wo-date"></span></div>
+        </div>
+        <div class="row r3">
+          <div class="cell"><span class="lab">Technician</span><span class="typed">Your AI assistant</span></div>
+          <div class="cell"><span class="lab">Make / model</span><span class="typed">Claude Code, Codex or similar</span></div>
+          <div class="cell"><span class="lab">Service manual</span><span class="typed"><a href="https://github.com/eucalyptus-viminalis/create-fc/blob/main/AGENTS.md">AGENTS.md</a></span></div>
+        </div>
+
+        <div class="block work">
+          <span class="lab">Work to be performed</span>
+          <p class="prompt" id="wo-prompt">Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</p>
+          <button class="tear" type="button" id="wo-tear">✂ <span>Tear off &amp; hand to your assistant</span></button>
+          <div class="stamp" aria-hidden="true">No seed phrases<small>Customer types secrets</small></div>
+        </div>
+
+        <div class="cols">
+          <div class="block">
+            <span class="lab">Technician will not</span>
+            <ul class="boxes">
+              <li><span class="bx x" aria-hidden="true"></span><span>Ask for, accept or handle a seed phrase, private key or API token</span></li>
+              <li><span class="bx x" aria-hidden="true"></span><span>Spend money without asking you first</span></li>
+              <li><span class="bx x" aria-hidden="true"></span><span>Delete anything without asking you first</span></li>
+              <li><span class="bx x" aria-hidden="true"></span><span>Change your Hetzner account, SSH keys or shell setup beyond the manual</span></li>
+            </ul>
+          </div>
+          <div class="block">
+            <span class="lab">Customer will</span>
+            <ul class="boxes">
+              <li><input type="checkbox" id="wo-c1" name="c1"><label for="wo-c1">Make a Hetzner Cloud project and an API token, then run <code>hcloud context create fc-node</code> in their own terminal</label></li>
+              <li><input type="checkbox" id="wo-c2" name="c2"><label for="wo-c2">Say yes, or no, when the technician asks to spend money</label></li>
+              <li><input type="checkbox" id="wo-c3" name="c3"><label for="wo-c3">Sign in on the page <code>fameboy ui</code> opens, themselves</label></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="row r3">
+          <div class="cell"><span class="lab">Spending authorized</span><span class="typed">≈ $0.16 / hr, until deleted. Ask first.</span></div>
+          <div class="cell"><span class="lab">Est. time</span><span class="typed">6–8 hrs (reads in ≈ 2)</span></div>
+          <div class="cell"><span class="lab">Labor</span><span class="typed">$0.00</span></div>
+        </div>
+
+        <div class="sign">
+          <div class="cell"><span class="lab">Customer signature</span><input class="sigline" name="sig" aria-label="Type your name to sign" placeholder="Type your name to sign" maxlength="40" autocomplete="off"></div>
+          <div class="cell"><span class="lab">Work completed</span><span class="typed">☐ Node in sync<br>☐ Client installed</span></div>
+        </div>
+
+        <div class="foot"><span class="copies"><i>White · Technician</i><i>Yellow · Customer</i><i>Pink · File</i></span><span>NDA Form 7 · Rev. 10/26</span></div>
+      </form>
+    </article>
+    <div class="out" aria-hidden="true"></div>
+  </div>
+</section>
 <section class="doc doc-pending" id="kit" aria-label="Before you start and quickstart"><div><b>Before you start + quickstart · kit assembly manual</b>Port from <code>brand/mockups/kit-manual.html</code></div></section>
 <section class="doc doc-pending" id="explainers" aria-label="Explainers"><div><b>Explainers · Herbert Bayer booklet</b>Port from <code>brand/mockups/concepts-bayer.html</code></div></section>
 <section class="doc doc-pending" id="costs" aria-label="Costs"><div><b>Costs · slide chart</b>Port from <code>brand/mockups/costs-sliderule.html</code></div></section>
@@ -201,6 +270,7 @@
 <script type="module" src="shared/paper.js"></script>
 <script type="module" src="shared/sounds.js"></script>
 <script type="module" src="sections/hero/hero.js"></script>
+<script type="module" src="sections/agent/agent.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>
