@@ -41,7 +41,7 @@ Every copy of fameboy is named after its app account. If the app account is `@fa
 Point an A record for the domain at your server's IP with your DNS provider, wait a few minutes, then:
 
 ```bash
-ssh root@<ip> fc-node client clearcast.example.com
+ssh root@<ip> fc-node client fameboy.example.com
 ```
 
 It checks the domain points at your server before it switches. `fc-node client sslip` goes back to the sslip.io address.
