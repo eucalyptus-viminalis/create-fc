@@ -95,9 +95,15 @@ sed -i "s|__SNAPCHAIN_RAW__|$SNAPCHAIN_RAW|" /usr/local/sbin/fc-node-setup
 chmod +x /usr/local/sbin/fc-node-setup
 
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx snapchain-snapchain-1; then
+  # Running already: this run only updated the helpers. Say where things stand
+  # instead of the first-run message below.
   echo "the node is already running."
   fc-companion-install || true
   if [ -f /var/lib/fc-fameboy/url ]; then fc-fameboy-install || true; fi
+  echo
+  echo "Updated. Where things stand:"
+  fc-node status | sed 's/^/  /' || true
+  exit 0
 elif systemctl is-active --quiet fc-node-setup; then
   echo "setup is already running."
 else
