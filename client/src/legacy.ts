@@ -17,16 +17,14 @@ async function read<T>(name: string): Promise<T | undefined> {
 }
 
 export async function legacyState(fid: number) {
-  const [inbox, cleared, checkins, presence, device] = await Promise.all([
+  const [inbox, checkins, presence, device] = await Promise.all([
     read<Record<string, unknown>>("inbox.json"),
-    read<Record<string, unknown>>("cleared.json"),
     read<Record<string, unknown>>("checkins.json"),
     read<{ status?: string }>("presence.json"),
     read<{ id?: string }>("device.json"),
   ]);
   return {
     inbox: inbox?.[fid] ?? null, // { cleared: { casts, likes, replies, followers }, saved }
-    cleared: cleared?.[fid] ?? null, // the classic feed's: { before, hashes, today }
     visit: checkins?.[fid] ?? null, // { prev, lastActive }
     presence: presence?.status ?? null,
     device: device?.id ?? null,
