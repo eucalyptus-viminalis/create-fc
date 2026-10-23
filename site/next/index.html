@@ -24,14 +24,15 @@
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="shared/page.css">
 <link rel="stylesheet" href="sections/hero/hero.css">
 <link rel="stylesheet" href="sections/agent/agent.css">
 <link rel="stylesheet" href="sections/kit/kit.css">
 <link rel="stylesheet" href="sections/explainers/explainers.css">
 <link rel="stylesheet" href="sections/costs/costs.css">
+<link rel="stylesheet" href="sections/troubleshooting/troubleshooting.css">
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
@@ -567,7 +568,65 @@
   <div class="chart" id="nc-chart"></div>
   <p class="note">About $1.30 to sync and try, about $4 a day, $105 a month. Billed by the hour until you delete it. <a href="../docs/Costs">Full breakdown</a></p>
 </section>
-<section class="doc doc-pending" id="troubleshooting" aria-label="Troubleshooting"><div><b>Troubleshooting · torn-out service manual page</b>Port from <code>brand/mockups/troubleshooting-scan.html</code></div></section>
+<!-- Troubleshooting: a page torn out of a service manual (sections/troubleshooting/) -->
+<section class="doc doc-ts" id="troubleshooting" aria-labelledby="ts-t">
+  <article class="sheet" id="ts-sheet">
+    <div class="paper" aria-hidden="true">
+      <svg class="grain" preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".2"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".42"/><g class="dust"></g></svg>
+    </div>
+    <!-- the reverse page, faintly through the paper -->
+    <div class="show" aria-hidden="true">
+      PARTS LIST . . . . . . . . . . . . . . . . . . . . 8-1<br>Server, CX43 . . . . . . . . . . . . . . . . . . . . 8-1<br>Volume, 1000 GB . . . . . . . . . . . . . . . . . . 8-1<br>Firewall Rules . . . . . . . . . . . . . . . . . . . 8-2<br>Snapchain, Shards 0–2 . . . . . . . . . . . . . . 8-2<br>Companion Service . . . . . . . . . . . . . . . . . 8-3<br>Image Host . . . . . . . . . . . . . . . . . . . . . . . 8-3<br>Client Package fameboy . . . . . . . . . . . . . 8-4<br>App Key . . . . . . . . . . . . . . . . . . . . . . . . . 8-4<br><br>SCHEMATIC LEGENDS . . . . . . . . . . . . . . . 8-5<br>Interconnect — Schematic . . . . . . . . . . . . 8-6<br>Gossip Ports 3381–3383 . . . . . . . . . . . . . 8-7<br>Uptime Ledger . . . . . . . . . . . . . . . . . . . . 8-7<br>Shard Layout . . . . . . . . . . . . . . . . . . . . . . 8-8<br>Snapshot Loader . . . . . . . . . . . . . . . . . . . 8-9<br>Signer Requests . . . . . . . . . . . . . . . . . . . 8-9
+    </div>
+
+    <div class="print">
+      <div class="running"><span>NDA Node Operator's Service Manual</span><span>Section 7</span></div>
+      <h2 id="ts-t">Trouble-Shooting</h2>
+      <div class="model">Model NDA-1 Node · Fameboy Receiver</div>
+
+      <div class="toc" id="ts-toc"></div>
+
+      <figure>
+        <svg viewBox="0 0 700 150" role="img" aria-label="Block diagram: your computer connects over SSH to the server running Snapchain; the fameboy client reads from and writes to it. Test points TP1 to TP3.">
+          <g fill="none" stroke="#1b1a17" stroke-width="1.6">
+            <rect x="10" y="30" width="170" height="70"/><rect x="265" y="30" width="170" height="70"/><rect x="520" y="30" width="170" height="70"/>
+            <path d="M180 55h80M255 50l6 5-6 5"/><path d="M435 58h80M509 53l6 5-6 5"/><path d="M520 76h-80M446 71l-6 5 6 5" stroke-dasharray="4 3"/>
+            <path d="M95 100v18M350 100v18M605 100v18"/>
+            <circle cx="95" cy="128" r="10"/><circle cx="350" cy="128" r="10"/><circle cx="605" cy="128" r="10"/>
+          </g>
+          <g font-size="12" fill="#1b1a17" text-anchor="middle">
+            <text x="95" y="58" font-weight="800" letter-spacing="1">YOUR COMPUTER</text><text x="95" y="76">hcloud · ssh</text><text x="95" y="91">Cmds 0 &amp; 2</text>
+            <text x="350" y="58" font-weight="800" letter-spacing="1">SERVER fc-node</text><text x="350" y="76">Snapchain :3381</text><text x="350" y="91">Cmd 1</text>
+            <text x="605" y="58" font-weight="800" letter-spacing="1">CLIENT fameboy</text><text x="605" y="76">browser · terminal</text><text x="605" y="91">reads &amp; writes</text>
+            <text x="220" y="48" font-size="10">SSH</text><text x="475" y="51" font-size="10">READ</text><text x="475" y="92" font-size="10">WRITE</text>
+            <text x="95" y="132" font-size="9" font-weight="800">1</text><text x="350" y="132" font-size="9" font-weight="800">2</text><text x="605" y="132" font-size="9" font-weight="800">3</text>
+            <text x="140" y="132" font-size="10" text-anchor="start">hcloud context active</text>
+            <text x="395" y="132" font-size="10" text-anchor="start">fc-node status</text>
+            <text x="560" y="132" font-size="10" text-anchor="end">fameboy ui</text>
+          </g>
+        </svg>
+        <figcaption>Figure 7-1. Block Diagram With Test Points</figcaption>
+      </figure>
+
+      <table>
+        <caption>Trouble-Shooting Chart</caption>
+        <thead><tr><th scope="col">No.</th><th scope="col">Symptom</th><th scope="col">Probable Cause</th><th scope="col">Remedy</th></tr></thead>
+        <tbody id="ts-rows"></tbody>
+      </table>
+
+      <div class="after">
+        <div>
+          <h4>If Trouble Persists</h4>
+          <p>File a report with the step and the exact output at <a href="https://github.com/eucalyptus-viminalis/create-fc/issues">github.com/eucalyptus-viminalis/create-fc</a>, or message <b>@3070.eth</b> for a 30-minute session on your own machine.</p>
+        </div>
+        <div class="warn"><b>CAUTION</b>Never give a seed phrase, recovery phrase or API token to a person, a chat, or an AI assistant. Anyone who can read it can use it.</div>
+      </div>
+
+      <div class="foot"><span>Printed in U.S.A.</span><span class="pg">7-1</span><span class="r">NDA 26-1171 · 10/26</span></div>
+    </div>
+
+  </article>
+</section>
 <section class="doc doc-pending" id="seed" aria-label="Seed phrase safety"><div><b>Seed phrase safety · operator training card</b>Port from <code>brand/mockups/training-card.html</code></div></section>
 <section class="doc doc-pending" id="client" aria-label="The fameboy client"><div><b>The client · radio-set brochure</b>Port from <code>brand/mockups/client-brochure.html</code></div></section>
 
@@ -696,6 +755,7 @@
 <script type="module" src="sections/kit/kit.js"></script>
 <script type="module" src="sections/explainers/explainers.js"></script>
 <script type="module" src="sections/costs/costs.js"></script>
+<script type="module" src="sections/troubleshooting/troubleshooting.js"></script>
 <script type="module" src="sections/finish/finish.js"></script>
 </body>
 </html>
