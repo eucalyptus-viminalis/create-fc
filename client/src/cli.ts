@@ -8,6 +8,7 @@ import { setUsername } from "./username.ts";
 import { startUi } from "./ui-server.ts";
 import { setUpAppAccount } from "./app-account.ts";
 import { setProfile } from "./profile.ts";
+import { loadAppAccount } from "./signin.ts";
 import { createInterface } from "node:readline/promises";
 import { newAccount } from "./new-account.ts";
 import { appNames, appsOfUser, filterByApp, resolveApps } from "./filter.ts";
@@ -32,8 +33,10 @@ Usage:
                                        sign out. The key signs its own removal: no seed phrase
   fameboy app-account [--sponsor]    Set up the account that lets people sign in to
                                        fameboy ui by approving in the Farcaster app
-  fameboy profile [--display "Name"] [--pfp https://…] [--bio "…"]
-                                       Show or change your display name, picture and bio
+  fameboy profile [--display "Name"] [--pfp https://…] [--bio "…"] [--app-account]
+                                       Show or change your display name, picture and bio.
+                                       --app-account: this fameboy's app account instead,
+                                       signed with its saved key (no seed phrase)
   fameboy username <name> [--replace] [--dry-run]
                                        Claim an fname and set it as your username.
                                        --replace gives up the name the account has now
@@ -89,6 +92,14 @@ async function show(casts: Message[], apps: Map<string, number | undefined>) {
   }
 }
 
+// The app key saved with this fameboy's app account (by fameboy app-account).
+async function appAccountKey() {
+  const app = await loadAppAccount();
+  if (!app) throw new NodeError("no app account on this computer: run fameboy app-account once in a terminal");
+  if (!app.appKey) throw new NodeError(`the app account (fid ${app.fid}) has no saved app key yet: run fameboy app-account once to make one`);
+  return app.appKey;
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -110,6 +121,7 @@ async function main() {
       display: { type: "string" },
       pfp: { type: "string" },
       bio: { type: "string" },
+      "app-account": { type: "boolean" },
     },
   });
   const [cmd, arg] = positionals;
@@ -172,7 +184,7 @@ async function main() {
       break;
     }
     case "profile": {
-      const key = await loadKey();
+      const key = values["app-account"] ? await appAccountKey() : await loadKey();
       const fields = { display: values.display, pfp: values.pfp, bio: values.bio };
       if (Object.values(fields).some((v) => v !== undefined)) await setProfile(key, fields, (l) => console.error(l));
       const p = await profile(key.fid);

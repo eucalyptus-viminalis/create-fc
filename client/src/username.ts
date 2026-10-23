@@ -23,6 +23,8 @@ import { appSigner, loadKey, registerAppKey, type Custody } from "./keys.ts";
 import { NodeError, get, post, submitUntil } from "./node.ts";
 import { profile } from "./read.ts";
 import { loadAppAccount, saveAppAccount } from "./signin.ts";
+import { setProfile } from "./profile.ts";
+import { avatarFor, colorOf } from "../../node/fameboy-name.mjs";
 
 const FNAMES = "https://fnames.farcaster.xyz";
 const FNAME = /^[a-z0-9][a-z0-9-]{0,15}$/;
@@ -149,6 +151,21 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
     const { valid } = await post<{ valid: boolean }>("/v1/validateMessage", bytes);
     return log(`dry run: USER_DATA_ADD username=${name} ${valid ? "passes" : "FAILS"} your node's stateless checks. Nothing was sent.`);
   }
-  if (await submitUntil(bytes, async () => (await profile(custody.fid)).username === name)) return log(`done: fid ${custody.fid} is now @${name}`);
-  throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run fameboy username ${name} again.`);
+  if (!(await submitUntil(bytes, async () => (await profile(custody.fid)).username === name)))
+    throw new NodeError(`sent USER_DATA_ADD, but your node doesn't show @${name} after 60 s. Run fameboy username ${name} again.`);
+  log(`done: fid ${custody.fid} is now @${name}`);
+  await matchAvatar(name, key, log);
+}
+
+// An @fameboy<color> name with no picture yet gets the keycap in its colour,
+// so an app account set up on a server (fc-node app-account) doesn't keep
+// Farcaster's default avatar. Never replaces a picture someone chose.
+async function matchAvatar(name: string, key: Parameters<typeof setProfile>[0], log: (s: string) => void) {
+  if (!colorOf(name)) return;
+  try {
+    if ((await profile(key.fid)).pfp) return;
+    await setProfile(key, { pfp: avatarFor(name) }, log);
+  } catch (e) {
+    log(`couldn't set the picture: ${e instanceof Error ? e.message : e}. Set it later: fameboy profile${key.fid === (await loadAppAccount())?.fid ? " --app-account" : ""} --pfp ${avatarFor(name)}`);
+  }
 }
