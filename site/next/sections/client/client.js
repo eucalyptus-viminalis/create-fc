@@ -5,7 +5,8 @@ import { inkFilter } from '../../shared/paper.js';
 import './editions.js';
 
 const doc = document.getElementById('client');
-inkFilter('client', '#1c1c1a');
+// fewer ink dropouts than the other documents: this page has big solid blacks, where specks read as spray paint
+inkFilter('client', '#1c1c1a', { specks: 5.2 });
 
 // The page is a fixed 760 x 1000 sheet, scaled to fit, never up.
 const fit = doc.querySelector('#cl-fit');
