@@ -14,7 +14,7 @@ brand/
   scripts/build.mjs    writes logo/ and copies files to site/ and docs/public/
   logo/                finished files: use these, don't edit them by hand
   mockups/             explorations (gitignored)
-  sounds/              original sound recordings (gitignored); the site loads trimmed clips from site/next/sounds/
+  sounds/              original sound recordings (gitignored); the site loads trimmed clips from site/sounds/
 ```
 
 | File | Use |

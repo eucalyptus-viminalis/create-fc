@@ -16,5 +16,5 @@ docs/.vitepress/dist/
 # Cloudflare Workers local state (register/)
 .wrangler/
 
-# Original sound recordings (credits in site/next/sounds/CREDITS.md)
+# Original sound recordings (credits in site/sounds/CREDITS.md)
 brand/sounds/

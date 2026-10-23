@@ -6,7 +6,7 @@ This page covers the one-time setup on your server, what it puts at risk, and wh
 
 ## What you need
 
-- A node from [commands 0 and 1](https://createfc.org/#quickstart), in sync.
+- A node from [commands 0 and 1](https://createfc.org/quickstart/), in sync.
 - Its companion running. `ssh root@<ip> fc-node status` should end with `companion: running on port 3390`. If it doesn't, run command 1 again.
 - A Farcaster account to be your node's **app account** (below). If you don't have a spare one, `fameboy new-account` registers one for about $0.20 of ETH on Optimism.
 

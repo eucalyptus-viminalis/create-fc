@@ -19,5 +19,5 @@ features:
     link: https://docs.farcaster.xyz/learn/what-is-farcaster/accounts
   - title: The three commands
     details: Rent a server, sync a node, install the client. The quickstart lives on the main site.
-    link: https://createfc.org/#quickstart
+    link: https://createfc.org/quickstart/
 ---

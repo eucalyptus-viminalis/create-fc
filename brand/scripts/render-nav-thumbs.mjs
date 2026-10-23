@@ -1,5 +1,5 @@
 // Photographs each document into the small pictures the contents pile uses (shared/doc-nav.js):
-//   site/next/img/nav/<section id>.jpg   240px tall, the document's own width
+//   site/img/nav/<section id>.jpg   240px tall, the document's own width
 // Re-run it after a document changes how it looks.
 // Run the site first (pnpm site:dev), then: pnpm nav-thumbs:render [base URL]
 // Uses your installed Chrome.
@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const dir = path.join(repo, 'site', 'next', 'img', 'nav');
-const base = (process.argv[2] || 'http://localhost:5173/next/').replace(/\/?$/, '/');
+const dir = path.join(repo, 'site', 'img', 'nav');
+const base = (process.argv[2] || 'http://localhost:5173/').replace(/\/?$/, '/');
 const HEIGHT = 240;
 
 // what to photograph in each section: the document itself, without its desk
@@ -50,6 +50,6 @@ for (const [id, sel] of Object.entries(SHOTS)) {
     return c.toDataURL('image/jpeg', .84).split(',')[1];
   }, { src: 'data:image/png;base64,' + png.toString('base64'), h: HEIGHT });
   fs.writeFileSync(path.join(dir, id + '.jpg'), Buffer.from(jpg, 'base64'));
-  console.log('wrote site/next/img/nav/' + id + '.jpg');
+  console.log('wrote site/img/nav/' + id + '.jpg');
 }
 await browser.close();

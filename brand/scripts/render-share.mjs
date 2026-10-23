@@ -3,13 +3,13 @@
 // createfc.org/costs: a small page with its own title and picture that forwards readers to /#costs.
 //
 // Writes, for each document:
-//   site/next/<slug>/index.html      the share page
-//   site/next/img/share/<slug>.jpg   its preview, 1200x630: the document on its own desk
+//   site/<slug>/index.html      the share page
+//   site/img/share/<slug>.jpg   its preview, 1200x630: the document on its own desk
 //
 // Run the site first (pnpm site:dev), then: pnpm share:render [site URL] [public URL]
-//   site URL    where to photograph the documents (default http://localhost:5173/next/)
+//   site URL    where to photograph the documents (default http://localhost:5173/)
 //   public URL  where the pages will live, for the absolute links previews need
-//               (default https://createfc.org/next/; once the new site is at the root, https://createfc.org/)
+//               (default https://createfc.org/)
 // Uses your installed Chrome. Re-run it after a document changes how it looks or the site moves.
 import path from 'node:path';
 import fs from 'node:fs';
@@ -17,9 +17,9 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const out = path.join(repo, 'site', 'next');
-const base = (process.argv[2] || 'http://localhost:5173/next/').replace(/\/?$/, '/');
-const pub = (process.argv[3] || 'https://createfc.org/next/').replace(/\/?$/, '/');
+const out = path.join(repo, 'site');
+const base = (process.argv[2] || 'http://localhost:5173/').replace(/\/?$/, '/');
+const pub = (process.argv[3] || 'https://createfc.org/').replace(/\/?$/, '/');
 
 // slug: the share address; id: the section it opens; shot: the document itself, without its desk;
 // whole: show a tall document whole instead of large and cropped
@@ -111,6 +111,6 @@ for (const d of DOCS) {
   await card.screenshot({ path: path.join(out, 'img', 'share', d.slug + '.jpg'), type: 'jpeg', quality: 86 });
   fs.mkdirSync(path.join(out, d.slug), { recursive: true });
   fs.writeFileSync(path.join(out, d.slug, 'index.html'), sharePage(d));
-  console.log(`wrote site/next/${d.slug}/ and site/next/img/share/${d.slug}.jpg`);
+  console.log(`wrote site/${d.slug}/ and site/img/share/${d.slug}.jpg`);
 }
 await browser.close();
