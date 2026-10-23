@@ -124,6 +124,7 @@ a.mode { text-decoration: none; color: inherit; }
 /* boot */
 #boot { position: fixed; inset: 0; z-index: 90; background: var(--g0); display: grid; place-items: center; transition: opacity .26s; }
 #boot.out { opacity: 0; pointer-events: none; }
+.booted #boot { display: none; }
 #boot .word { font-size: clamp(40px, 9vw, 112px); text-align: center; }
 #boot .word span { opacity: .1; } #boot .word span.on { opacity: 1; }
 /* Under the wordmark, like "Game Boy Color": this copy's colour, or its own name (theme.js). */

@@ -34,16 +34,29 @@ function paintEdition() {
 paintEdition();
 document.addEventListener("fameboy:theme", paintEdition);
 
+// The full boot plays once per tab (home.html's head marks <html class="booted">).
+// Coming back to home, after posting or from the inbox, goes straight to the
+// dashboard, and the node tile fills in when the node answers.
+const BOOTED = "fameboy-booted";
+async function fetchHome(onError) {
+  for (;;) {
+    try { return await api("/api/home"); }
+    catch (e) { onError(e); await wait(5000); }
+  }
+}
+
 async function boot() {
-  const b = $("#boot"), letters = [...b.querySelectorAll(".word span")], status = $("#boot-status");
+  const b = $("#boot");
+  if (document.documentElement.classList.contains("booted")) {
+    b.hidden = true; document.body.classList.add("ready");
+    $("#node").innerHTML = `<span class="dim">connecting to this node<span class="blink">_</span></span>`;
+    return fetchHome((e) => ($("#node").innerHTML = `<p class="dim">${esc(e.message)} · trying again</p>`));
+  }
+  const letters = [...b.querySelectorAll(".word span")], status = $("#boot-status");
   let on = false;
   const blink = setInterval(() => { on = !on; letters[0].classList.toggle("on", on); if (on) sfx.blink(); }, 260);
   status.textContent = "connecting to this node";
-  let home;
-  for (;;) {
-    try { home = await api("/api/home"); break; }
-    catch (e) { status.textContent = `${e.message} · trying again`; await wait(5000); }
-  }
+  const home = await fetchHome((e) => (status.textContent = `${e.message} · trying again`));
   clearInterval(blink);
   letters[0].classList.add("on");
   status.textContent = `${new URL(home.node.url).host} · ${home.node.inSync ? "in sync" : "catching up"}`;
@@ -51,6 +64,7 @@ async function boot() {
   await wait(80); sfx.chime(); await wait(380);
   b.classList.add("out"); document.body.classList.add("ready");
   setTimeout(() => (b.hidden = true), 300);
+  try { sessionStorage.setItem(BOOTED, "1"); } catch {}
   return home;
 }
 
