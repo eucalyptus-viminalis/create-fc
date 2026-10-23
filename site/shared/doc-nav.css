@@ -1,0 +1,73 @@
+/* Contents: every document as a small paper in a pile in the top-left corner, the one you're
+   reading on top. Reach for the pile and the papers fan out down the side of the window, like a
+   macOS Dock stack, each with its name beside it. Behaviour lives in shared/doc-nav.js; the
+   pictures are made by `pnpm nav-thumbs:render`. Mockup: brand/mockups/doc-nav/stack.html. */
+
+@property --dn-x  { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --dn-y  { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --dn-rx { syntax: '<length>'; inherits: false; initial-value: 200px; }
+@property --dn-ry { syntax: '<length>'; inherits: false; initial-value: 200px; }
+
+.docnav { position: fixed; z-index: 60; top: 0; left: 0; --dn-h: 64px; --dn-grow: 1.7;   /* above the clipboard (50) */
+  font: 650 13px/1.15 "Archivo", system-ui, sans-serif; }
+.docnav:not(.ready) { display: none; }   /* nothing to show until the script has laid the papers out */
+
+/* The window dims while the papers are fanned out, and a pool of light follows the paper you point at.
+   The dim layer also takes the pointer, so moving off the fan, or clicking beside it, folds it back. */
+.docnav .dn-dim, .docnav .dn-spot { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .25s; }
+.docnav .dn-dim { background: rgb(0 0 0 / .45); }
+.docnav .dn-spot { background: radial-gradient(ellipse var(--dn-rx) var(--dn-ry) at var(--dn-x) var(--dn-y), transparent 40%, rgb(0 0 0 / .72) 100%);
+  transition: opacity .25s, --dn-x .22s ease-out, --dn-y .22s ease-out, --dn-rx .22s ease-out, --dn-ry .22s ease-out; }
+.docnav.open .dn-dim { opacity: 1; pointer-events: auto; }
+.docnav.open.aim .dn-spot { opacity: 1; }
+.docnav.open.aim .dn-dim { opacity: 0; }
+
+/* The pile: what you reach for, and the name of the document you're reading under it. */
+.docnav .dn-pile { position: absolute; z-index: 25; left: var(--dn-pile-l); top: var(--dn-pile-t); width: var(--dn-pile-w); height: var(--dn-pile-h);
+  border: 0; padding: 0; background: none; cursor: pointer; border-radius: 6px; }
+.docnav .dn-pile:focus-visible { outline: 2px solid #f2c94c; outline-offset: 4px; }
+.docnav .dn-count { position: absolute; z-index: 24; left: var(--dn-count-x); top: var(--dn-count-y); transform: translateX(-50%);
+  padding: 3px 9px 4px; border-radius: 99px; background: #1c1c1a; color: #fff; pointer-events: none;
+  font-size: 10px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(0 0 0 / .35); transition: opacity .15s; }
+.docnav.open .dn-count { opacity: 0; }
+
+/* The papers. Each one sits in the pile at its own angle, or in its row of the fan. */
+.docnav > a { position: absolute; left: 0; top: 0; height: var(--dn-h); outline: none; color: inherit; text-decoration: none;
+  transform: translate(var(--sx), var(--sy)) rotate(var(--sr)); transform-origin: 0 50%;
+  transition: transform .42s cubic-bezier(.25,1.25,.45,1);
+  transition-delay: calc((8 - var(--i)) * 18ms);      /* folding back: the last one in goes first */
+  pointer-events: none; }                              /* the hit layer below takes the pointer */
+.docnav.open > a { transform: translate(var(--fx), var(--fy)) rotate(var(--fr));
+  transition-delay: calc(var(--i) * 28ms); }           /* fanning out: dealt in page order */
+.docnav > a img { display: block; height: 100%; width: auto; border-radius: 1px; transform-origin: 0 50%;
+  box-shadow: 0 1px 1px rgb(0 0 0 / .2), 0 10px 12px -6px rgb(0 0 0 / .45), 0 20px 26px -12px rgb(0 0 0 / .25);
+  transition: transform .2s cubic-bezier(.3,1.4,.5,1), box-shadow .2s; }
+.docnav > a:is(.hot, :focus-visible) { z-index: 20 !important; }
+.docnav > a.cool { z-index: 19 !important; }             /* just left: stays above its neighbours while it shrinks */
+.docnav > a:is(.hot, :focus-visible) img { transform: scale(var(--dn-grow));
+  box-shadow: 0 2px 3px rgb(0 0 0 / .25), 0 18px 20px -8px rgb(0 0 0 / .5), 0 34px 40px -14px rgb(0 0 0 / .3); }
+.docnav.open > a[aria-current] img { outline: 2px solid #f2c94c; outline-offset: 3px; }
+
+/* A new current document slides out of the pile and lands back on top. */
+@keyframes dn-surface { 0% { translate: 0 0; } 45% { translate: calc(var(--dn-h) * 1.45) 8px; } 100% { translate: 0 0; } }
+.docnav > a.surfacing { animation: dn-surface .55s cubic-bezier(.35,.6,.3,1); }
+
+/* The name beside each paper. Colours swap at once: fading only the background hid the text mid-fade. */
+.docnav .dn-label { position: absolute; left: calc(100% + 12px); top: 50%; width: max-content;
+  transform: translateY(-50%) rotate(calc(-1 * var(--fr)));
+  padding: 5px 11px 6px; border-radius: 8px; background: rgb(22 22 20 / .88); color: #fff;
+  box-shadow: 0 3px 10px rgb(0 0 0 / .35);
+  opacity: 0; transition: opacity .15s, left .2s cubic-bezier(.3,1.4,.5,1); }
+.docnav .dn-label small { display: block; margin-top: 2px; font-weight: 500; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .6; }
+.docnav.open .dn-label { opacity: 1; transition-delay: calc(var(--i) * 28ms + 180ms), 0s; }
+.docnav > a:is(.hot, :focus-visible) .dn-label { background: #f2c94c; color: #1c1c1a; left: calc(var(--dn-grow) * 100% + 12px); }
+
+/* While open, one invisible layer over the whole fan takes the pointer, and the row nearest the
+   cursor is the one lit. The papers grow and overlap, so letting each take the pointer itself made
+   the hover flicker in the gaps between rows and between a paper and its name. */
+.docnav .dn-hit { position: absolute; z-index: 30; left: 0; top: 0; display: none; cursor: pointer; }
+.docnav.open .dn-hit { display: block; }
+
+/* Phones: smaller papers, a gentler curve, less growth, so the names stay on screen. */
+@media (max-width: 600px) { .docnav { --dn-h: 50px; --dn-grow: 1.3; font-size: 12px; } }

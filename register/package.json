@@ -7,6 +7,12 @@
     "dev": "wrangler dev",
     "db:init": "wrangler d1 execute nda-register --local --file schema.sql",
     "db:init:remote": "wrangler d1 execute nda-register --remote --file schema.sql",
+    "db:migrate": "wrangler d1 execute nda-register --local --file migrations/001-filings-and-bulletins.sql",
+    "db:migrate:remote": "wrangler d1 execute nda-register --remote --file migrations/001-filings-and-bulletins.sql",
+    "db:migrate:002": "wrangler d1 execute nda-register --local --file migrations/002-reimbursement-claims.sql",
+    "db:migrate:002:remote": "wrangler d1 execute nda-register --remote --file migrations/002-reimbursement-claims.sql",
+    "claims": "wrangler d1 execute nda-register --local --command \"SELECT id, name, node, payout, created_at FROM members WHERE payout IS NOT NULL ORDER BY id\"",
+    "claims:remote": "wrangler d1 execute nda-register --remote --command \"SELECT id, name, node, payout, created_at FROM members WHERE payout IS NOT NULL ORDER BY id\"",
     "deploy": "wrangler deploy",
     "test": "node --test test/*.test.js"
   },

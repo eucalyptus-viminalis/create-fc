@@ -18,9 +18,16 @@ fallthrough = true
 # Pages allowed to send NDA Form 1. Add the local dev server you use for the microsite.
 ALLOWED_ORIGINS = "https://createfc.org,https://eucalyptus-viminalis.github.io,http://localhost:5173,http://127.0.0.1:5173"
 SITE_URL = "https://createfc.org/"
+# Sender of bulletin confirmation e-mails. Its domain must be onboarded for Email Sending (README).
+MAIL_FROM = "register@createfc.org"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "nda-register"
 # Made by `pnpm wrangler d1 create nda-register`. Local dev uses its own database in .wrangler/.
 database_id = "55381e1e-7cfa-4f85-9beb-3e7a7a4beb3b"
+
+# Bulletin confirmation e-mails, sent with Cloudflare Email Sending (needs Workers Paid; 3,000 a month included).
+# Local dev never sends: src/bulletins.js logs the link instead.
+[[send_email]]
+name = "EMAIL"

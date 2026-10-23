@@ -1,0 +1,68 @@
+/* Seed phrase safety: the qualification card, set as a 1940s first-aid certificate. Front and back,
+   lying on the desk. From brand/mockups/qualification-vintage.html (A). Scoped to .doc-seed. */
+.doc-seed { background: #cfcdc2 radial-gradient(120% 90% at 30% 15%, #d9d7cc, #bdbbaf); color: #1c1c1a; padding: 72px 16px 90px; }
+/* each card is fixed card stock (520 x 328) scaled to its slot; seed.js sets --s */
+.doc-seed .pair { max-width: 1120px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 36px 56px; }
+.doc-seed .slot { position: relative; width: calc(520px * var(--s, 1)); height: calc(340px * var(--s, 1)); }
+.doc-seed .slot .card { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: scale(var(--s, 1)) rotate(var(--tilt, 0deg)); }
+.doc-seed .slot:nth-child(1) { --tilt: -.8deg; } .doc-seed .slot:nth-child(2) { --tilt: .6deg; margin-top: 18px; }
+.doc-seed .typed[contenteditable] { cursor: text; }
+@media (max-width: 640px) { .doc-seed { padding: 40px 12px 56px; } .doc-seed .slot:nth-child(2) { margin-top: 0; } }
+/* ---------- a printed card ---------- */
+  .doc-seed .card { position: relative; width: 520px; height: 328px; flex: none;
+    filter: drop-shadow(0 1px 1px rgb(40 30 10 / .25)) drop-shadow(0 16px 22px rgb(40 30 10 / .28)); }
+  .doc-seed .stock { position: absolute; inset: 0; border-radius: var(--r, 6px); background: var(--paper); clip-path: var(--cut, none); overflow: hidden; }
+  .doc-seed .stock::after { content: ""; position: absolute; inset: 0; background: radial-gradient(130% 100% at 50% 45%, transparent 55%, rgb(110 80 30 / .2) 100%); }  /* handled edges */
+  .doc-seed .stock svg { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: multiply; }
+  .doc-seed .face { position: absolute; inset: 0; clip-path: var(--cut, none); }
+  /* the press: everything printed goes through one ink filter per colour */
+  .doc-seed .p1 { filter: url(#ink-seed-1); } .doc-seed .p2 { filter: url(#ink-seed-2); }
+  .doc-seed .p2 { transform: translate(var(--reg, .9px), -.6px); }
+  /* a filtered layer holding positioned marks (frames, corners, seals) must cover the card, or they collapse into it */
+  .doc-seed .layer { position: absolute; inset: 0; }          /* second colour, a hair off register */
+  @media (prefers-contrast: more) { .doc-seed .p1, .doc-seed .p2 { filter: none; } }
+  .doc-seed .typed { font: 400 19px/1 "Courier Prime", monospace; color: #23222a; outline: none; min-width: 6ch; display: inline-block; filter: url(#seed-type); }
+  .doc-seed .typed:empty::before { content: attr(data-ph); color: rgb(35 34 42 / .3); }
+  .doc-seed .typed:focus { background: rgb(255 255 255 / .2); }
+  .doc-seed .sig { position: absolute; overflow: visible; }
+
+  /* ---------- A · 1940s first-aid certificate ---------- */
+  .doc-seed .a { --paper: #f1e9d2; --ink1: #1d1a16; --ink2: #b0302a; }
+  .doc-seed .a .face { padding: 18px 22px; }
+  .doc-seed .a .frame { position: absolute; inset: 12px; border: 3px double var(--ink1); }
+  .doc-seed .a .frame::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--ink1); }
+  .doc-seed .a .corner { position: absolute; width: 22px; height: 22px; color: var(--ink2); }
+  .doc-seed .a .in { position: relative; height: 100%; padding: 16px 26px 10px; text-align: center; display: flex; flex-direction: column; }
+  .doc-seed .a .org { font: 400 15px/1.1 "IM Fell English SC"; letter-spacing: .1em; color: var(--ink1); }
+  .doc-seed .a .orn { display: flex; align-items: center; gap: 10px; justify-content: center; margin: 4px 0 2px; color: var(--ink2); }
+  .doc-seed .a .orn i { width: 70px; height: 1px; background: currentColor; }
+  .doc-seed .a .this { font: italic 400 13px/1 "IM Fell English"; color: var(--ink1); margin-top: 2px; }
+  .doc-seed .a .name { border-bottom: 1px solid var(--ink1); margin: 6px 40px 0; padding-bottom: 3px; min-height: 26px; }
+  .doc-seed .a .script { font: 400 26px/1.1 "Pinyon Script"; color: var(--ink2); margin: 6px 0 0; }
+  .doc-seed .a .course { font: 400 25px/1.05 "IM Fell English SC"; letter-spacing: .04em; color: var(--ink1); }
+  .doc-seed .a .small { font: italic 400 12px/1.2 "IM Fell English"; color: var(--ink1); margin-top: 2px; }
+  .doc-seed .a .foot { margin-top: auto; display: grid; grid-template-columns: 1fr 1.3fr; gap: 26px; align-items: end; text-align: center; }
+  .doc-seed .a .foot .line { border-top: 1px solid var(--ink1); font: italic 400 10.5px/1.2 "IM Fell English"; padding-top: 3px; color: var(--ink1); }
+  .doc-seed .a .seal { position: absolute; left: 26px; bottom: 30px; width: 64px; height: 64px; }
+  .doc-seed .a .back .in { text-align: left; padding: 16px 28px 10px; }
+  .doc-seed .a .back h3 { margin: 0 0 6px; text-align: center; font: 400 17px/1 "IM Fell English SC"; letter-spacing: .14em; color: var(--ink1); }
+  .doc-seed .a .back ol { margin: 0; padding: 0; list-style: none; counter-reset: r; display: grid; gap: 5px; font: 400 12.5px/1.32 "IM Fell English"; color: var(--ink1); }
+  .doc-seed .a .back li { counter-increment: r; display: grid; grid-template-columns: 22px 1fr; }
+  .doc-seed .a .back li::before { content: counter(r, upper-roman) "."; font: 400 14px/1.2 "IM Fell English SC"; color: var(--ink2); }
+  .doc-seed .a .back b { font-weight: 400; font-style: italic; }
+  .doc-seed .a code { font: 400 .9em/1 "Courier Prime", monospace; }
+.doc-seed .a .back .exposed { margin: 8px 0 0; padding-top: 6px; border-top: 1px solid var(--ink1); font: italic 400 11.5px/1.3 "IM Fell English"; color: var(--ink2); text-align: center; }
+
+/* On the site the cards are images (photographed from card.html), lying on the desk, with a Download button. */
+.doc-seed .pair img { display: block; width: 100%; height: auto; }
+.doc-seed .pair:has(img) .slot { width: min(520px, 100%); height: auto; }
+.doc-seed .pair:has(img) .slot img { transform: rotate(var(--tilt, 0deg)); filter: drop-shadow(0 1px 1px rgb(40 30 10 / .25)) drop-shadow(0 16px 22px rgb(40 30 10 / .28)); }
+.doc-seed .take { max-width: 1120px; margin: 40px auto 0; display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: center; font: italic 400 15px/1.4 "IM Fell English", Georgia, serif; color: #3d3a33; }
+.doc-seed .take a { color: inherit; }
+.doc-seed .take .more { flex-basis: 100%; margin: 0; text-align: center; }
+.doc-seed .dl { display: inline-flex; align-items: center; gap: 8px; font: 400 17px/1 "IM Fell English SC", Georgia, serif; font-style: normal; letter-spacing: .12em; color: #f1e9d2 !important; text-decoration: none;
+  background: #1d1a16; padding: 12px 22px 11px; border-radius: 3px; box-shadow: 0 2px 0 #b0302a, 0 6px 14px rgb(0 0 0 / .2); }
+.doc-seed .dl::before { content: "↓"; font-family: system-ui, sans-serif; font-size: 15px; }
+.doc-seed .dl:hover { background: #b0302a; box-shadow: 0 2px 0 #1d1a16, 0 6px 14px rgb(0 0 0 / .2); }
+.doc-seed .dl:focus-visible, .doc-seed .take a:focus-visible { outline: 2px dashed #b0302a; outline-offset: 4px; }
+.doc-seed .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -6,7 +6,7 @@ This page covers turning it on, the address it gets, who can sign in, and what t
 
 ## What you need
 
-- A node from [commands 0 and 1](https://createfc.org/#quickstart), in sync, with its companion running. `ssh root@<ip> fc-node status` should say `companion: running on port 3390`.
+- A node from [commands 0 and 1](https://createfc.org/quickstart/), in sync, with its companion running. `ssh root@<ip> fc-node status` should say `companion: running on port 3390`.
 - An **app account** on the node, set up with `ssh -t root@<ip> fc-node app-account`. Its name is what people approve on their phone, and it becomes your copy's name. See [Share your node](./share-your-node#_1-choose-an-app-account) for choosing one.
 - Ports 80 and 443 open. Command 0's firewall already opens them, for [images](./images).
 

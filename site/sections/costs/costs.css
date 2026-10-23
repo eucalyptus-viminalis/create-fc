@@ -1,0 +1,16 @@
+/* Costs: the slide chart, lying on the desk. Scoped to .doc-costs. */
+.doc-costs { background: #d6d5cc; padding: 64px 16px 80px; color: #1c1c1a; }
+.doc-costs .chart { max-width: 1060px; margin: 0 auto; transform: rotate(-.6deg); }
+.doc-costs .obj { display: block; width: 100%; height: auto; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / .25)) drop-shadow(0 18px 22px rgb(0 0 0 / .3)); }
+.doc-costs .obj.drag { cursor: grabbing; }
+.doc-costs .obj:focus-visible { outline: 2px dashed #1c1c1a; outline-offset: 6px; }
+.doc-costs .obj .slide { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+.doc-costs .obj.drag .slide { transition: none; }
+.doc-costs .obj [data-set] { cursor: pointer; }
+.doc-costs .obj [data-set]:hover { text-decoration: underline; }
+/* a pencilled note on the desk beside it */
+.doc-costs .note { max-width: 1060px; margin: 22px auto 0; text-align: right; font: 400 15px/1.4 "Arvo", Georgia, serif; color: #57574f; }
+.doc-costs .note a { color: #1c1c1a; }
+.doc-costs .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 640px) { .doc-costs { padding: 36px 10px 50px; } .doc-costs .chart { transform: none; } .doc-costs .note { text-align: left; } }

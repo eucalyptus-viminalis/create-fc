@@ -105,6 +105,6 @@ Their app key in `~/.fameboy` survives. A new node takes 6–8 hours to sync aga
 
 ## More
 
-- What each step does and why: https://createfc.org/#tutorial
+- Step by step, with what you need first: https://createfc.org/quickstart/
 - Costs: `docs/Costs.md`
-- Errors seen in practice: https://createfc.org/#troubleshooting
+- Errors seen in practice: https://createfc.org/troubleshooting/

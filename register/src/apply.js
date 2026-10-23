@@ -12,6 +12,21 @@ export function contactKind(value) {
   return null;
 }
 
+// Part IV: the server reimbursement. Where the node is, so the Authority can check it's in sync,
+// and any EVM address to pay. Both are needed to claim.
+const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+const IPV6 = /^[0-9a-f:]+$/i;
+const HOST = /^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+const EVM = /^0x[0-9a-fA-F]{40}$/;
+export function nodeAddress(value) {
+  // forgive a pasted URL: http://203.0.113.7:3381/ becomes 203.0.113.7
+  let v = String(value ?? '').trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  if ((v.match(/:/g) || []).length === 1) v = v.replace(/:\d{1,5}$/, '');   // a port; IPv6 has several colons
+  if (IPV4.test(v) || HOST.test(v) || (v.includes(':') && v.length <= 45 && IPV6.test(v))) return v.toLowerCase();
+  return null;
+}
+export const payoutAddress = value => { const v = String(value ?? '').trim(); return EVM.test(v) ? v : null; };
+
 // Strip control characters and squeeze spaces, then cap the length.
 const clean = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
@@ -22,7 +37,15 @@ export function checkApplication(body) {
   if (!kind) errors.contact = 'Enter your FID (numbers only) or an e-mail address.';
   if (body?.certify?.sync !== true || body?.certify?.cast !== true) errors.certify = 'Both certifications are required.';
   const signature = clean(body?.signature, 60);
-  if (signature.length < 2) errors.signature = 'Sign to apply.';
+  if (!signature) errors.signature = 'Sign to apply.';   // the form signs with item 2, or "anon", so one letter is fine
+  // A claim comes as { node, payout }; no claim, no reimbursement details.
+  let node = null, payout = null;
+  if (body?.claim) {
+    node = nodeAddress(body.claim.node);
+    payout = payoutAddress(body.claim.payout);
+    if (!node) errors.node = "Enter your node's address: its IP, like 203.0.113.7.";
+    if (!payout) errors.payout = 'Enter an EVM address: 0x and 40 letters or numbers.';
+  }
   if (Object.keys(errors).length) return { ok: false, errors };
 
   return {
@@ -34,6 +57,8 @@ export function checkApplication(body) {
       name: clean(body?.name, 40) || signature,
       signature,
       bulletins: body?.bulletins === true,
+      node,
+      payout,
     },
   };
 }

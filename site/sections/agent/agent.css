@@ -1,0 +1,113 @@
+/* Agent prompt: a carbon-copy service work order you hand your AI assistant, with what it may not do,
+   what you do yourself, and what you authorize it to spend. From brand/mockups/work-order.html.
+   Everything is scoped to .doc-agent. */
+.doc-agent { --paper: #e8e6db; --ink: #1c1c1a; --type: #23253a; --accent: #8a63d2; --stamp: #6b4fc4; --yellow: #e2d9a8; --pink: #e3c8c2;
+    --label: 500 10.5px/1 "Oswald", sans-serif; --typed: 400 16px/1.45 "Courier Prime", monospace; }
+  .doc-agent { background: #cfcdc2 radial-gradient(120% 90% at 30% 20%, #d9d7cc, #bfbdb1); color: var(--ink); font: 400 15px/1.45 "Arvo", serif; padding: 56px 16px 90px; }
+
+  .doc-agent .set { position: relative; max-width: 860px; margin: 0 auto; transform: rotate(.4deg); }
+  /* the carbon copies underneath, peeking out */
+  .doc-agent .set::before, .doc-agent .set::after { content: ""; position: absolute; inset: 0; border-radius: 1px; box-shadow: 0 1px 2px rgb(0 0 0 / .15); transition: opacity .2s; }
+  /* each tear takes the top copy away: white, then yellow, then the pink file copy stays */
+  .doc-agent .set[data-top="yellow"] { --paper: var(--yellow); } .doc-agent .set[data-top="yellow"]::after { opacity: 0; }
+  .doc-agent .set[data-top="pink"] { --paper: var(--pink); } .doc-agent .set[data-top="pink"]::after, .doc-agent .set[data-top="pink"]::before { opacity: 0; }
+  .doc-agent .set[data-top="empty"]::before, .doc-agent .set[data-top="empty"]::after { opacity: 0; }
+  .doc-agent .set[data-top="empty"] .sheet { visibility: hidden; }
+  .doc-agent .set[data-top] .sheet { animation: wo-settle .35s ease-out; }
+  .doc-agent .set[data-top="empty"] .sheet { animation: none; }
+  /* out of forms: just an outline on the desk where the pad was */
+  .doc-agent .out { display: none; position: absolute; inset: 0; z-index: 2; border: 2px dashed rgb(28 28 26 / .3); border-radius: 2px; }
+  .doc-agent .set[data-top="empty"] .out { display: grid; }
+  @keyframes wo-settle { from { transform: translate(7px, 8px) rotate(.4deg); } }
+  .doc-agent .set::before { background: var(--pink); transform: translate(14px, 16px) rotate(.9deg); }
+  .doc-agent .set::after { background: var(--yellow); transform: translate(7px, 8px) rotate(.4deg); }
+  .doc-agent .sheet { position: relative; z-index: 1; filter: drop-shadow(0 1px 0 rgb(0 0 0 / .08)) drop-shadow(6px 10px 14px rgb(0 0 0 / .22)); }
+  .doc-agent .paper { position: absolute; inset: 0; background:
+      linear-gradient(90deg, rgb(255 255 255 / .25), rgb(255 255 255 / 0) 35%, rgb(80 70 45 / .07)), var(--paper); }
+  .doc-agent .paper svg { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: multiply; }
+
+  /* perforated stub across the top */
+  .doc-agent .stub { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 14px 36px 16px; font: var(--label); letter-spacing: .14em; text-transform: uppercase; }
+  .doc-agent .perf { position: relative; height: 8px; margin: 0 14px; background: radial-gradient(circle, #bfbdb1 2.2px, transparent 2.8px) 0 50% / 12px 8px repeat-x; }
+
+  .doc-agent .print { position: relative; padding: 18px 36px 30px; filter: url(#ink-black); }
+  @media (prefers-contrast: more) { .print { filter: none; } }
+
+  .doc-agent .head { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: end; padding-bottom: 12px; border-bottom: 3px solid var(--ink); }
+  .doc-agent .head img { height: 24px; display: block; }
+  .doc-agent .head h2 { margin: 0; text-align: center; font: 700 clamp(30px, 5vw, 46px)/1 "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .doc-agent .head h2 small { display: block; font: var(--label); letter-spacing: .2em; margin-top: 6px; }
+  .doc-agent .no { text-align: right; font: var(--label); letter-spacing: .12em; text-transform: uppercase; }
+  .doc-agent .no b { display: block; font: 700 26px/1 "Courier Prime", monospace; color: var(--stamp); letter-spacing: .04em; margin-top: 4px; }
+
+  /* form boxes: a small printed label, typed fill-in below */
+  .doc-agent .row { display: grid; border-bottom: 1.4px solid var(--ink); }
+  .doc-agent .r2 { grid-template-columns: 1.4fr 1fr; } .doc-agent .r3 { grid-template-columns: 1fr 1fr 1fr; }
+  .doc-agent .cell { padding: 7px 10px 9px; border-right: 1.4px solid var(--ink); min-width: 0; }
+  .doc-agent .cell:last-child { border-right: 0; }
+  .doc-agent .lab { display: block; font: var(--label); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 5px; }
+  .doc-agent .typed { font: var(--typed); color: var(--type); display: block; transform: translateY(1px); }
+  .doc-agent .typed a { color: inherit; }
+
+  .doc-agent .block { border-bottom: 1.4px solid var(--ink); padding: 9px 10px 12px; }
+  .doc-agent .block > .lab { font-size: 11.5px; font-weight: 600; }
+  .doc-agent .work { position: relative; }
+  .doc-agent .prompt { overflow-wrap: anywhere; font: var(--typed); color: var(--type); margin: 2px 0 12px; padding: 4px 0 0; background: repeating-linear-gradient(transparent 0 22.2px, rgb(28 28 26 / .22) 22.2px 23.2px); line-height: 23.2px; }
+
+  .doc-agent .cols { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1.4px solid var(--ink); }
+  .doc-agent .cols > .block { border-bottom: 0; }
+  .doc-agent .cols > .block:first-child { border-right: 1.4px solid var(--ink); }
+  .doc-agent ul.boxes { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 7px; }
+  .doc-agent ul.boxes li { display: grid; grid-template-columns: 20px 1fr; gap: 9px; font-size: 14px; line-height: 1.4; }
+  .doc-agent .bx { width: 16px; height: 16px; border: 1.6px solid var(--ink); margin-top: 2px; position: relative; display: block; }
+  .doc-agent .bx.x::after { content: "X"; position: absolute; left: 1px; top: -4px; font: 700 18px/1 "Courier Prime", monospace; color: var(--type); }
+  .doc-agent ul.boxes input { appearance: none; width: 16px; height: 16px; border: 1.6px solid var(--ink); margin: 2px 0 0; background: none; cursor: pointer; position: relative; }
+  .doc-agent ul.boxes input:checked::after { content: "X"; position: absolute; left: 1px; top: -4px; font: 700 18px/1 "Courier Prime", monospace; color: var(--type); }
+  .doc-agent ul.boxes input:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+  .doc-agent ul.boxes code { font: 700 13px/1 "Courier Prime", monospace; }
+  .doc-agent ul.boxes label { cursor: pointer; }
+
+  .doc-agent .sign { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0; }
+  .doc-agent .sign .cell { padding-top: 10px; }
+  .doc-agent .sigline { display: block; width: 100%; border: 0; border-bottom: 1.4px solid var(--ink); background: none; padding: 2px 4px 0; height: 46px; font: 400 24px/1 "Homemade Apple", cursive; color: var(--type); outline: none; }
+
+  .doc-agent .foot { display: flex; justify-content: space-between; gap: 16px; margin-top: 12px; font: var(--label); letter-spacing: .12em; text-transform: uppercase; }
+  .doc-agent .foot .copies i { font-style: normal; margin-right: 12px; }
+  .doc-agent .foot .copies i::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 5px; border: 1px solid var(--ink); vertical-align: -1px; }
+  .doc-agent .foot .copies i:nth-child(1)::before { background: var(--paper); } .doc-agent .foot .copies i:nth-child(2)::before { background: var(--yellow); } .doc-agent .foot .copies i:nth-child(3)::before { background: var(--pink); }
+
+  .doc-agent .work { padding-bottom: 46px; }
+
+  /* Hovering the order covers it with a copy prompt; clicking anywhere but the boxes, signature
+     and links copies it. The overlay lets clicks through, and hides while you're over a control. */
+  .doc-agent .sheet { cursor: copy; }
+  .doc-agent .sheet :is(input, label) { cursor: var(--cursor-pen); }
+  .doc-agent .sheet a { cursor: pointer; }
+  .doc-agent .copy-over { all: unset; box-sizing: border-box; position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
+    background: rgb(28 28 26 / .10); color: var(--ink); opacity: 0; transition: opacity .15s; }
+  .doc-agent .copy-over span { padding: 16px 26px 15px; font: 600 clamp(18px, 2.6vw, 26px)/1.1 "Oswald", sans-serif; letter-spacing: .12em; text-transform: uppercase; text-align: center; }
+  .doc-agent .sheet:hover:not(:has(:is(input, label, a):hover)) .copy-over, .doc-agent .copy-over:focus-visible { opacity: 1; }
+  .doc-agent .copy-over:focus-visible span { outline: 2px solid var(--stamp); outline-offset: 6px; }
+  .doc-agent .set[data-top="empty"] .copy-over { display: none; }
+  /* Touch screens can't hover: the prompt becomes a bar along the bottom of the order. */
+  @media (hover: none) {
+    .doc-agent .copy-over { position: relative; inset: auto; display: block; width: 100%; opacity: 1; pointer-events: auto; padding: 14px 16px; text-align: center; }
+    .doc-agent .copy-over span { display: inline-block; padding: 10px 14px; font-size: 16px; }
+  }
+
+  /* rubber stamp, struck at an angle, outside the ink filter so it reads as a second impression */
+  .doc-agent .stamp { position: absolute; z-index: 3; right: 26px; bottom: 4px; transform: rotate(-11deg); color: var(--stamp); border: 3px solid currentColor; border-radius: 4px; padding: 7px 14px 6px; text-align: center; font: 700 22px/1 "Oswald", sans-serif; letter-spacing: .12em; text-transform: uppercase; opacity: .82; mix-blend-mode: multiply; filter: url(#paper-stamp); pointer-events: none; }
+  .doc-agent .stamp small { display: block; font-size: 10px; letter-spacing: .2em; margin-top: 4px; }
+
+  @media (max-width: 700px) {
+    .doc-agent { padding: 24px 10px 60px; }
+    .doc-agent .set { transform: none; }
+    .doc-agent .stub, .doc-agent .print { padding-left: 16px; padding-right: 16px; }
+    .doc-agent .head { grid-template-columns: 1fr auto; } .doc-agent .head img { grid-column: 1 / -1; }
+    .doc-agent .head h2 { text-align: left; }
+    .doc-agent .r2, .doc-agent .r3, .doc-agent .cols, .doc-agent .sign { grid-template-columns: 1fr; }
+    .doc-agent .cell { border-right: 0; border-bottom: 1.4px solid var(--ink); } .doc-agent .row .cell:last-child { border-bottom: 0; }
+    .doc-agent .cols > .block:first-child { border-right: 0; border-bottom: 1.4px solid var(--ink); }
+    .doc-agent .stamp { position: static; display: inline-block; margin: 14px 0 0 6px; font-size: 17px; }
+    .doc-agent .foot { flex-direction: column; }
+  }

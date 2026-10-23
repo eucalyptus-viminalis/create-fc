@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Qualification Card · print plate</title>
+<!-- The print plate for the seed phrase section: the qualification card, front and back, as live HTML.
+     brand/scripts/render-seed-card.mjs photographs it into site/img/nda-card-*.png, which is
+     what the site shows and offers for download. Edit the card here, then run pnpm seed-card:render. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Barlow+Condensed:wght@500;600;700&family=Archivo+Narrow:wght@400;500;600;700&family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:wght@400;700&family=Homemade+Apple&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Pinyon+Script&family=Kalam:wght@400&family=JetBrains+Mono:wght@500;700&family=Josefin+Sans:wght@300;600;700&family=Jost:wght@500;600;700;800&family=Libre+Franklin:wght@600;700;800;900&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="seed.css">
+<style>* { box-sizing: border-box; } body { margin: 0; } .doc-seed .pair { --s: 1; }</style>
+</head>
+<body>
+<section class="doc-seed" id="seed">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <filter id="seed-type"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="1" seed="13" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="d"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2.2" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>
+    <symbol id="sigpath" viewBox="0 0 160 44"><path d="M6 32c6-14 14-26 18-24s-8 26-6 28 10-18 16-18-2 14 2 14 8-12 12-12 0 10 4 10 10-14 16-14-4 12 0 12 14-8 20-12m-62 6c20-5 50-10 74-12M120 22c4-4 8-6 10-4s-4 8 0 8 8-6 14-8" fill="none" stroke="#2a3170" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="orn" viewBox="0 0 22 22"><path d="M2 20V8c0-3 3-6 6-6h12M6 20v-9c0-2 2-4 4-4h10" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="4" cy="4" r="1.8" fill="currentColor"/></symbol>
+  </defs></svg>
+  <div class="pair">
+    <div class="slot">
+    <div class="card a" role="group" aria-label="Qualification card, front">
+          <div class="stock"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+          <div class="face">
+            <div class="p1 layer"><div class="frame"></div></div>
+            <div class="p2 layer"><svg class="corner" style="left:7px;top:7px"><use href="#orn"/></svg><svg class="corner" style="right:7px;top:7px;transform:scaleX(-1)"><use href="#orn"/></svg><svg class="corner" style="left:7px;bottom:7px;transform:scaleY(-1)"><use href="#orn"/></svg><svg class="corner" style="right:7px;bottom:7px;transform:scale(-1)"><use href="#orn"/></svg></div>
+            <div class="in">
+              <div class="p1"><div class="org">The Network Decentralization Authority</div></div>
+              <div class="p2"><div class="orn"><i></i>✦<i></i></div></div>
+              <div class="p1"><div class="this">This is to certify that</div></div>
+              <div class="name"><span class="typed"></span></div>
+              <div class="p2"><div class="script">is duly qualified in</div></div>
+              <div class="p1"><h2 class="course" id="seed-t">Seed Phrase Handling</h2><div class="small">having read and understood the four rules overleaf</div></div>
+              <div class="foot">
+                <div class="p1"><div style="min-height:20px"><span class="typed"></span></div><div class="line">Date</div></div>
+                <div style="position:relative"><svg class="sig" width="130" height="36" style="left:20px;bottom:18px"><use href="#sigpath"/></svg><div class="p1"><div style="height:22px"></div><div class="line">Administrator, Key Safety &amp; Accident Prevention</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="slot">
+    <div class="card a" role="group" aria-label="Qualification card, back: the four rules">
+          <div class="stock"><svg preserveAspectRatio="none"><rect width="100%" height="100%" filter="url(#paper-blotch)" opacity=".22"/><rect width="100%" height="100%" filter="url(#paper-tooth)" opacity=".45"/><g class="dust"></g></svg></div>
+          <div class="face back">
+            <div class="p1 layer"><div class="frame"></div></div>
+            <div class="in">
+              <div class="p1"><h3>The Four Rules</h3></div>
+              <div class="p2"><div class="orn" style="margin:0 0 6px"><i></i>✦<i></i></div></div>
+              <div class="p1"><ol>
+            <li><span><b>Never share it.</b> Whoever holds the phrase holds every account made from it. Give it to another only if you mean to give them those accounts.</span></li>
+            <li><span><b>Keep it on paper.</b> Write it down and store it somewhere safe. Never photograph it, nor keep it in e-mail, notes or the cloud.</span></li>
+            <li><span><b>Know that no one will ask.</b> No genuine service, support desk or assistant needs your phrase. Whoever asks for it is after the accounts.</span></li>
+            <li><span><b>Type it only where you trust.</b> Into software you trust, on your own machine; better still, approve with your wallet and type it not at all.</span></li>
+          </ol>
+          <p class="exposed">Should the phrase ever be exposed, move what its accounts hold at once, and use it no more.</p></div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</section>
+<script type="module">
+  import { inkFilter, dust } from '../../shared/paper.js';
+  inkFilter('seed-1', '#1d1a16', { wobble: .8, specks: 4.6, plate: .62, spread: .5, bleed: .7, drift: 1.8 });   // inky: a wetter plate that spreads and bleeds
+  inkFilter('seed-2', '#b0302a', { wobble: .8, specks: 4.6, plate: .52, spread: .5, bleed: .7, drift: 1.8 });
+  document.querySelectorAll('.card').forEach((c, k) => dust(c, c.querySelector('.dust'), 31 + k * 17, 26));
+  // ?flat lays the cards straight, for photographing one at a time
+  if (location.search.includes('flat')) document.querySelectorAll('.slot').forEach(s => { s.style.setProperty('--tilt', '0deg'); s.style.marginTop = '0'; });
+  document.fonts.ready.then(() => document.body.dataset.ready = '1');
+</script>
+</body>
+</html>

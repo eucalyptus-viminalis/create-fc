@@ -1,11 +1,14 @@
 // The Network Decentralization Authority's register: a Cloudflare Worker with a D1 database.
 //
-//   POST /apply          NDA Form 1 from the microsite. Records the application and returns the
-//                        member number. Applying again with the same FID or e-mail keeps the number.
+//   POST /apply          NDA Form 1 from the microsite. Records the filing and returns a new member
+//                        number. Filings never change each other, even with the same FID or e-mail.
 //   GET  /m/:n           a member's page: what a cast embed links to. Its preview image is the card.
 //   GET  /m/:n/card.png  the member card, 1200x630.
+//   GET|POST /confirm    the link in a bulletin confirmation e-mail (src/bulletins.js).
+//   GET|POST /unsubscribe  the link that stops bulletins.
 //
-// Only the name, number, enrolled date and signature are ever public. The contact stays in D1.
+// Only the name, number, enrolled date and signature are ever public. The contact, and a claim's node
+// and payout addresses, stay in D1.
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import wasm from '@resvg/resvg-wasm/index_bg.wasm';
 import courier from '@expo-google-fonts/courier-prime/700Bold/CourierPrime_700Bold.ttf';
@@ -14,6 +17,7 @@ import franklin from '@expo-google-fonts/libre-franklin/900Black/LibreFranklin_9
 import apple from '@expo-google-fonts/homemade-apple/400Regular/HomemadeApple_400Regular.ttf';
 import { checkApplication, memberNo, enrolledDate } from './apply.js';
 import { cardSvg, renderPng } from './card.js';
+import { requestBulletins, linkPage } from './bulletins.js';
 
 const FONTS = [courier, archivo, franklin, apple].map(b => new Uint8Array(b));
 let ready;
@@ -44,15 +48,18 @@ async function apply(request, env) {
   const checked = checkApplication(body);
   if (!checked.ok) return json({ error: 'Returned for correction.', errors: checked.errors }, 422, headers);
   const m = checked.member;
-  // New contacts get the next number; a returning contact keeps theirs and updates their card.
+  // Every filing is a new member. Nothing on the form proves who owns an FID or e-mail address, so a
+  // filing must never change one made before it.
   const row = await env.DB.prepare(
-    `INSERT INTO members (contact, kind, name, signature, bulletins) VALUES (?1, ?2, ?3, ?4, ?5)
-     ON CONFLICT(contact) DO UPDATE SET name = excluded.name, signature = excluded.signature,
-       bulletins = excluded.bulletins, updated_at = CURRENT_TIMESTAMP
+    `INSERT INTO members (contact, kind, name, signature, bulletins, node, payout) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
      RETURNING id, name, signature, created_at`,
-  ).bind(m.contact, m.kind, m.name, m.signature, m.bulletins ? 1 : 0).first();
-  const site = new URL(request.url).origin;
-  return json({ ...publicMember(row), page: `${site}/m/${row.id}`, card: `${site}/m/${row.id}/card.png` }, 200, headers);
+  ).bind(m.contact, m.kind, m.name, m.signature, m.bulletins ? 1 : 0, m.node, m.payout).first();
+  const url = new URL(request.url), site = url.origin;
+  // E-mail bulletins start only when the address confirms. (FID bulletins aren't set up yet.)
+  const bulletins = m.bulletins && m.kind === 'email'
+    ? await requestBulletins(env, m.contact, { origin: site, local: ['localhost', '127.0.0.1'].includes(url.hostname) })
+    : null;
+  return json({ ...publicMember(row), page: `${site}/m/${row.id}`, card: `${site}/m/${row.id}/card.png`, bulletins }, 200, headers);
 }
 
 const findMember = (env, n) =>
@@ -101,8 +108,16 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/apply') {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request, env) });
-      if (request.method === 'POST') return apply(request, env);
+      if (request.method === 'POST') {
+        // Errors keep the CORS headers, so the form can tell the visitor instead of the browser hiding it.
+        try { return await apply(request, env); }
+        catch (e) { console.error(e); return json({ error: "The register couldn't record that. Try again." }, 500, cors(request, env)); }
+      }
       return json({ error: 'POST the form here.' }, 405);
+    }
+    if (url.pathname === '/confirm' || url.pathname === '/unsubscribe') {
+      if (request.method === 'GET' || request.method === 'POST') return linkPage(request, env, url.pathname.slice(1));
+      return new Response('Open the link from the e-mail.', { status: 405 });
     }
     const m = url.pathname.match(/^\/m\/(\d{1,9})(\/card\.png)?$/);
     if (m && request.method === 'GET') return m[2] ? card(request, env, ctx, Number(m[1])) : page(request, env, Number(m[1]));

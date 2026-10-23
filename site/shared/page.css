@@ -1,0 +1,34 @@
+/* The page itself: a stack of documents, each on its own stretch of desk.
+   Everything inside a document belongs to that document's own stylesheet (sections/<name>/). */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
+
+/* Each document is a full-width band. Sections set their own desk background and padding. */
+.doc { position: relative; min-height: 60vh; overflow-x: clip; }   /* nothing in a document can widen the page */
+
+/* A document that hasn't been ported from its mockup yet. */
+.doc-pending { display: grid; place-content: center; padding: 64px 16px; background: #3a3833; color: #d9d6cb; text-align: center;
+  font: 500 15px/1.5 ui-monospace, Menlo, monospace; border-top: 1px dashed #5a574f; }
+.doc-pending b { display: block; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #a8a596; margin-bottom: 6px; }
+.doc-pending code { color: #fff; }
+
+/* External links (shared/links.js): a small ↗ after the text, in the link's own font and colour. */
+.ext-mark { display: inline-block; margin-left: .12em; font-size: .78em; line-height: 1; text-decoration: none; vertical-align: .18em; font-family: system-ui, sans-serif; font-weight: 600; }
+.ext-nw { white-space: nowrap; }
+.ext-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Cursors. Things you tick get a ballpoint pen, its tip at the hot spot; links keep the pointer. */
+:root { --cursor-pen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M3 23l2.2-6.6L18.8 2.8a2.3 2.3 0 0 1 3.3 0l1.1 1.1a2.3 2.3 0 0 1 0 3.3L9.6 20.8z' fill='%23f4f2ea' stroke='%2322348f' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M5.2 16.4l4.4 4.4M16.6 5l4.4 4.4' stroke='%2322348f' stroke-width='1.6'/%3E%3Cpath d='M3 23l1.2-3.6 2.4 2.4z' fill='%2322348f'/%3E%3C/svg%3E") 3 23, pointer; }
+
+/* The footer under the last document: links, licence, credits. */
+.colophon { padding: 22px 16px 28px; color: #a8a596; font: 400 12px/1.5 ui-monospace, Menlo, monospace; text-align: center; }
+.colophon p { margin: 0 auto; max-width: 80ch; }
+.colophon a { color: #d9d6cb; }
+.colophon .links { display: flex; justify-content: center; gap: 22px; margin-bottom: 10px; font-size: 14px; letter-spacing: .04em; }
+.colophon .links a { text-decoration: none; border-bottom: 1px solid rgb(217 214 203 / .4); }
+.colophon .links a:hover { border-bottom-color: currentColor; }
+.colophon p + p { margin-top: 4px; }
+
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
