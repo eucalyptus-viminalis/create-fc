@@ -27,7 +27,7 @@ ssh -t root@<ip> fc-node app-account
 Then everyone using your node can sign in this way, and you can give each friend an invite code ([Share your node](../guide/share-your-node)). Or set one up for this computer alone with `fameboy app-account`. If it has no username, setup suggests a free `@fameboy<color>` with a random color, like `@fameboyteal`, trying another whenever one is taken; keep it or type your own. Setup also offers a display name, picture and bio for it, so the approval screen looks like an app, not a bare number.
 
 ::: warning Run it yourself
-`fc-node app-account` prints the new account's seed phrase. Run it in your own terminal, never through an AI assistant.
+`fc-node app-account` asks for the app account's seed phrase. Run it in your own terminal, never through an AI assistant.
 :::
 
 **Use your seed phrase.** The same steps as `fameboy login`, offered only because the server listens on your computer alone. Read [Seed phrases](#seed-phrases) first.
