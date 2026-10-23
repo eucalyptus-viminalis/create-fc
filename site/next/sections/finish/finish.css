@@ -66,7 +66,9 @@
 .doc-finish .box input:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
 .doc-finish .req { color: var(--red); font-weight: 700; }
 
-/* signature: type your name and it comes out in ink */
+/* signature and date: filled in for you, not typed. The signature is item 2 in ink, or "anon". */
+.doc-finish .signed, .doc-finish .typed { display: block; margin-top: 6px; min-height: 1.6em; border-bottom: 1px dotted rgb(36 73 59 / .35); padding: 2px 0 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-finish .typed { font: var(--typed-font); color: var(--typed); letter-spacing: .02em; line-height: 1.6; }
 .doc-finish .sig { font: 400 22px/1.6 "Homemade Apple", cursive !important; color: #1f2a6b !important; letter-spacing: 0 !important; }
 
 /* for Authority use only */

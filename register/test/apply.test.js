@@ -26,7 +26,7 @@ test('the name falls back to the signature', () => {
 });
 
 test('missing items are returned for correction', () => {
-  const r = checkApplication({ contact: 'nope', certify: { sync: true }, signature: 'A' });
+  const r = checkApplication({ contact: 'nope', certify: { sync: true }, signature: '' });
   assert.equal(r.ok, false);
   assert.deepEqual(Object.keys(r.errors).sort(), ['certify', 'contact', 'signature']);
 });

@@ -22,7 +22,7 @@ export function checkApplication(body) {
   if (!kind) errors.contact = 'Enter your FID (numbers only) or an e-mail address.';
   if (body?.certify?.sync !== true || body?.certify?.cast !== true) errors.certify = 'Both certifications are required.';
   const signature = clean(body?.signature, 60);
-  if (signature.length < 2) errors.signature = 'Sign to apply.';
+  if (!signature) errors.signature = 'Sign to apply.';   // the form signs with item 2, or "anon", so one letter is fine
   if (Object.keys(errors).length) return { ok: false, errors };
 
   return {

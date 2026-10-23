@@ -16,8 +16,7 @@ const REGISTER = ['localhost', '127.0.0.1'].includes(location.hostname)
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const stampDate = d => `${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-const today = new Date();
-$('nda-date').valueAsDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+$('nda-date').textContent = stampDate(new Date());   // always today; not something you fill in
 
 // Item 1 takes an FID or an e-mail address, and ticks 1a as you type. The register checks it again.
 const kindOf = v => /^\d{1,10}$/.test(v) && +v > 0 ? 'fid' : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? 'email' : null;
@@ -29,14 +28,18 @@ function tick() {
 }
 contact.addEventListener('input', tick);
 
-// The card fills in as the form does; the number, date and seal wait for approval.
+// Item 2 signs the form and names the card; left blank, you're "anon". Item 1 never appears on
+// either: it can be an e-mail address, and the card is public.
 const card = $('nda-card');
+const operator = () => $('nda-name').value.trim() || 'anon';
 function fillCard() {
-  $('nda-m-name').textContent = $('nda-name').value.trim() || $('nda-sign').value.trim();
-  $('nda-m-sig').textContent = $('nda-sign').value.trim();
-  if (!card.classList.contains('issued')) { $('nda-m-no').textContent = 'Assigned on approval'; $('nda-m-date').textContent = 'Pending'; }
+  $('nda-sign').textContent = operator();
+  if (card.classList.contains('issued')) return;   // an issued card shows what was filed
+  $('nda-m-name').textContent = operator();
+  $('nda-m-sig').textContent = operator();
+  $('nda-m-no').textContent = 'Assigned on approval'; $('nda-m-date').textContent = 'Pending';
 }
-for (const id of ['nda-name', 'nda-sign']) $(id).addEventListener('input', fillCard);
+$('nda-name').addEventListener('input', fillCard);
 
 const submit = doc.querySelector('button.submit');
 const after = [...doc.querySelectorAll('.after')];
@@ -51,6 +54,7 @@ function issue(m, animate = true) {
   card.classList.add('issued');
   $('nda-m-name').textContent = m.name;
   $('nda-m-sig').textContent = m.signature;
+  $('nda-sign').textContent = m.signature;
   $('nda-m-no').textContent = m.no;
   $('nda-m-date').textContent = m.enrolled;
   submit.textContent = 'Filed ✓'; submit.disabled = true;
@@ -60,18 +64,18 @@ function issue(m, animate = true) {
 }
 
 const say = (text, ok = false) => { status.className = 'status' + (ok ? ' ok' : ''); status.textContent = text; };
-const FIELD = { contact: 'nda-c-contact', certify: 'nda-c-cert', signature: 'nda-c-sign' };
+const FIELD = { contact: 'nda-c-contact', certify: 'nda-c-cert', name: 'nda-c-name', signature: 'nda-c-name' };
 
 form.addEventListener('submit', async e => {
   e.preventDefault();
   const v = contact.value.trim(), k = kindOf(v);
   const certify = { sync: form.elements.sync.checked, cast: form.elements.cast.checked };
-  const signature = $('nda-sign').value.trim();
-  const bad = { contact: !k, certify: !(certify.sync && certify.cast), signature: signature.length < 2 };
+  const signature = operator();
+  const bad = { contact: !k, certify: !(certify.sync && certify.cast) };
   for (const [f, isBad] of Object.entries(bad)) $(FIELD[f]).classList.toggle('bad', isBad);
   if (Object.values(bad).some(Boolean)) {
     say('Returned for correction: see the items marked in red.');
-    (bad.contact ? contact : bad.certify ? form.querySelector('#nda-c-cert input:not(:checked)') : $('nda-sign')).focus();
+    (bad.contact ? contact : form.querySelector('#nda-c-cert input:not(:checked)')).focus();
     return;
   }
   if (!REGISTER) return say("The Authority's office isn't open yet. Try again soon.");
@@ -80,7 +84,7 @@ form.addEventListener('submit', async e => {
   try {
     const res = await fetch(REGISTER + '/apply', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ contact: v, name: $('nda-name').value.trim(), signature, certify, bulletins: form.elements.bulletins.checked }),
+      body: JSON.stringify({ contact: v, name: operator(), signature, certify, bulletins: form.elements.bulletins.checked }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 422 && data.errors) {

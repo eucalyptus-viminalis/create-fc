@@ -806,8 +806,8 @@
             <div class="hint" style="margin-top:8px">Ticked for you as you type.</div>
           </div>
 
-          <div class="cell c6">
-            <label for="nda-name">2. Operator name or handle <span class="hint">(as it should appear on your member card)</span></label>
+          <div class="cell c6" id="nda-c-name">
+            <label for="nda-name">2. Operator name or handle <span class="hint">(as it should appear on your member card; leave blank to sign as anon)</span></label>
             <input type="text" id="nda-name" name="name" autocomplete="nickname" placeholder="@yourname" maxlength="40">
           </div>
 
@@ -826,13 +826,12 @@
           </div>
 
           <div class="cell c4" id="nda-c-sign">
-            <label for="nda-sign">5. Signature of operator <span class="req">*</span></label>
-            <input type="text" id="nda-sign" name="signature" class="sig" autocomplete="name" placeholder="Type your name" maxlength="60" required aria-describedby="nda-sign-err">
-            <div class="err" id="nda-sign-err">Sign to apply.</div>
+            <span class="lbl">5. Signature of operator</span>
+            <div class="sig signed" id="nda-sign">anon</div>
           </div>
           <div class="cell c2">
-            <label for="nda-date">6. Date</label>
-            <input type="date" id="nda-date" name="date">
+            <span class="lbl">6. Date</span>
+            <div class="typed" id="nda-date"></div>
           </div>
 
           <div class="cell c6 shade agency">
