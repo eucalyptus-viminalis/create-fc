@@ -88,13 +88,5 @@ const copy = c => dock.copy({ text: c.textContent, title: c.dataset.title, from:
 doc.addEventListener('click', e => { const c = e.target.closest('.cmd'); if (c && !c.closest('#ts-clone')) { e.stopPropagation(); copy(c); } });
 doc.addEventListener('keydown', e => { const c = e.target.closest('.cmd'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); copy(c); } });
 
-// The torn binding edge down the cover's left side, the same on every visit.
-function tear() {
-  let seed = 1971; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const h = cover.offsetHeight, pts = ['14px 0', '100% 0', '100% 100%', '10px 100%'];
-  const left = []; for (let y = h; y > 0; y -= 6 + rnd() * 10) left.push(`${(2 + rnd() * 13 + (rnd() < .08 ? 6 : 0)).toFixed(1)}px ${y.toFixed(0)}px`);
-  cover.style.setProperty('--torn', `polygon(${pts.join(',')},${left.join(',')})`);
-}
-tear();
 doc.querySelectorAll('.dust').forEach((g, k) => dust(g.closest('.sheet, .spread'), g, 77 + k * 13, 46));
 fit();

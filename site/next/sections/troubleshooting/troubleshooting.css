@@ -8,16 +8,15 @@
   }
   .doc-ts { padding: 56px 16px 90px; background: var(--desk); color: var(--ink); font: 400 15.5px/1.38 var(--sans); font-stretch: 100%; }
 
-  /* ---------- the torn page ---------- */
+  /* ---------- the page ---------- */
   .doc-ts .sheet { position: relative; filter: drop-shadow(0 1px 0 rgb(0 0 0 / .08)) drop-shadow(6px 10px 14px rgb(0 0 0 / .22)); }
   .doc-ts .paper { position: absolute; inset: 0; background:
-      linear-gradient(90deg, rgb(60 50 30 / .13), rgb(60 50 30 / 0) 70px),            /* shadow where the binding was */
+      linear-gradient(90deg, rgb(60 50 30 / .07), rgb(60 50 30 / 0) 36px),            /* the cover's left edge is the gatefold's fold: a soft shade, no tear */
       linear-gradient(180deg, rgb(255 255 255 / .35), rgb(255 255 255 / 0) 40%, rgb(90 80 50 / .06)), /* uneven scanner light */
-      var(--paper);
-    clip-path: var(--torn, none); }
+      var(--paper); }
   .doc-ts .paper svg.grain { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: multiply; }
   .doc-ts .show { position: absolute; inset: 70px 56px 70px 80px; transform: scaleX(-1); opacity: .05; filter: blur(.6px); pointer-events: none; user-select: none;
-    font: 600 14px/2.05 var(--sans); color: #000; overflow: hidden; clip-path: var(--torn, none); }
+    font: 600 14px/2.05 var(--sans); color: #000; overflow: hidden; }
 
   /* the printed layer: transparent background, so the filter only sees ink */
   .doc-ts .print { position: relative; padding: 46px 64px 40px 86px; filter: url(#ink-ts); }
@@ -97,7 +96,6 @@
   .doc-ts .half { position: absolute; inset: 0; overflow: hidden; }
   .doc-ts .spread { position: absolute; top: 0; width: 1632px; height: 1056px; }
   .doc-ts .half.l .spread { left: 0; } .doc-ts .half.r .spread { left: -816px; }
-  .doc-ts .spread .paper { clip-path: none; }
   .doc-ts .spread .print { height: 100%; display: flex; flex-direction: column; padding: 40px 60px 30px 74px; }
   .doc-ts .spread thead th:first-child { width: 5%; } .doc-ts .spread thead th:nth-child(2) { width: 27%; } .doc-ts .spread thead th:nth-child(3) { width: 27%; }
   .doc-ts .spread caption { font-size: 26px; }
@@ -127,8 +125,6 @@
   .doc-ts .letter { font-size: 14px; line-height: 1.32; }
   .doc-ts .letter .toc a { font-size: 13.5px; line-height: 1.36; }
   .doc-ts .letter .toc h3 { margin: 10px 0 4px; }
-  /* the reverse page's print is mirrored, so the torn-edge clip would land on the wrong side: keep it inside its own box */
-  .doc-ts .show { clip-path: none; }
-  /* closed, the inside stays hidden (the cover's torn edge would show it); it appears as the cover lifts, and goes once it's back down */
+  /* closed, the inside stays hidden (it would peek out around the cover); it appears as the cover lifts, and goes once it's back down */
   .doc-ts .base { visibility: hidden; transition: visibility 0s .9s; }
   .doc-ts .open .base { visibility: visible; transition-delay: 0s; }
