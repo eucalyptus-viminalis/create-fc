@@ -57,13 +57,26 @@
 .doc-hero .coupon::before { content: "✂"; position: absolute; top: -13px; left: 18px; font-size: 20px; line-height: 1; padding: 0 4px; text-shadow: 0 0 0 var(--paper); }
 .doc-hero .coupon h2 { margin: 0 0 10px; font: 500 16px/1.2 "Oswald", sans-serif; letter-spacing: .04em; text-transform: uppercase; }
 .doc-hero .coupon .to { margin: -4px 0 10px; font: var(--small-font); }
-.doc-hero .cmd { all: unset; display: block; width: 100%; box-sizing: border-box; cursor: copy; background: rgb(28 28 26 / .92); color: var(--paper); padding: 10px 12px; font: 700 13px/1.45 "JetBrains Mono", monospace; word-break: break-all; }
-.doc-hero .cmd:focus-visible { outline: 2px dashed var(--accent-ink); outline-offset: 3px; }
+.doc-hero .cmd { display: block; width: 100%; box-sizing: border-box; background: rgb(28 28 26 / .92); color: var(--paper); padding: 10px 12px; font: 700 13px/1.45 "JetBrains Mono", monospace; word-break: break-all; }
 .doc-hero .cmd .hint { display: block; margin-top: 6px; font-weight: 500; font-size: 11px; opacity: .7; word-break: normal; }
-.doc-hero .yes { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font: var(--small-font); cursor: pointer; }
-.doc-hero .yes input { appearance: none; flex: none; width: 18px; height: 18px; margin: 1px 0 0; border: 2px solid var(--ink); background: transparent; display: grid; place-items: center; cursor: pointer; }
-.doc-hero .yes input:checked::after { content: "✓"; font: 900 16px/1 sans-serif; color: var(--tick); transform: translate(1px, -2px) rotate(-6deg); }
-.doc-hero .yes input:focus-visible { outline: 2px dashed var(--accent-ink); outline-offset: 2px; }
+.doc-hero .yes { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; font: var(--small-font); }
+/* printed box, already ticked in pencil */
+.doc-hero .yes .box { flex: none; width: 18px; height: 18px; margin-top: 1px; border: 2px solid var(--ink); display: grid; place-items: center; }
+.doc-hero .yes .box::after { content: "✓"; font: 900 16px/1 sans-serif; color: var(--tick); transform: translate(1px, -2px) rotate(-6deg); }
+
+/* Hovering the coupon tints it, and the command strip says what a click does: the label sits on the
+   dark strip, where ink text couldn't be read. A click anywhere on the coupon copies. */
+.doc-hero .coupon { cursor: copy; }
+.doc-hero .cmd { position: relative; }
+.doc-hero .cmd-label { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 0 12px; opacity: 0; transition: opacity .15s;
+  font: 600 clamp(15px, 1.8vw, 19px)/1.1 "Oswald", sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.doc-hero .copy-over { all: unset; box-sizing: border-box; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: rgb(28 28 26 / .10); opacity: 0; transition: opacity .15s; }
+.doc-hero .coupon:is(:hover, :has(.copy-over:focus-visible)) .copy-over,
+.doc-hero .coupon:is(:hover, :has(.copy-over:focus-visible)) .cmd-label { opacity: 1; }
+.doc-hero .coupon:is(:hover, :has(.copy-over:focus-visible)) .cmd { color: transparent; }
+.doc-hero .coupon:is(:hover, :has(.copy-over:focus-visible)) .cmd-label { color: var(--paper); }
+.doc-hero .coupon:has(.copy-over:focus-visible) { outline: 2px solid var(--accent-ink); outline-offset: 4px; }
+
 
 .doc-hero .foot { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-top: clamp(18px, 3vw, 28px); padding-top: 12px; border-top: 1px solid var(--ink); color: var(--ink); }
 .doc-hero .fine { margin: 0; max-width: 78ch; font: var(--fine-font); }

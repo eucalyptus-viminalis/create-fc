@@ -1,4 +1,4 @@
-// Hero: copying the command cuts the coupon out (a scissors snip, sounds/) and clips it
+// Hero: clicking the coupon copies the command and cuts the coupon out (a scissors snip, sounds/) and clips it
 // to the clipboard dock (shared/clipboard-dock.js).
 import { dust } from '../../shared/paper.js';
 
@@ -28,7 +28,7 @@ function placeHole() {
 
 // Copying cuts the coupon out of the page and clips it to the clipboard. There's one per page:
 // what's left is the hole, showing the desk underneath.
-cmd.addEventListener('click', () => {
+coupon.addEventListener('click', () => {
   if (coupon.classList.contains('gone')) return;
   dock.copy({ text: CMD, title: 'Command 0', from: coupon, kind: 'coupon', paper: '#e2e0d4', sound: SNIPS, onLift: () => {
     page.insertAdjacentHTML('beforeend', '<div class="hole" aria-hidden="true"></div>');
@@ -36,11 +36,6 @@ cmd.addEventListener('click', () => {
   } });
 });
 addEventListener('resize', () => { if (coupon.classList.contains('gone')) placeHole(); });
-
-// Remember the YES box per visitor.
-const yes = coupon.querySelector('.yes input');
-try { yes.checked = localStorage.getItem('hero-yes') === '1'; } catch {}
-yes.addEventListener('change', () => { try { localStorage.setItem('hero-yes', yes.checked ? '1' : '0'); } catch {} });
 
 // A torn right edge (the page came out of the magazine) and dust on the scan.
 function tear() {

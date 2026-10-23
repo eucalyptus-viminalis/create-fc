@@ -62,8 +62,10 @@
           <form class="coupon" onsubmit="return false">
             <h2>Trial coupon · act today!</h2>
             <p class="to">Paste this in your own terminal. About $1 pays for an afternoon to try it.*</p>
-            <button type="button" class="cmd" title="Click to copy" data-cmd="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash">curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash<span class="hint">Click to copy · one per customer</span></button>
-            <label class="yes"><input type="checkbox" name="yes"> YES! I want my own node. I'll pay by the hour and quit anytime.</label>
+            <div class="cmd" data-cmd="curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash">curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | bash<span class="hint">One per customer</span><span class="cmd-label" aria-hidden="true">Copy Command to Clipboard</span></div>
+            <p class="yes"><span class="box" aria-hidden="true"></span>YES! I want my own node. I'll pay by the hour and quit anytime.</p>
+            <!-- Hover the coupon (or focus this) to copy; a click anywhere on the coupon copies. -->
+            <button class="copy-over" type="button" aria-label="Copy command to clipboard"></button>
           </form>
         </div>
         <div class="foot">
@@ -102,7 +104,6 @@
         <div class="block work">
           <span class="lab">Work to be performed</span>
           <p class="prompt" id="wo-prompt">Set up my own Farcaster read node and client with create-fc. Read https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/AGENTS.md and follow it step by step. Check with me before spending money or deleting anything. Never ask me for a seed phrase, private key or API token: when a step needs one, tell me the command to run in my own terminal.</p>
-          <button class="tear" type="button" id="wo-tear">✂ <span>Tear off &amp; hand to your assistant</span></button>
           <div class="stamp" aria-hidden="true">No seed phrases<small>Customer types secrets</small></div>
         </div>
 
@@ -133,12 +134,14 @@
         </div>
 
         <div class="sign">
-          <div class="cell"><span class="lab">Customer signature</span><input class="sigline" name="sig" aria-label="Type your name to sign" placeholder="Type your name to sign" maxlength="40" autocomplete="off"></div>
+          <div class="cell"><span class="lab">Customer signature</span><span class="sigline" aria-hidden="true"></span></div>
           <div class="cell"><span class="lab">Work completed</span><span class="typed">☐ Node in sync<br>☐ Client installed</span></div>
         </div>
 
         <div class="foot"><span class="copies"><i>White · Technician</i><i>Yellow · Customer</i><i>Pink · File</i></span><span>NDA Form 7 · Rev. 10/26</span></div>
       </form>
+      <!-- Hover the order (or focus this) to copy the prompt. Clicks on the boxes, signature and links still reach them. -->
+      <button class="copy-over" type="button" id="wo-copy"><span>Copy Agent Prompt to Clipboard</span></button>
     </article>
     <div class="out" aria-hidden="true"></div>
   </div>
