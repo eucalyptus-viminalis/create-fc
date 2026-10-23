@@ -46,7 +46,6 @@ name.addEventListener('blur', () => { if (!name.value.trim()) anon.checked = tru
 const submit = doc.querySelector('button.submit');
 const after = [...doc.querySelectorAll('.after')];
 for (const b of after) b.addEventListener('click', e => { if (b.hasAttribute('aria-disabled')) e.preventDefault(); });
-$('nda-print').addEventListener('click', e => { if (!e.currentTarget.hasAttribute('aria-disabled')) print(); });
 
 // Once filed, the form shows what was sent and can't be changed: editing it afterwards would only
 // make it disagree with the card. Filings from before the answers were kept show item 1 as on file.

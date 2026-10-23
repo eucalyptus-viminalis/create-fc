@@ -126,9 +126,3 @@
 .doc-finish .status.ok { color: var(--form); }
 
 @media (max-width: 640px) { .doc-finish { padding: 32px 12px 60px; } }
-@media print {
-  body > :not(.doc-finish) { display: none; }
-  .doc-finish { background: none; padding: 0; }
-  .doc-finish .fit { height: auto; } .doc-finish .sheet { position: relative; left: 0; transform: none; filter: none; }
-  .doc-finish .desk, .doc-finish .status { display: none; }
-}
