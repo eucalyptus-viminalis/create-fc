@@ -23,6 +23,7 @@ export default defineConfig({
       { text: "create-fc", link: "https://createfc.org/" },
     ],
     sidebar: [
+      { text: "Start here", link: "/" },
       {
         text: "How it works",
         items: [
