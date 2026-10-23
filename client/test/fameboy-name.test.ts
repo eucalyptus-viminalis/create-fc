@@ -14,8 +14,8 @@ test("one-word colours, each short enough for a fameboy<color> fname, each with 
 
 test("every colour has a built avatar, and other names get the clear one", () => {
   for (const c of COLORS) assert.ok(existsSync(new URL(`../../site/img/avatars/fameboy${c}.jpg`, import.meta.url)), `site/img/avatars/fameboy${c}.jpg is missing: run node client/logo/scripts/build-avatars.cjs ${c}`);
-  assert.equal(avatarFor("fameboyteal"), "https://eucalyptus-viminalis.github.io/create-fc/img/avatars/fameboyteal.jpg");
-  assert.equal(avatarFor("fameboyclear"), "https://eucalyptus-viminalis.github.io/create-fc/img/fameboy-avatar.png");
+  assert.equal(avatarFor("fameboyteal"), "https://createfc.org/img/avatars/fameboyteal.jpg");
+  assert.equal(avatarFor("fameboyclear"), "https://createfc.org/img/fameboy-avatar.png");
 });
 
 test("a name says its colour only when it's fameboy plus a colour from the list", () => {

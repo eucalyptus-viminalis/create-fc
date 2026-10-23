@@ -89,7 +89,7 @@ Once the node has an app account, it can host fameboy at a web address, so peopl
 ssh root@<ip> fc-node client
 ```
 
-It prints the address, `https://<app account's name>.<ip with dashes>.sslip.io`. Tell the person that anyone can sign in there unless they run `fc-node signin invite`, and that every cast made through it says "via" their app account. `fc-node client off` stops it. More: https://eucalyptus-viminalis.github.io/create-fc/docs/guide/host-fameboy
+It prints the address, `https://<app account's name>.<ip with dashes>.sslip.io`. Tell the person that anyone can sign in there unless they run `fc-node signin invite`, and that every cast made through it says "via" their app account. `fc-node client off` stops it. More: https://createfc.org/docs/guide/host-fameboy
 
 Don't run `fameboy login`, `fameboy app-account`, `fc-node app-account`, `fameboy username` or `fameboy new-account` yourself, and never fill in the sign-in page's seed phrase box. Their output or input includes a seed phrase.
 
@@ -105,6 +105,6 @@ Their app key in `~/.fameboy` survives. A new node takes 6–8 hours to sync aga
 
 ## More
 
-- What each step does and why: https://eucalyptus-viminalis.github.io/create-fc/#tutorial
+- What each step does and why: https://createfc.org/#tutorial
 - Costs: `docs/Costs.md`
-- Errors seen in practice: https://eucalyptus-viminalis.github.io/create-fc/#troubleshooting
+- Errors seen in practice: https://createfc.org/#troubleshooting
