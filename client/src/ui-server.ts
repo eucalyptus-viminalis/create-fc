@@ -31,8 +31,6 @@ import { colorOf } from "../../node/fameboy-name.mjs";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const UI_DIR = join(HERE, "..", "ui");
-const TANGERINE_DIR = join(HERE, "..", "..", "site", "tangerine");
-const THEME_CSS = join(HERE, "..", "..", "site", "fc-theme.css");
 const FARCASTER_EPOCH = 1609459200;
 
 const TYPES: Record<string, string> = {
@@ -329,11 +327,6 @@ const routes: Record<string, Handler> = {
     if (!key) return null;
     return { ...(await profileOf(key.fid)), scopes: key.scopes, publicKey: key.publicKey };
   },
-  "GET /api/profile": async () => {
-    const fid = await myFid();
-    const [p, follows] = await Promise.all([profileOf(fid), following(fid)]);
-    return { ...p, following: follows.length };
-  },
   "GET /api/feed": async (q) => {
     const fid = await myFid();
     if (q.get("fresh")) feedCache.delete(fid);
@@ -584,16 +577,12 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
         // await, so the catch below answers with the error instead of it escaping and stopping the server.
         return await converse(res, c, () => handler(url.searchParams, body));
       }
-      // The home view is the front page; the earlier all-in-one page lives on at /classic.
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
-      if (path === "/classic" || path === "/index.html") return serveFile(res, UI_DIR, "index.html", token);
       if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
       if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token);
       if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token);
       if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token);
       if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token);
-      if (path === "/fc-theme.css") return serveFile(res, join(THEME_CSS, ".."), "fc-theme.css");
-      if (path.startsWith("/tangerine/")) return serveFile(res, TANGERINE_DIR, path.slice("/tangerine/".length));
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);

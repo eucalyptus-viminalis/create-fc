@@ -7,8 +7,7 @@
 // those four recolours every page. Each shade keeps the colour's hue at a
 // fixed lightness, so text stays readable whatever the colour.
 //
-// Also: the favicon keycap takes the colour, the page title uses the copy's name, and
-// the classic page's accent follows the colour.
+// Also: the favicon keycap takes the colour, and the page title uses the copy's name.
 //
 // Load it first, in <head>:  <script src="/theme.js"></script>
 // theme.name is this copy's name ("fameboyteal", or "fameboy").
@@ -54,12 +53,10 @@
     root.dataset.theme = theme.color ?? "clear";
     if (theme.hex) {
       shades(theme.hex).forEach((v, n) => root.style.setProperty(`--g${n}`, v));
-      root.style.setProperty("--accent", theme.hex);
-      root.style.setProperty("--accent-ink", shades(theme.hex)[2]);
       favicon(theme.hex);
     } else {
       document.querySelectorAll('link[rel="icon"]').forEach((l) => (l.href = "/fameboy-small.svg"));
-      for (const n of [0, 1, 2, 3, "accent", "accent-ink"].map((x) => (typeof x === "number" ? `--g${x}` : `--${x}`))) root.style.removeProperty(n);
+      for (const n of [0, 1, 2, 3]) root.style.removeProperty(`--g${n}`);
     }
     if (theme.name !== "fameboy") document.title = document.title.replace(/\bfameboy\b/, theme.name);
     document.dispatchEvent(new CustomEvent("fameboy:theme", { detail: theme }));

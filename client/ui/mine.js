@@ -8,7 +8,7 @@
 // lasts until the tab closes. It's per browser: clearing on a laptop doesn't
 // clear on a phone, and clearing site data forgets it.
 //
-// Load it before kit.js or app.js:  <script src="/mine.js"></script>
+// Load it before kit.js:  <script src="/mine.js"></script>
 //
 //   mine.device()                        { id, status } for presence
 //   mine.setStatus(fid, "online" | "invisible")
@@ -16,8 +16,6 @@
 //   mine.inbox(fid)                      { cleared: { casts, likes, replies, followers }, saved }
 //   mine.clear(fid, kind, ids, on)       clear or bring back inbox items
 //   mine.save(fid, cast, on)             save a cast (keeps a copy) or unsave it
-//   mine.feedCleared(fid)                the classic feed's { before, hashes, today }
-//   mine.changeFeedCleared(fid, change)  { add, remove, before, counted }, like the old /api/cleared
 //
 // On a hosted fameboy, your app key lives here too:
 //   mine.key.supported()   can this browser make Ed25519 keys?
@@ -101,7 +99,6 @@
         return;
       }
       if (old?.inbox) await update(`${fid}/inbox`, (v) => v ?? old.inbox);
-      if (old?.cleared) await update(`${fid}/cleared`, (v) => v ?? old.cleared);
       if (old?.visit) await update(`${fid}/visit`, (v) => v ?? old.visit);
       if (old?.presence) await update(`${fid}/presence`, (v) => v ?? old.presence);
       if (old?.device) await update("device", (v) => v ?? old.device);
@@ -169,30 +166,6 @@
       s.saved = s.saved.filter((x) => x.hash !== cast.hash);
       if (on) s.saved.unshift({ hash: cast.hash, fid: cast.fid, savedAt: new Date().toISOString(), cast });
       return s;
-    });
-  }
-
-  // ------------------------------------------------------------ classic feed
-  // Per feed: "before" clears everything at or before a time (clear all);
-  // "hashes" are casts after it, cleared one by one, with their times.
-  const localDay = () => new Date().toLocaleDateString("en-CA");
-  const emptyFeed = () => ({ hashes: {}, today: { day: localDay(), n: 0 } });
-  const fresh = (c) => (c.today?.day === localDay() ? c : { ...c, today: { day: localDay(), n: 0 } });
-  async function feedCleared(fid) {
-    await ready(fid);
-    return fresh((await get(`${fid}/cleared`)) ?? emptyFeed());
-  }
-  async function changeFeedCleared(fid, change) {
-    await ready(fid);
-    return update(`${fid}/cleared`, (v) => {
-      const c = fresh(v ?? emptyFeed());
-      for (const { hash, time } of change.add ?? []) c.hashes[hash] = time;
-      for (const hash of change.remove ?? []) delete c.hashes[hash];
-      if (change.before === null) delete c.before;
-      else if (change.before) c.before = change.before;
-      if (c.before) for (const [h, t] of Object.entries(c.hashes)) if (t <= c.before) delete c.hashes[h];
-      c.today.n = Math.max(0, c.today.n + (change.counted ?? (change.add?.length ?? 0) - (change.remove?.length ?? 0)));
-      return c;
     });
   }
 
@@ -267,5 +240,5 @@
     },
   };
 
-  window.mine = { device, setStatus, visit, inbox, clear, save, feedCleared, changeFeedCleared, key };
+  window.mine = { device, setStatus, visit, inbox, clear, save, key };
 })();
