@@ -335,14 +335,16 @@ function instance() {
 }
 
 // Likes, recasts and replies on one cast.
-async function countsOf(fid: number, hash: string) {
-  const count = (path: string, params: Record<string, string | number>) => get<Page>(path, { ...params, pageSize: 1000 }).then((p) => p.messages.length, () => 0);
-  const [likes, recasts, replies] = await Promise.all([
-    count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Like" }),
-    count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Recast" }),
-    count("/v1/castsByParent", { fid, hash }),
+async function countsOf(fid: number, hash: string, viewer?: number) {
+  const who = (path: string, params: Record<string, string | number>) => get<Page>(path, { ...params, pageSize: 1000 }).then((p) => p.messages.map((m) => m.data.fid), () => [] as number[]);
+  const [likers, recasters, repliers] = await Promise.all([
+    who("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Like" }),
+    who("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Recast" }),
+    who("/v1/castsByParent", { fid, hash }),
   ]);
-  return { likes, recasts, replies };
+  const counts = { likes: likers.length, recasts: recasters.length, replies: repliers.length };
+  // Signed in: whether you've liked or recast it, so buttons start right.
+  return viewer === undefined ? counts : { ...counts, liked: likers.includes(viewer), recasted: recasters.includes(viewer) };
 }
 
 const routes: Record<string, Handler> = {
@@ -394,7 +396,7 @@ const routes: Record<string, Handler> = {
   "GET /api/inbox/counts": async (q) => {
     const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
     if (!Number.isInteger(fid) || !/^0x[0-9a-f]{40}$/i.test(hash)) throw new NodeError("counts need fid and hash");
-    return countsOf(fid, hash);
+    return countsOf(fid, hash, await myFid().catch(() => undefined));
   },
   // Who's on this node. Each call is also your heartbeat, so the page calls it
   // every 30 s with its device id and status (online or invisible).
