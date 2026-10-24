@@ -152,6 +152,11 @@ export async function thread<C extends Shaped>(who: string, hash: string, viewer
   };
 }
 
+// Just the cast, for its link preview: one lookup when the hash is full.
+export async function lookupCast(who: string, hash: string): Promise<Message> {
+  return findCast(await fidOf(who), hash);
+}
+
 // After a delete, so no page shows the cast from the cache.
 export function forgetThreads() {
   cache.clear();
