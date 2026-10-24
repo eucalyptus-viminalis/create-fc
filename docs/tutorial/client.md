@@ -4,7 +4,7 @@
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-You can run this as soon as the node is catching up. [`install.sh`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/install.sh) clones the repo into `~/.fameboy/app`, installs three dependencies (`@farcaster/core`, `viem`, `@scure/bip39`), saves your node's address in `~/.fameboy/config.json`, and puts `fameboy` in `~/.local/bin`. Node.js runs the TypeScript directly, with no build step. To update fameboy later, run the same command again; your sign-in is kept.
+You can run this as soon as the node is catching up. [`install.sh`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/install.sh) clones the repo into `~/.fameboy/app`, installs three dependencies (`@farcaster/core`, `viem`, `@scure/bip39`), saves your node's address in `~/.fameboy/config.json`, and puts `fameboy` in `~/.local/bin`. Node.js runs the TypeScript directly, with no build step. To update fameboy later, run `fameboy update`, or the same command again; your sign-in is kept.
 
 ::: tip There is no npm package
 `npm create fc` runs an unrelated package someone else published in 2022. Install with the command above.
