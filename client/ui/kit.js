@@ -303,5 +303,31 @@
     return { add, toggle, list };
   })();
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP };
+  // ---------------------------------------------------------------- casts
+  // Pieces for showing casts, shared by the inbox and the cast page.
+  // kit.castUrl(cast): where a cast lives in fameboy, /<username>/<hash>, the
+  // same path as farcaster.xyz. It carries the full hash, so the server finds
+  // it in one lookup (client/src/thread.ts).
+  const castUrl = (c) => `/${encodeURIComponent(c.author?.username ?? c.username ?? `!${c.fid}`)}/${c.hash}`;
+  const profileUrl = (u) => `https://farcaster.xyz/${encodeURIComponent(u)}`;
+  function ago(iso) {
+    const s = (Date.now() - Date.parse(iso)) / 1000;
+    return s < 60 ? "now" : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`;
+  }
+  const pic = (url, cls = "pf") => (url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="${cls} nopic"></span>`);
+  // Cast text with links: @names go to their Farcaster profile, URLs open in a new tab.
+  function rich(text) {
+    return esc(text)
+      .replace(/https?:\/\/[^\s<]+/g, (u) => ext(u.replace(/&amp;/g, "&"), u.length > 60 ? u.slice(0, 57) + "…" : u))
+      .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}${ext(profileUrl(u), `@${u}`)}`);
+  }
+  const isImage = (u) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /imagedelivery\.net|i\.imgur\.com|\.sslip\.io\/img\//.test(u);
+  function embeds(list) {
+    const urls = (list ?? []).filter((u) => /^https?:\/\//.test(u));
+    const imgs = urls.filter(isImage), links = urls.filter((u) => !isImage(u));
+    return (imgs.length ? `<div class="pics">${imgs.map((u) => ext(u, `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`, { arrow: false })).join("")}</div>` : "") +
+      (links.length ? `<div class="links">${links.map((u) => ext(u, esc(u))).join("")}</div>` : "");
+  }
+
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, castUrl, profileUrl, ago, pic, rich, embeds };
 })();

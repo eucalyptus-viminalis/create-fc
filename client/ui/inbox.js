@@ -18,26 +18,8 @@ const sfx = {
 };
 
 // ------------------------------------------------------------------ pieces
-function ago(iso) {
-  const s = (Date.now() - Date.parse(iso)) / 1000;
-  return s < 60 ? "now" : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`;
-}
-const profileUrl = (u) => `https://farcaster.xyz/${encodeURIComponent(u)}`;
-const pic = (url, cls = "pf") => (url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="${cls} nopic"></span>`);
+const { ago, pic, rich, embeds, profileUrl, castUrl } = kit;
 const freshMark = (on) => (on ? `<span class="fresh" title="new since your last visit"></span>` : "");
-// Cast text with links: @names go to their Farcaster profile, URLs open in a new tab.
-function rich(text) {
-  return esc(text)
-    .replace(/https?:\/\/[^\s<]+/g, (u) => kit.ext(u.replace(/&amp;/g, "&"), u.length > 60 ? u.slice(0, 57) + "…" : u))
-    .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}${kit.ext(profileUrl(u), `@${u}`)}`);
-}
-const isImage = (u) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /imagedelivery\.net|i\.imgur\.com|\.sslip\.io\/img\//.test(u);
-function embeds(list) {
-  const urls = (list ?? []).filter((u) => /^https?:\/\//.test(u));
-  const imgs = urls.filter(isImage), links = urls.filter((u) => !isImage(u));
-  return (imgs.length ? `<div class="pics">${imgs.map((u) => kit.ext(u, `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`, { arrow: false })).join("")}</div>` : "") +
-    (links.length ? `<div class="links">${links.map((u) => kit.ext(u, esc(u))).join("")}</div>` : "");
-}
 const fixed = (label, n, attrs) => kit.button(`${label}${n ? ` ${n}` : ""}`, { fixed: true, disabled: !n, attrs });
 const seg = (tabs, cur) => kit.seg(tabs, cur);
 
@@ -129,7 +111,7 @@ function renderCasts() {
     ${C.tab === "cleared" ? fixed("bring back", n, 'data-bulk="unclear"') : fixed("clear", n, 'data-bulk="clear"')}
     ${fixed("★ save", n, 'data-bulk="save"')}
     ${appTools(d)}
-    <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
+    <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>o</kbd> open · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
   const c = shown.find((x) => x.hash === C.focus);
   // Keep the list where it was: re-rendering would otherwise jump it to the top.
   const oldList = $("#view .mail .list"), keep = oldList && C.listTab === C.tab ? oldList.scrollTop : 0;
@@ -160,7 +142,7 @@ function readPane(c) {
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta">${counts ? `<span>↩ ${counts.replies}</span><span>⟲ ${counts.recasts}</span><span>♥ ${counts.likes + (C.liked.has(c.hash) ? 1 : 0)}</span>` : `<span>counting<span class="blink">_</span></span>`}
-      ${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "open on Farcaster", { attrs: 'style="margin-left:auto"' }) : ""}</div>
+      <a href="${castUrl(c)}" style="margin-left:auto" title="The cast and its replies (o)">conversation →</a>${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "on Farcaster") : ""}</div>
     <div class="acts">
       ${kit.button(C.liked.has(c.hash) ? "♥ liked" : "♥ like", { key: "l", pressed: C.liked.has(c.hash), attrs: 'data-act="like"' })}
       ${kit.button("⟲ recast", { attrs: 'data-act="recast"' })}
@@ -256,7 +238,7 @@ function renderLikes() {
     return `<article class="note${L.checked.has(g.cast.hash) ? " checked" : ""}" data-hash="${g.cast.hash}">
       <span class="ck"></span>
       <div>
-        <div class="yours">your cast · ${me ? kit.ext(`${profileUrl(me)}/${g.cast.hash.slice(0, 10)}`, esc(g.cast.text || "[embed]")) : esc(g.cast.text)}</div>
+        <div class="yours">your cast · <a href="${castUrl({ ...g.cast, fid: S.me.fid, username: me })}">${esc(g.cast.text || "[embed]")}</a></div>
         <div class="line"><span class="heart">♥ ${g.likes.length}</span><span class="stack">${g.likes.slice(0, 6).map((l) => pic(l.pfp, "")).join("")}</span><span>${who} liked this</span>
           <span class="t">${freshMark(g.likes.some((l) => l.fresh) && L.tab === "new")}${ago(g.likes[0].time)}</span></div>
       </div></article>`;
@@ -290,12 +272,12 @@ function renderReplies() {
   $("#view").innerHTML = `<div class="notes">${shown.length ? shown.map((g) => `
     <article class="note" style="grid-template-columns:1fr">
       <div>
-        <div class="yours">your cast · ${me ? kit.ext(`${profileUrl(me)}/${g.cast.hash.slice(0, 10)}`, esc(g.cast.text || "[embed]")) : esc(g.cast.text)}</div>
+        <div class="yours">your cast · <a href="${castUrl({ ...g.cast, fid: S.me.fid, username: me })}">${esc(g.cast.text || "[embed]")}</a></div>
         ${g.replies.map((r) => `
           <div class="reply${R.checked.has(r.hash) ? " checked" : ""}" data-hash="${r.hash}">
             <span class="ck" data-rck></span>${pic(r.author?.pfp)}
             <div>
-              <div class="rh">${freshMark(r.fresh && R.tab === "new")}${kit.ext(profileUrl(r.author?.username ?? ""), `<b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b>`)}<span class="t dim small" style="margin-left:auto">${ago(r.time)}</span></div>
+              <div class="rh">${freshMark(r.fresh && R.tab === "new")}${kit.ext(profileUrl(r.author?.username ?? ""), `<b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b>`)}<a class="t dim small" style="margin-left:auto" href="${castUrl(r)}" title="Open the conversation">${ago(r.time)}</a></div>
               <div class="rt">${rich(r.text)}</div>
               ${embeds(r.embeds)}
               <div class="line">${kit.button("↩ reply", { look: "primary", pressed: R.reply === r.hash, attrs: "data-rreply" })}${kit.button("♥ like", { attrs: "data-rlike" })}${kit.button(r.cleared ? "bring back" : "clear", { look: "quiet", attrs: "data-rclear" })}</div>
@@ -332,6 +314,7 @@ function castsKey(k, e) {
   if (k === "s") { castAct("save", C.checked.size ? [...C.checked] : [C.focus]); return true; }
   if (k === "l") { castAct("like", [C.focus]); return true; }
   if (k === "r") { castAct("reply", [C.focus]); e.preventDefault(); return true; }
+  if (k === "o" && C.focus) { const c = castsShown().find((x) => x.hash === C.focus); if (c) location.href = castUrl(c); return true; }
   if (k === "u" && C.undo) { const u = C.undo; C.undo = null; castAct(u.on ? "unclear" : "clear", u.hashes).then(() => toast("Undone.")); return true; }
   if (k === "escape") { C.checked.clear(); renderCasts(); return true; }
 }

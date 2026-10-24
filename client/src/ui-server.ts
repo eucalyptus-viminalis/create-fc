@@ -26,6 +26,7 @@ import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
+import { CastNotFound, thread } from "./thread.ts";
 import type { Hex } from "viem";
 import { colorOf } from "../../node/fameboy-name.mjs";
 
@@ -181,6 +182,7 @@ async function mentionSuggestions(me: number, raw: string) {
 }
 
 const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
+const CAST_PAGE = /^\/[^/]+\/0x[0-9a-f]{8,40}\/?$/i;
 
 // ------------------------------------------------------------------ routes
 
@@ -301,6 +303,13 @@ const routes: Record<string, Handler> = {
   // Personal state older versions kept in ~/.fameboy, for the page to take
   // over once (legacy.ts). Never on a hosted fameboy.
   "GET /api/legacy": async () => (LOCAL_ONLY ? legacyState(await myFid()) : null),
+  // One cast and its conversation, for the cast page (thread.ts). Open to
+  // anyone, signed in or not: casts are public. Signed in, it also says
+  // whether you've liked or recast it.
+  "GET /api/thread": async (q) => {
+    const viewer = await myFid().catch(() => undefined);
+    return thread(q.get("who") ?? "", q.get("hash") ?? "", viewer, shape, Boolean(q.get("fresh")));
+  },
   // Likes, recasts and replies on one cast, for the reading pane.
   "GET /api/inbox/counts": async (q) => {
     const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
@@ -583,10 +592,13 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token);
       if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token);
       if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token);
+      // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
+      // starting 0x tells it apart from fameboy's own pages and files.
+      if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token);
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      send(res, e instanceof SignedOut ? 401 : e instanceof NoAppAccount ? 409 : e instanceof NodeError ? 400 : 500, { error: message });
+      send(res, e instanceof SignedOut ? 401 : e instanceof CastNotFound ? 404 : e instanceof NoAppAccount ? 409 : e instanceof NodeError ? 400 : 500, { error: message });
     }
   }
 
