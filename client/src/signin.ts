@@ -183,7 +183,12 @@ export async function startNodeSignIn(invite: string) {
 
 const browserRequests = new Map<string, { publicKey: string; expires: number }>(); // token -> key waiting for approval
 
-export async function startBrowserSignIn(key: string, invite: string, client: string) {
+// The QR code opens this server's /approve page rather than the farcaster://
+// link itself: a phone without the Farcaster app can't open that link, and
+// its camera only says "No usable data found" (ADR 005).
+export const approvePage = (origin: string, token: string) => `${origin}/approve#${token}`;
+
+export async function startBrowserSignIn(key: string, invite: string, client: string, origin: string) {
   for (const [t, r] of browserRequests) if (r.expires < Date.now()) browserRequests.delete(t);
   if (!/^0x[0-9a-f]{64}$/i.test(key)) throw new NodeError("that isn't an Ed25519 public key");
   let res: Response;
@@ -200,7 +205,7 @@ export async function startBrowserSignIn(key: string, invite: string, client: st
   const json = (await res.json().catch(() => ({}))) as { error?: string; token: string; deeplinkUrl: string; requestFid: number; deadline: number };
   if (!res.ok) throw new NodeError(json.error ?? `the companion said ${res.status}`);
   browserRequests.set(json.token, { publicKey: key.toLowerCase(), expires: json.deadline * 1000 });
-  const qr = await QRCode.toString(json.deeplinkUrl, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
+  const qr = await QRCode.toString(approvePage(origin, json.token), { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#1c1c1a", light: "#0000" } });
   return { token: json.token, url: json.deeplinkUrl, qr, sponsored: false, via: "node" as const, requestFid: json.requestFid };
 }
 

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="fameboy-token" content="__FAMEBOY_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>approve · fameboy</title>
+  <link rel="icon" href="/fameboy-small.svg" type="image/svg+xml" />
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/kit.css" />
+  <link rel="stylesheet" href="/signin.css" />
+  <style>.tile[hidden] { display: none; }</style>
+</head>
+<body class="ready">
+<!-- The sign-in QR code lands here (ADR 005). It opens the Farcaster app,
+     or says to install it first. The token stays in the #fragment, so it
+     never reaches a server log. -->
+<main class="signin" id="screen" aria-live="polite">
+  <div class="title"><h1>approve</h1><span class="dim">on this phone</span></div>
+  <section class="tile" id="ok" hidden>
+    <h2><span>open the Farcaster app</span><span></span></h2>
+    <div class="body">
+      <p>Tap the button. Approve in the app.</p>
+      <p class="dim">Then look back at your other screen.</p>
+      <div class="row"><a class="k-btn lg primary" id="open" href="#"><span class="k-lbl">open Farcaster</span></a></div>
+    </div>
+  </section>
+  <section class="tile" id="get" hidden style="margin-top:22px">
+    <h2><span>no Farcaster app?</span><span>get it first</span></h2>
+    <div class="body">
+      <p>Nothing happened? Install the app.</p>
+      <p class="dim">Sign in there. Then tap open again.</p>
+      <div class="row">
+        <a class="k-btn lg" href="https://apps.apple.com/app/id1600555445" rel="noopener">App Store</a>
+        <a class="k-btn lg" href="https://play.google.com/store/apps/details?id=com.farcaster.mobile" rel="noopener">Google Play</a>
+      </div>
+    </div>
+  </section>
+  <section class="tile" id="bad" hidden>
+    <h2><span>this link is broken</span><span></span></h2>
+    <div class="body"><p>Scan the code again.</p></div>
+  </section>
+</main>
+<script src="/approve.js"></script>
+</body>
+</html>

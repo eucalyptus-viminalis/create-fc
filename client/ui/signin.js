@@ -177,7 +177,7 @@ async function phoneStart(code) {
         tile(at < 2 ? "scan this with your phone" : "you approved it", at < 2 ? "lasts 24 h" : "almost there", `
           <div class="qrwrap"><div class="qr">${req.qr}</div><div>
             <p>Open your camera and scan.</p>
-            <p class="dim">The Farcaster app opens. Tap approve.</p>
+            <p class="dim">${browser ? "Tap open Farcaster. Then tap approve." : "The Farcaster app opens. Tap approve."}</p>
             <p class="dim">${fee}</p>
             <p class="mobile-only"><a href="${esc(req.url)}">On this phone? Open the link.</a></p>
             <div style="margin-top:14px">${steps(PHONE_STEPS, at)}</div></div></div>

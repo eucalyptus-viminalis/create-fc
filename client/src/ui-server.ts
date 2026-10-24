@@ -466,7 +466,7 @@ const routes: Record<string, Handler> = {
   // Hosted sign-in: the browser made a key and sends its public half.
   "POST /api/signin/browser": async (_q, b) => {
     if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer and keeps its key in ~/.fameboy");
-    return startBrowserSignIn(String(b.key ?? ""), String(b.invite ?? "").trim(), here().client);
+    return startBrowserSignIn(String(b.key ?? ""), String(b.invite ?? "").trim(), here().client, ORIGIN);
   },
   "GET /api/signin/browser": async (q) => browserSignInStatus(q.get("token") ?? ""),
   // A session: sign this challenge with your browser's key, then POST it back.
@@ -708,6 +708,8 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token, path);
       if (path === "/me" || path === "/me.html") return serveFile(res, UI_DIR, "me.html", token, path);
       if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token, path);
+      // Where a hosted sign-in QR code lands: opens the Farcaster app, or says to install it (ADR 005).
+      if (path === "/approve" || path === "/approve.html") return serveFile(res, UI_DIR, "approve.html", token, path);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.
       if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path, await castOg(path));
