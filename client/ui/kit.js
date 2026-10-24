@@ -296,17 +296,32 @@
     }
 
     // Sit just above whatever is fixed to the bottom: the modes bar, or a footer.
+    // "built with create-fc" shares the corner, left of the tab, and left of
+    // that the commit this copy runs (GET /version), so a report can name it.
+    async function version(corner) {
+      try {
+        const v = await (await fetch("/version")).json();
+        if (!v.commit) return;
+        const label = `<span class="k-ver-c">${esc(v.commit.slice(0, 7))}</span>`;
+        const title = `fameboy ${v.version}, commit ${v.commit}`;
+        const html = v.url ? ext(v.url, label, { cls: "k-built k-ver", title, arrow: false }) : `<span class="k-built k-ver" title="${esc(title)}">${label}</span>`;
+        corner.insertAdjacentHTML("afterbegin", html);
+      } catch {}
+    }
+
     function mount() {
       const dock = document.querySelector("[data-modes], body > .foot");
       el = document.createElement("div");
       el.className = "rq";
-      el.innerHTML = `<button type="button" class="rq-tab" aria-expanded="false" aria-controls="rq-panel" title="The node calls behind this page (\`)"><span class="arr" aria-hidden="true"></span>requests <span class="rq-n">0</span></button>
+      const built = ext("https://createfc.org", `<span class="k-built-w">built with</span><img src="/create-fc-lockup.svg" alt="create-fc" width="83" height="13">`, { cls: "k-built", arrow: false });
+      el.innerHTML = `<div class="rq-corner">${built}<button type="button" class="rq-tab" aria-expanded="false" aria-controls="rq-panel" title="The node calls behind this page (\`)"><span class="arr" aria-hidden="true"></span>requests <span class="rq-n">0</span></button></div>
         <section class="rq-panel" id="rq-panel" role="region" aria-label="Requests" hidden>
           <h2><span>requests</span><span><span class="rq-what">this page's calls to your node · </span><button type="button" class="rq-x">close <kbd>esc</kbd></button></span></h2>
           <div class="rq-body"></div>
         </section>`;
       document.body.append(el);
       tab = el.querySelector(".rq-tab"); body = el.querySelector(".rq-body");
+      version(el.querySelector(".rq-corner"));
       const place = () => el.style.setProperty("--dock", `${dock ? dock.offsetHeight : 0}px`);
       place();
       if (dock && window.ResizeObserver) new ResizeObserver(place).observe(dock);

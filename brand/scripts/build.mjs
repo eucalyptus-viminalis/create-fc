@@ -49,5 +49,7 @@ copy('apple-touch-icon.png', 'site/apple-touch-icon.png');
 copy('create-fc-mark.svg', 'docs/public/create-fc-mark.svg');
 copy('create-fc-mark-white.svg', 'docs/public/create-fc-mark-white.svg');
 copy('favicon.svg', 'docs/public/favicon.svg');
+// fameboy's "built with create-fc" corner
+copy('create-fc-lockup.svg', 'client/ui/create-fc-lockup.svg');
 
-console.log('built brand/logo/*; copied to site/ and docs/public/');
+console.log('built brand/logo/*; copied to site/, docs/public/ and client/ui/');

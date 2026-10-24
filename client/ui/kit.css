@@ -48,7 +48,9 @@
    A tab sits on the bar's top edge; it blinks once when new calls come in. */
 .rq { position: fixed; z-index: 45; bottom: var(--dock, 0px); left: 0; right: 0; pointer-events: none; }
 .rq > *, .rq .rq-tab { pointer-events: auto; } /* after all: unset, the tab would inherit none */
-.rq-tab { all: unset; box-sizing: border-box; cursor: pointer; position: absolute; bottom: 0; right: max(24px, calc((100vw - 1180px) / 2 + 24px));
+/* The bottom-right corner: "built with create-fc", then the requests tab. */
+.rq-corner { position: absolute; bottom: 0; right: max(24px, calc((100vw - 1180px) / 2 + 24px)); display: flex; align-items: flex-end; gap: 10px; }
+.rq-tab { all: unset; box-sizing: border-box; cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px; font: 16px/1 var(--px); -webkit-font-smoothing: none; color: var(--g3); background: var(--g0);
   border: var(--b) solid var(--g3); border-bottom: 0; padding: 7px 10px 6px; }
 .rq-tab .rq-n { font: 16px var(--vt); -webkit-font-smoothing: antialiased; color: var(--g2); }
@@ -58,7 +60,18 @@
 .rq-tab:focus-visible { outline: 2px dotted var(--g3); outline-offset: 3px; }
 .rq-tab.ping { animation: rq-ping .5s steps(2, jump-none) 2; }
 @keyframes rq-ping { 50% { background: var(--g3); color: var(--g0); } }
-.rq.open .rq-tab { bottom: min(46vh, 460px); background: var(--g3); color: var(--g0); }
+.rq.open .rq-corner { bottom: min(46vh, 460px); }
+.rq.open .rq-tab { background: var(--g3); color: var(--g0); }
+.rq.open .k-built { visibility: hidden; }
+/* The lockup stays ink, as brand/README.md asks. */
+.k-built { display: inline-flex; align-items: center; gap: 8px; color: var(--g2); font-size: 16px; line-height: 1; white-space: nowrap; text-decoration: none;
+  background: var(--g0); border: 2px solid var(--g1); border-bottom: 0; padding: 7px 10px 6px; }
+.k-built img { display: block; height: 13px; width: auto; }
+.k-built:hover, .k-built:focus-visible { color: var(--g3); border-color: var(--g3); }
+.k-built:focus-visible { outline: 2px dotted var(--g3); outline-offset: 3px; }
+/* The commit this copy runs, in the corner's small type. */
+.k-ver .k-ver-c { font: 16px/16px var(--vt); -webkit-font-smoothing: antialiased; }
+@media (max-width: 600px) { .k-built-w { display: none; } }
 .rq.open .rq-tab .arr { transform: rotate(180deg); }
 .rq-panel { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: min(1132px, calc(100vw - 32px)); height: min(46vh, 460px);
   display: flex; flex-direction: column; background: var(--g0); border: var(--b) solid var(--g3); border-bottom: 0; box-shadow: 5px 0 0 var(--g3); }

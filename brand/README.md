@@ -27,7 +27,7 @@ brand/
 | `favicon.ico` | 16/32/48px fallback for older browsers and tools |
 | `apple-touch-icon.png` | 180px iOS home-screen icon |
 
-Copies are written to `site/` (favicons, `img/create-fc-lockup.svg`) and `docs/public/` (mark, favicon). The social preview (`assets/social-preview.html`) loads `logo/create-fc-lockup-white.svg` directly.
+Copies are written to `site/` (favicons, `img/create-fc-lockup.svg`), `docs/public/` (mark, favicon) and `client/ui/` (lockup, for fameboy's "built with create-fc" corner). The social preview (`assets/social-preview.html`) loads `logo/create-fc-lockup-white.svg` directly.
 
 ## Rebuilding
 
