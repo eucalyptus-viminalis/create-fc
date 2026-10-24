@@ -45,7 +45,7 @@ const TYPES: Record<string, string> = {
 // Link previews (Farcaster, X, iMessage) don't run the page's scripts, so every
 // page carries the same card: ui/og.png, drawn from assets/fameboy-og.html
 // (make fameboy-og). Previews need absolute links, hence this server's origin.
-const OG_DESCRIPTION = "A Farcaster client that reads from its own node. Sign in with your phone. It's playtime, not scrolltime.";
+const OG_DESCRIPTION = "A Farcaster client that reads from its own node. Sign in with your phone. Built with create-fc.";
 function ogTags(path: string) {
   return [
     `<meta name="description" content="${OG_DESCRIPTION}" />`,
@@ -57,7 +57,7 @@ function ogTags(path: string) {
     `<meta property="og:image" content="${ORIGIN}/og.png" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="fameboy: a clear keycap beside the words It's playtime, not scrolltime, over the client's mode bar." />`,
+    `<meta property="og:image:alt" content="fameboy: a clear keycap beside the words It's playtime, built with create-fc." />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
   ].join("\n  ");
 }
