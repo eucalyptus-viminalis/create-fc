@@ -298,6 +298,9 @@ async function terminal(title, cmd, lines) {
 }
 
 // ------------------------------------------------------------------ done
+// Where to go once you're in: back to the page that sent you (a cast page
+// passes ?next=/<user>/<hash>), else home. Only paths on this site.
+const NEXT = (() => { const n = new URLSearchParams(location.search).get("next") ?? ""; return /^\/(?![/\\])/.test(n) ? n : "/"; })();
 async function done(already = false) {
   S.screen = "done"; S.run++;
   const me = await api("/api/me").catch(() => null);
@@ -312,8 +315,8 @@ async function done(already = false) {
       <div class="row">${go("start", "A", 'id="start"')}</div></div></section>`,
     `<span><kbd>A</kbd>/<kbd>↵</kbd> start</span>`,
   );
-  $("#start").addEventListener("click", () => (location.href = "/"));
-  keyHandler = (k) => { if (k === "enter" || k === "a" || k === " ") { location.href = "/"; return true; } };
+  $("#start").addEventListener("click", () => (location.href = NEXT));
+  keyHandler = (k) => { if (k === "enter" || k === "a" || k === " ") { location.href = NEXT; return true; } };
 }
 
 // ------------------------------------------------------------------ input

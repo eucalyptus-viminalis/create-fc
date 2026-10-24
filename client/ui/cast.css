@@ -1,0 +1,51 @@
+/* The cast page: one cast and its conversation. Builds on home.css and
+   inbox.css (the open cast reuses the inbox's reading pane, .read).
+   Casts above it hang on a line down the pictures; replies sit below. */
+
+.ib-top .ct-links { margin-left: auto; display: flex; align-items: center; gap: 14px; font-size: 16px; }
+
+.ct { max-width: 760px; margin: 0 auto; }
+.ct-note { color: var(--g2); font-size: 16px; margin: 8px 0 12px; }
+.ct-note a { color: inherit; text-underline-offset: 3px; }
+
+/* a cast in the conversation */
+.ct-c { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; padding: 10px 12px; cursor: pointer; position: relative; }
+.ct-c .pf { width: 40px; height: 40px; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; position: relative; z-index: 1; }
+.ct-c .who { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.ct-c .who b { font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-c .who .dim { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-c .who .t { margin-left: auto; color: var(--g2); font-size: 16px; white-space: nowrap; text-decoration: none; }
+.ct-c .who .t:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ct-c .tx { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 6px; }
+.ct-c a { color: inherit; text-underline-offset: 3px; }
+.ct-c .pics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+.ct-c .pics img { width: 100%; max-height: 280px; object-fit: cover; background: var(--g1); border: 2px solid var(--g3); display: block; }
+.ct-c .links { display: grid; gap: 4px; margin: 4px 0 8px; }
+.ct-c .links a { display: block; border: 2px dashed var(--g1); padding: 4px 8px; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-c:hover { background: color-mix(in srgb, var(--g1) 28%, transparent); }
+.ct-c .ct-c:hover { background: color-mix(in srgb, var(--g1) 40%, transparent); }
+
+/* above: the casts this one answers, joined by a line through their pictures */
+.ct-up .ct-c::before { content: ""; position: absolute; left: 31px; top: 50px; bottom: -10px; border-left: 3px solid var(--g1); }
+.ct-up { margin-bottom: 10px; }
+
+/* the open cast */
+.ct-focus { min-height: 0; scroll-margin-top: 12px; }
+.ct-focus .acts { align-items: center; }
+
+/* below: replies, each with a few of its own */
+.ct-h { font: 16px/1 var(--px); -webkit-font-smoothing: none; font-weight: 400; margin: 26px 0 6px; padding-bottom: 8px; border-bottom: var(--b) solid var(--g3); }
+.ct-replies > .ct-c { border-bottom: 2px dashed var(--g1); padding: 12px; }
+.ct-c .ft { display: flex; align-items: center; gap: 14px; font-size: 16px; color: var(--g2); }
+.ct-c .ft .k-btn { font-size: 14px; padding: 4px 7px 3px; }
+.ct-c .kids { margin-top: 8px; border-left: 3px solid var(--g1); }
+.ct-c .kids .ct-c { grid-template-columns: 30px minmax(0, 1fr); padding: 8px 10px; }
+.ct-c .kids .pf { width: 30px; height: 30px; }
+.ct-more { display: inline-block; margin: 6px 0 0 13px; font-size: 16px; color: var(--g2); }
+.ct-c .inline { margin-bottom: 8px; }
+
+@media (max-width: 900px) {
+  .ib-top .ct-links { margin-left: 0; width: 100%; }
+  .ct-c { padding: 10px 4px; }
+  .ct-up .ct-c::before { left: 23px; }
+}

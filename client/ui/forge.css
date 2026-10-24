@@ -1,0 +1,82 @@
+/* Link forge: a Farcaster link goes on the anvil, the hammer strikes three
+   times, a fameboy link comes out. Builds on home.css and kit.css.
+   The scene is drawn on a grid of --c cells, like the pixel art in it.
+   The link on the anvil starts Farcaster purple and cools to fameboy ink. */
+
+.fg-top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-bottom: 12px; }
+.fg-top h1 { font: 48px/0.9 var(--px); margin: 0; -webkit-font-smoothing: none; }
+.fg-count { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--g2); font-size: 16px; }
+.fg-count b { font: 16px var(--px); -webkit-font-smoothing: none; color: var(--g3); font-weight: 400; }
+.fg-count .ico { width: 14px; height: 14px; fill: var(--g3); }
+
+#app { max-width: 820px; }
+
+/* 1: the slot */
+.fg-slot { display: flex; gap: 10px; align-items: stretch; }
+.fg-slot input { flex: 1; min-width: 0; font: 22px/1 var(--vt); color: var(--g3); background: transparent; border: var(--b) solid var(--g3); padding: 9px 10px 8px; outline: none; box-shadow: inset 3px 3px 0 var(--g1); }
+.fg-slot input:focus { box-shadow: inset 3px 3px 0 var(--g1), 0 0 0 2px var(--g0), 0 0 0 4px var(--g3); }
+.fg-slot input::placeholder { color: var(--g2); opacity: .6; }
+.fg-scan { margin: 12px 0 0; min-height: 1.3em; overflow-wrap: anywhere; }
+.fg-scan b { font-weight: 400; }
+.fg-tag { display: inline-block; min-width: 20px; text-align: center; font: 14px/1 var(--px); -webkit-font-smoothing: none; background: var(--g3); color: var(--g0); padding: 3px 4px 2px; margin-right: 4px; vertical-align: 1px; }
+.fg-tag.bad { background: transparent; color: var(--g3); border: 2px solid var(--g3); padding: 1px 2px 0; }
+
+/* the anvil scene */
+.fg-stage { --c: 11px; margin: 26px 0 8px; display: grid; justify-items: center; }
+.fg-scene { position: relative; width: calc(var(--c) * 26); height: calc(var(--c) * 26); }
+.fg-anvil { position: absolute; left: calc(var(--c) * 5); bottom: 0; width: calc(var(--c) * 16); height: calc(var(--c) * 9); fill: var(--g3); }
+.fg-scene::after { content: ""; position: absolute; left: calc(var(--c) * 2); right: calc(var(--c) * 2); bottom: calc(var(--c) * -1); height: var(--c); background: repeating-linear-gradient(90deg, var(--g1) 0 var(--c), transparent var(--c) calc(var(--c) * 2)); }
+
+/* the link being forged: purple when it goes in, ink when it's done */
+.fg-ingot { position: absolute; left: calc(var(--c) * 10); top: calc(var(--c) * 16); width: calc(var(--c) * 5); height: var(--c); background: var(--fc); opacity: 0; transform: translateY(calc(var(--c) * -3)); transition: opacity .15s, transform .2s steps(3); }
+.fg-ingot.on, .fg-ingot[data-heat="1"], .fg-ingot[data-heat="2"], .fg-ingot[data-heat="3"] { opacity: 1; transform: none; }
+.fg-ingot[data-heat="1"] { background: color-mix(in srgb, var(--fc) 66%, var(--g3)); width: calc(var(--c) * 5.5); left: calc(var(--c) * 9.75); }
+.fg-ingot[data-heat="2"] { background: color-mix(in srgb, var(--fc) 33%, var(--g3)); width: calc(var(--c) * 6); left: calc(var(--c) * 9.5); }
+/* done: a bar of fameboy ink with a shine, sitting proud of the anvil */
+.fg-ingot[data-heat="3"] { background: var(--g2); width: calc(var(--c) * 6.5); left: calc(var(--c) * 9.25); top: calc(var(--c) * 15.5); height: calc(var(--c) * 1.5); box-shadow: inset 0 0 0 2px var(--g3), inset 4px 4px 0 2px var(--g1); }
+
+/* the hammer pivots on the end of its handle; the face lands on the link */
+.fg-hammer { position: absolute; left: calc(var(--c) * 15); top: calc(var(--c) * 1); width: calc(var(--c) * 10); height: calc(var(--c) * 10); transform-origin: 50% 100%; transform: rotate(8deg); }
+.fg-hammer-px { width: 100%; height: 100%; display: block; fill: var(--g3); }
+.fg-hammer.hit { animation: strike .3s 1; }
+@keyframes strike {
+  0% { transform: rotate(8deg); }
+  20% { transform: rotate(-30deg); }
+  36% { transform: rotate(-90deg); }
+  48% { transform: rotate(-84deg); }
+  100% { transform: rotate(8deg); }
+}
+
+/* sparks fly up from where it lands */
+.fg-sparks { position: absolute; left: calc(var(--c) * 12.5); top: calc(var(--c) * 16); width: 0; height: 0; }
+.fg-sparks i { position: absolute; width: var(--s); height: var(--s); background: var(--g3); opacity: 0; }
+.fg-sparks.go i { animation: spark .42s steps(5) forwards; }
+.fg-sparks.go i:nth-child(3n) { background: var(--fc); }
+@keyframes spark { 0% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+
+.fg-stage.shake .fg-scene { animation: shake .18s steps(3) 1; }
+@keyframes shake { 33% { transform: translate(-3px, 2px); } 66% { transform: translate(3px, -1px); } }
+.fg-stage.miss .fg-scene { animation: miss .3s steps(4) 1; }
+@keyframes miss { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-4px); } }
+.fg-status { font: 16px/1 var(--px); -webkit-font-smoothing: none; text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 0; min-height: 1em; }
+
+/* 2: what comes out (a .tile is flex, which would beat [hidden]) */
+.fg-out[hidden] { display: none; }
+.fg-out.pop { animation: pop .32s steps(4) 1; }
+@keyframes pop { 0% { transform: translateY(14px) scale(.96); opacity: 0; } 60% { transform: translateY(-3px); opacity: 1; } 100% { transform: none; } }
+.fg-url { font-size: 24px; line-height: 1.25; overflow-wrap: anywhere; border: 2px dashed var(--g2); padding: 10px 12px; user-select: all; -webkit-user-select: all; }
+.fg-acts { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.fg-acts .ext-arrow { margin-left: 0; }
+.fg-who { margin: 14px 0 0; overflow-wrap: anywhere; }
+.fg-who b { font-weight: 400; }
+
+@media (max-width: 900px) {
+  .fg-top h1 { font-size: 32px; }
+  .fg-count { margin-left: 0; }
+  .fg-in > h2 span:last-child { display: none; }
+  .fg-slot { flex-wrap: wrap; } .fg-slot input { flex-basis: 100%; }
+  .fg-stage { --c: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fg-hammer.hit, .fg-sparks.go i, .fg-stage.shake .fg-scene, .fg-stage.miss .fg-scene, .fg-out.pop { animation: none; }
+}

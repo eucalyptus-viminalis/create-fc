@@ -25,6 +25,17 @@
     return `<a class="ext${cls ? ` ${cls}` : ""}" href="${esc(href)}" target="_blank" rel="noopener noreferrer"${title ? ` title="${esc(title)}"` : ""}${attrs ? ` ${attrs}` : ""}>${label}${withArrow ? arrow : ""}<span class="sr"> (opens in a new tab)</span></a>`;
   }
 
+  // A 10x10 pixel hammer, drawn in the text colour: the link forge's icon in
+  // the modes bar, and (bigger) the hammer that strikes on its page.
+  //   ###.......
+  //   #########.
+  //   ##########
+  //   #########.
+  //   ###.##....
+  //   ....##....  (handle, down to the bottom)
+  const HAMMER_ROWS = [[0, 0, 3], [0, 1, 9], [0, 2, 10], [0, 3, 9], [0, 4, 3], [4, 4, 2], [4, 5, 2], [4, 6, 2], [4, 7, 2], [4, 8, 2], [4, 9, 2]]; // [x, y, width]
+  const hammer = (cls = "ico") => `<svg class="${cls}" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${HAMMER_ROWS.map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="1"/>`).join("")}</svg>`;
+
   // ---------------------------------------------------------------- basics
   const $ = (sel) => document.querySelector(sel);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -111,10 +122,14 @@
     { id: "apps", label: "apps", href: "/apps" },
     { id: "keys", label: "keys", href: "/keys" },
     { id: "create", label: "create", soon: true },
+    // Tools sit after the modes, as an icon: small jobs, one per page.
+    { id: "forge", label: "link forge", href: "/forge", icon: hammer() },
   ];
   function modes(current) {
     return MODES.map((m, i) =>
-      m.soon
+      m.icon
+        ? `<a class="mode tool" href="${m.href}" data-mode="${m.id}" title="${m.label} (${i + 1})" aria-label="${m.label}"${m.id === current ? ' aria-current="page"' : ""}><span class="k">${i + 1}</span>${m.icon}</a>`
+        : m.soon
         ? `<button class="mode" type="button" data-mode="${m.id}" aria-disabled="true" title="coming soon"><span class="k">${i + 1}</span>${m.label}<span class="soon">soon</span></button>`
         : `<a class="mode" href="${m.href}" data-mode="${m.id}"${m.id === current ? ' aria-current="page"' : ""}><span class="k">${i + 1}</span>${m.label}</a>`,
     ).join("");
@@ -303,5 +318,31 @@
     return { add, toggle, list };
   })();
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP };
+  // ---------------------------------------------------------------- casts
+  // Pieces for showing casts, shared by the inbox and the cast page.
+  // kit.castUrl(cast): where a cast lives in fameboy, /<username>/<hash>, the
+  // same path as farcaster.xyz. It carries the full hash, so the server finds
+  // it in one lookup (client/src/thread.ts).
+  const castUrl = (c) => `/${encodeURIComponent(c.author?.username ?? c.username ?? `!${c.fid}`)}/${c.hash}`;
+  const profileUrl = (u) => `https://farcaster.xyz/${encodeURIComponent(u)}`;
+  function ago(iso) {
+    const s = (Date.now() - Date.parse(iso)) / 1000;
+    return s < 60 ? "now" : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`;
+  }
+  const pic = (url, cls = "pf") => (url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="${cls} nopic"></span>`);
+  // Cast text with links: @names go to their Farcaster profile, URLs open in a new tab.
+  function rich(text) {
+    return esc(text)
+      .replace(/https?:\/\/[^\s<]+/g, (u) => ext(u.replace(/&amp;/g, "&"), u.length > 60 ? u.slice(0, 57) + "…" : u))
+      .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}${ext(profileUrl(u), `@${u}`)}`);
+  }
+  const isImage = (u) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /imagedelivery\.net|i\.imgur\.com|\.sslip\.io\/img\//.test(u);
+  function embeds(list) {
+    const urls = (list ?? []).filter((u) => /^https?:\/\//.test(u));
+    const imgs = urls.filter(isImage), links = urls.filter((u) => !isImage(u));
+    return (imgs.length ? `<div class="pics">${imgs.map((u) => ext(u, `<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer">`, { arrow: false })).join("")}</div>` : "") +
+      (links.length ? `<div class="links">${links.map((u) => ext(u, esc(u))).join("")}</div>` : "");
+  }
+
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds };
 })();

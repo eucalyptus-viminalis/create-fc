@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="fameboy-token" content="__FAMEBOY_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>link forge · fameboy</title>
+  <link rel="icon" href="/fameboy-small.svg" type="image/svg+xml" />
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/kit.css" />
+  <link rel="stylesheet" href="/forge.css" />
+</head>
+<body class="ready">
+<div id="app">
+  <header class="fg-top">
+    <h1>link forge</h1>
+    <span class="dim">Farcaster link in, fameboy link out.</span>
+    <span class="fg-count" id="count" title="Links you've forged in this browser"></span>
+  </header>
+
+  <section class="tile fg-in">
+    <h2><span>1 · drop a cast link on the anvil</span><span>farcaster.xyz · warpcast.com</span></h2>
+    <div class="body">
+      <form class="fg-slot" id="form" autocomplete="off">
+        <label class="sr" for="link">Farcaster cast link</label>
+        <input id="link" type="text" inputmode="url" spellcheck="false" placeholder="https://farcaster.xyz/kenny/0xd0c4ec07" />
+        <span id="paste-slot"></span>
+        <span id="go-slot"></span>
+      </form>
+      <p class="fg-scan" id="scan" aria-live="polite"><span class="dim">waiting for a link<span class="blink">_</span></span></p>
+    </div>
+  </section>
+
+  <section class="fg-stage" id="stage" aria-hidden="true">
+    <div class="fg-scene">
+      <div class="fg-hammer" id="hammer"></div>
+      <div class="fg-ingot" id="ingot"></div>
+      <svg class="fg-anvil" viewBox="0 0 16 9" shape-rendering="crispEdges">
+        <rect x="0" y="0" width="15" height="1"/><rect x="2" y="1" width="13" height="1"/><rect x="4" y="2" width="10" height="1"/>
+        <rect x="5" y="3" width="8" height="1"/><rect x="6" y="4" width="6" height="2"/><rect x="5" y="6" width="8" height="1"/><rect x="3" y="7" width="12" height="2"/>
+      </svg>
+      <div class="fg-sparks" id="sparks"></div>
+    </div>
+    <p class="fg-status" id="status">ready</p>
+  </section>
+
+  <section class="tile fg-out" id="out" hidden>
+    <h2><span>2 · your fameboy link</span><span id="out-tag"></span></h2>
+    <div class="body">
+      <div class="fg-url" id="url"></div>
+      <div class="fg-acts" id="acts"></div>
+      <p class="fg-who" id="who"></p>
+    </div>
+  </section>
+</div>
+
+<nav class="bar" aria-label="Modes" data-modes="forge">
+  <div class="in">
+    <span class="hint"><kbd>↵</kbd> forge · <kbd>c</kbd> copy · <kbd>o</kbd> open · <kbd>esc</kbd> clear</span>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<script src="/mine.js"></script>
+<script src="/kit.js"></script>
+<script src="/forge.js"></script>
+</body>
+</html>
