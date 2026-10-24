@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=1200">
   <title>fameboy link preview</title>
   <!-- The link preview every fameboy page shares (client/ui/og.png): the clear keycap, the
-       wordmark, "It's playtime" and a built-with-create-fc credit, in the client's four greys. Render: make fameboy-og -->
+       wordmark, "It's playtime" and a built-with-create-fc credit, in the client's four greys. Render: make fameboy-og
+       With #demo it's demo.createfc.org's own card (client/ui/og-demo.createfc.org.png), with a QR code
+       for its address. The QR is the qrcode package's SVG for https://demo.createfc.org. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" rel="stylesheet">
@@ -34,9 +36,27 @@
       display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
     .credit span { font-size: 36px; line-height: 1; color: var(--g2); }
     .credit img { height: 44px; width: auto; display: block; }
+
+    /* #demo: a QR code for demo.createfc.org on the right, above the grain so it scans */
+    .qr { display: none; }
+    .demo .main { right: 330px; gap: 22px; }
+    .demo .cap { width: 270px; height: 270px; }
+    .demo .word { font-size: 92px; }
+    .demo .head { font-size: 52px; margin-top: 22px; }
+    .demo .qr { display: flex; flex-direction: column; align-items: center; gap: 12px; position: absolute; z-index: 4;
+      right: var(--safe); top: 52px; width: 268px; }
+    .demo .qr .code { width: 268px; height: 268px; padding: 18px; background: #f2f2ea; border: 4px solid var(--g3);
+      box-shadow: 8px 10px 0 rgb(28 28 26 / .16); }
+    .demo .qr svg { display: block; width: 100%; height: 100%; }
+    .demo .qr span { font-size: 34px; line-height: 1; color: var(--g3); }
+    .demo .credit { justify-content: space-between; }
+    .demo .credit .scan { display: inline; }
+    .credit .scan { display: none; }
+    .credit .by { display: flex; align-items: center; gap: 18px; }
   </style>
 </head>
 <body>
+  <script>if (location.hash === '#demo') document.body.className = 'demo';</script>
   <div class="card">
     <div class="main">
       <img class="cap" src="../client/logo/fameboy.svg" alt="">
@@ -45,7 +65,8 @@
         <div class="head">It's playtime<span class="blink">_</span></div>
       </div>
     </div>
-    <div class="credit"><span>built with</span><img src="../brand/logo/create-fc-lockup.svg" alt="create-fc"></div>
+    <div class="qr"><div class="code"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><path stroke="#1c1c1a" d="M0 0.5h7m2 0h2m1 0h1m1 0h1m1 0h1m1 0h7M0 1.5h1m5 0h1m2 0h3m2 0h3m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h3m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m1 0h3m3 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h2m4 0h3m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m1 0h1m1 0h1m1 0h3M0 8.5h1m1 0h5m2 0h1m3 0h3m2 0h5M1 9.5h2m1 0h1m7 0h1m3 0h1m2 0h1m3 0h1M1 10.5h2m3 0h3m1 0h2m1 0h3m1 0h2m2 0h1m1 0h2M0 11.5h6m6 0h1m4 0h3m4 0h1M2 12.5h2m1 0h6m1 0h7m1 0h1m1 0h3M0 13.5h3m1 0h2m1 0h4m5 0h1m2 0h1m1 0h1m1 0h1M0 14.5h1m1 0h2m2 0h3m2 0h3m1 0h3m1 0h3m1 0h2M0 15.5h1m1 0h1m1 0h2m1 0h1m3 0h1m2 0h1m2 0h4m3 0h1M0 16.5h1m2 0h2m1 0h3m2 0h3m1 0h6m1 0h1M8 17.5h3m1 0h2m1 0h2m3 0h2M0 18.5h7m3 0h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h4m4 0h1m3 0h2m1 0h2M0 20.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h9m1 0h1M0 21.5h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m1 0h4m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h3m1 0h3m1 0h1m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m1 0h2m1 0h4m1 0h3m2 0h1M0 24.5h7m1 0h1m1 0h1m2 0h3m1 0h1m1 0h6"/></svg></div><span>demo.createfc.org</span></div>
+    <div class="credit"><span class="scan">Try it now, nothing to install</span><span class="by"><span>built with</span><img src="../brand/logo/create-fc-lockup.svg" alt="create-fc"></span></div>
   </div>
 </body>
 </html>

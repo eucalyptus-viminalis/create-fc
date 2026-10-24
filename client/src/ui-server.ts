@@ -9,6 +9,7 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
@@ -44,7 +45,11 @@ const TYPES: Record<string, string> = {
 
 // Link previews (Farcaster, X, iMessage) don't run the page's scripts, so every
 // page carries the same card: ui/og.png, drawn from assets/fameboy-og.html
-// (make fameboy-og). Previews need absolute links, hence this server's origin.
+// (make fameboy-og). A host can have its own card, ui/og-<host>.png, like
+// demo.createfc.org's with a QR code for its address. Previews need absolute
+// links, hence this server's origin.
+let OG_IMAGE = "og.png";
+let OG_ALT = "fameboy: a clear keycap beside the words It's playtime, built with create-fc.";
 const OG_DESCRIPTION = "A Farcaster client that reads from its own node. Sign in with your phone. Built with create-fc.";
 function ogTags(path: string) {
   return [
@@ -54,10 +59,10 @@ function ogTags(path: string) {
     `<meta property="og:url" content="${ORIGIN}${encodeURI(path)}" />`,
     `<meta property="og:title" content="fameboy" />`,
     `<meta property="og:description" content="${OG_DESCRIPTION}" />`,
-    `<meta property="og:image" content="${ORIGIN}/og.png" />`,
+    `<meta property="og:image" content="${ORIGIN}/${OG_IMAGE}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="fameboy: a clear keycap beside the words It's playtime, built with create-fc." />`,
+    `<meta property="og:image:alt" content="${OG_ALT}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
   ].join("\n  ");
 }
@@ -559,6 +564,11 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
   const origin = (opts.origin ?? `http://127.0.0.1:${port}`).replace(/\/$/, "");
   ORIGIN = origin;
   SECURE = origin.startsWith("https://");
+  const host = new URL(origin).hostname;
+  if (existsSync(join(UI_DIR, `og-${host}.png`))) {
+    OG_IMAGE = `og-${host}.png`;
+    OG_ALT = `fameboy: a clear keycap beside the words It's playtime, and a QR code for ${host}.`;
+  }
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", origin);

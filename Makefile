@@ -9,6 +9,8 @@ SOCIAL_VIEWPORT ?= 1200,630
 social-preview:
 	bash scripts/capture_social_preview.sh "$(SOCIAL_HTML)" "$(SOCIAL_PNG)" "$(SOCIAL_VIEWPORT)"
 
-# fameboy's link preview: every page a fameboy serves (demo.createfc.org included) points at its /og.png.
+# fameboy's link preview: every page a fameboy serves points at its /og.png, or at
+# og-<its host>.png when there is one, like demo.createfc.org's with its QR code.
 fameboy-og:
 	bash scripts/capture_social_preview.sh assets/fameboy-og.html client/ui/og.png "$(SOCIAL_VIEWPORT)"
+	bash scripts/capture_social_preview.sh assets/fameboy-og.html client/ui/og-demo.createfc.org.png "$(SOCIAL_VIEWPORT)" demo
