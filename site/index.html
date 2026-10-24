@@ -45,6 +45,15 @@
     addEventListener('load', () => document.getElementById(to)?.scrollIntoView());
   })();
 </script>
+<script>
+  // Phones get a note to open the site on a computer (.phone-gate) instead of the documents.
+  // Tablets and "Request desktop site" get the full page. "Show it anyway" lasts for this tab.
+  (() => {
+    try { if (sessionStorage.getItem('phone-gate') === 'off') return; } catch {}
+    const phone = navigator.userAgentData?.mobile || /iPhone|iPod|Android.+Mobile|Mobi/i.test(navigator.userAgent);
+    if (phone) document.documentElement.classList.add('phone');
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts, by section. hero: Arvo, Oswald, JetBrains Mono, Libre Franklin · agent: Arvo, Courier Prime, Homemade Apple, Oswald · kit: Archivo, Courier Prime, Kalam, Tinos · explainers: Josefin Sans, Archivo, Space Mono · costs: Jost, Barlow Condensed, Arvo · troubleshooting: Archivo, Courier Prime · seed: IM Fell English, IM Fell English SC, Pinyon Script, Courier Prime · client: Silkscreen, VT323, Jost, Barlow Condensed, Permanent Marker · finish: Archivo Narrow, Courier Prime, Homemade Apple, Libre Franklin -->
@@ -62,6 +71,45 @@
 <link rel="stylesheet" href="sections/finish/finish.css">
 </head>
 <body>
+<div class="phone-gate" role="dialog" aria-labelledby="pg-t">
+  <div class="pg-note">
+    <p class="pg-kicker">create-fc</p>
+    <h1 id="pg-t">View this site on a desktop browser</h1>
+    <p>You set up your own Farcaster from a computer's terminal, and these pages are made for a big screen.</p>
+    <button class="pg-copy" type="button">Copy website link</button>
+    <button class="pg-send" type="button" hidden>Send this link to yourself</button>
+    <button class="pg-anyway" type="button">Show it anyway</button>
+  </div>
+</div>
+<script>
+  (() => {
+    const gate = document.querySelector('.phone-gate'), copy = gate.querySelector('.pg-copy'), send = gate.querySelector('.pg-send');
+    const url = location.href;
+    copy.addEventListener('click', async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(url); ok = true; } catch {
+        // Older browsers, and pages not served over https: copy through a hidden text field.
+        const t = Object.assign(document.createElement('textarea'), { value: url, readOnly: true });
+        t.style.cssText = 'position:fixed;opacity:0'; gate.append(t); t.select();
+        try { ok = document.execCommand('copy'); } catch {}
+        t.remove();
+      }
+      copy.textContent = ok ? 'Copied ✓' : url;
+      if (ok) setTimeout(() => { copy.textContent = 'Copy website link'; }, 2000);
+    });
+    // Only phones with a share sheet get this one; elsewhere it would just copy too.
+    if (navigator.share) {
+      send.hidden = false;
+      send.addEventListener('click', () => navigator.share({ title: document.title, url }).catch(() => {}));
+    }
+    gate.querySelector('.pg-anyway').addEventListener('click', () => {
+      try { sessionStorage.setItem('phone-gate', 'off'); } catch {}
+      document.documentElement.classList.remove('phone');
+      // Documents that measure themselves, and the pile's current document, update now that they're shown.
+      dispatchEvent(new Event('resize')); dispatchEvent(new Event('scroll'));
+    });
+  })();
+</script>
 <!-- Contents: the documents as a pile in the corner, the one you're reading on top; it fans out
      when you reach for it (shared/doc-nav.css, shared/doc-nav.js). Pictures: pnpm nav-thumbs:render -->
 <nav class="docnav" aria-label="Documents">

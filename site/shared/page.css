@@ -30,5 +30,20 @@ body { margin: 0; background: #2b2a27; color: #1c1c1a; overflow-x: hidden; }
 .colophon .links a:hover { border-bottom-color: currentColor; }
 .colophon p + p { margin-top: 4px; }
 
+/* On a phone (the script in index.html's head adds html.phone), a note instead of the documents. */
+.phone-gate { display: none; }
+html.phone body > :not(.phone-gate) { display: none !important; }
+html.phone .phone-gate { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; padding: 24px 16px; }
+.pg-note { max-width: 340px; padding: 30px 26px 26px; background: #e2e0d4; color: #1c1c1a; transform: rotate(-1deg);
+  box-shadow: 0 1px 0 rgb(0 0 0 / .08), 6px 12px 18px rgb(0 0 0 / .35); font: 400 15px/1.45 "Arvo", Georgia, serif; text-align: center; }
+.pg-kicker { margin: 0 0 14px; font: 500 12px/1 "Oswald", sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #5d43d6; }
+.pg-note h1 { margin: 0 0 12px; font: 700 26px/1.1 "Arvo", Georgia, serif; }
+.pg-note p { margin: 0 0 22px; }
+.pg-note button { display: block; width: 100%; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.pg-copy { padding: 12px 14px; border: 0; background: #8a63d2; color: #fff; font-weight: 700 !important; }
+.pg-send { margin-top: 10px; padding: 10px 14px; border: 2px solid #8a63d2; background: none; color: #5d43d6; font-weight: 700 !important; }
+.pg-note button[hidden] { display: none; }
+.pg-anyway { margin-top: 12px; padding: 4px; border: 0; background: none; color: #3d4256; text-decoration: underline; font-size: 13px !important; }
+
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
