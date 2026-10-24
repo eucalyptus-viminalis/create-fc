@@ -22,8 +22,14 @@ const WAIT_MS = 120_000;
 export type Reply = { sign: { id: string; payload: Hex } } | { done: unknown } | { failed: unknown };
 
 // One request's back and forth: what it has to say next, for whichever HTTP
-// reply is waiting to carry it.
+// reply is waiting to carry it. cookies: what the request's code sets on the
+// way out. After a pause the result goes out on a later request (/api/sign),
+// so the cookies travel with the conversation, not the first request.
 export class Conversation {
+  readonly cookies: string[];
+  constructor(cookies: string[] = []) {
+    this.cookies = cookies;
+  }
   private waiter?: (r: Reply) => void;
   private queued: Reply[] = [];
   say(r: Reply) {
