@@ -11,7 +11,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NodeError, PUBLIC_NODE, get, pool, recordCalls, type CallRecord, type Message, type Page } from "./node.ts";
@@ -296,7 +296,7 @@ async function author(): Promise<Author> {
   await myFid();
   if (LOCAL_ONLY) return localAuthor();
   const c = here();
-  return browserAuthor(c.session!, (c.conv ??= new Conversation()));
+  return browserAuthor(c.session!, (c.conv ??= new Conversation(c.cookies)));
 }
 
 // A session names a key; check now and then that it's still an app key of
@@ -571,7 +571,7 @@ const routes: Record<string, Handler> = {
 // { sign: { id, payload } }, and the browser's POST /api/sign gets whatever
 // comes next. Locally nothing pauses, so this is one plain reply.
 function converse(res: ServerResponse, c: Ctx, run: () => Promise<unknown>) {
-  const conv = (c.conv ??= new Conversation());
+  const conv = (c.conv ??= new Conversation(c.cookies));
   recordCalls(run).then(
     ({ result, calls }) => conv.say({ done: { data: result, calls } }),
     (e) => conv.say({ failed: e }),
@@ -582,8 +582,11 @@ function converse(res: ServerResponse, c: Ctx, run: () => Promise<unknown>) {
 async function reply(res: ServerResponse, c: Ctx, conv: Conversation) {
   const r = await conv.next();
   if ("sign" in r) return send(res, 200, { sign: r.sign });
+  // The result may go out on a later request than the one whose code set the
+  // cookies (sign out clears its cookie after a signature pause).
+  const cookies = [...new Set([...c.cookies, ...conv.cookies])];
+  if (cookies.length) res.setHeader("set-cookie", cookies);
   if ("failed" in r) throw r.failed;
-  if (c.cookies.length) res.setHeader("set-cookie", c.cookies);
   return send(res, 200, r.done);
 }
 
@@ -725,5 +728,13 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
     server.once("error", reject);
     server.listen(port, "127.0.0.1", resolve);
   });
+  running.add(server);
   return origin;
+}
+
+// Stop every server startUi started (tests).
+const running = new Set<Server>();
+export async function stopUi() {
+  await Promise.all([...running].map((s) => new Promise<void>((resolve) => (s.closeAllConnections(), s.close(() => resolve())))));
+  running.clear();
 }
