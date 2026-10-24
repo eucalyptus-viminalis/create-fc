@@ -118,6 +118,7 @@
   const MODES = [
     { id: "home", label: "home", href: "/" },
     { id: "inbox", label: "inbox", href: "/inbox" },
+    { id: "me", label: "me", href: "/me" },
     { id: "compose", label: "compose", href: "/post" },
     { id: "apps", label: "apps", href: "/apps" },
     { id: "keys", label: "keys", href: "/keys" },
@@ -344,5 +345,64 @@
       (links.length ? `<div class="links">${links.map((u) => ext(u, esc(u))).join("")}</div>` : "");
   }
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds };
+  // ---------------------------------------------------------------- your casts' menu
+  // Your own casts get a "…" in their top-right corner, with delete in it.
+  // Deleting asks once more first: it can't be undone.
+  //   kit.castMenu.html(cast, me)       the button, and the menu while it's open
+  //   kit.castMenu.wire(render, gone)   once per page: render() redraws it,
+  //                                     gone(hash) runs after a delete lands
+  // While a menu is open, a click elsewhere only closes it.
+  const castMenu = (() => {
+    const M = { open: null, confirm: false, busy: null };
+    const DOTS = `<svg viewBox="0 0 11 3" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" width="3" height="3"/><rect x="4" width="3" height="3"/><rect x="8" width="3" height="3"/></svg>`;
+    function html(c, me) {
+      if (!me || c.fid !== me.fid) return "";
+      const open = M.open === c.hash;
+      const menu = !open ? ""
+        : M.busy === c.hash ? `<div class="k-menu" role="menu"><p>deleting<span class="blink">_</span></p></div>`
+        : M.confirm ? `<div class="k-menu" role="menu"><p>Delete this cast from Farcaster? This can't be undone.</p>
+            <div class="row">${button("delete", { look: "primary", attrs: `role="menuitem" data-del="${c.hash}"` })}${button("cancel", { look: "quiet", attrs: 'role="menuitem" data-menu-close' })}</div></div>`
+        : `<div class="k-menu" role="menu"><button type="button" class="k-item" role="menuitem" data-del-ask>delete cast</button></div>`;
+      return `<span class="k-dots"><button type="button" class="k-dots-btn" data-menu="${c.hash}" title="More" aria-label="More for this cast" aria-haspopup="menu" aria-expanded="${open}">${DOTS}</button>${menu}</span>`;
+    }
+    function wire(render, gone) {
+      const close = () => { M.open = null; M.confirm = false; render(); };
+      const stop = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
+      // Capture, so these run before the page's own click handlers.
+      document.addEventListener("click", async (e) => {
+        const t = e.target;
+        const b = t.closest?.("[data-menu]");
+        if (b) { stop(e); if (M.busy) return; M.open = M.open === b.dataset.menu ? null : b.dataset.menu; M.confirm = false; tone(660, 0, 0.03); return render(); }
+        if (!M.open) return;
+        if (t.closest?.("[data-del-ask]")) { stop(e); M.confirm = true; tone(660, 0, 0.03); return render(); }
+        if (t.closest?.("[data-menu-close]")) { stop(e); return close(); }
+        const del = t.closest?.("[data-del]");
+        if (del) {
+          stop(e);
+          if (M.busy) return;
+          const hash = del.dataset.del;
+          M.busy = hash; render();
+          try {
+            const r = await api("/api/cast/delete", { hash });
+            tone(523, 0, 0.06); tone(392, 0.07, 0.1);
+            toast(r.landed ? "Deleted." : "Delete sent. It should be gone soon.");
+            M.busy = null; M.open = null; M.confirm = false;
+            await gone(hash);
+          } catch (err) {
+            M.busy = null;
+            toast(err.message, 3500);
+            render();
+          }
+          return;
+        }
+        if (t.closest?.(".k-menu")) return stop(e);
+        stop(e);
+        if (!M.busy) close();
+      }, true);
+      addEventListener("keydown", (e) => { if (e.key === "Escape" && M.open && !M.busy) { e.stopImmediatePropagation(); close(); } }, true);
+    }
+    return { html, wire, open: () => M.open !== null };
+  })();
+
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu };
 })();

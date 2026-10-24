@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="fameboy-token" content="__FAMEBOY_TOKEN__" />
+  <meta name="referrer" content="no-referrer" />
+  <title>me · fameboy</title>
+  <link rel="icon" href="/fameboy-small.svg" type="image/svg+xml" />
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
+  <link rel="stylesheet" href="/home.css" />
+  <link rel="stylesheet" href="/kit.css" />
+  <link rel="stylesheet" href="/inbox.css" />
+  <link rel="stylesheet" href="/cast.css" />
+  <link rel="stylesheet" href="/me.css" />
+</head>
+<body class="ready">
+<div id="app">
+  <header class="ib-top">
+    <h1>me</h1>
+    <span class="dim" id="sub"></span>
+    <span class="me-links" id="links"></span>
+  </header>
+  <div class="me-tools" id="tools"></div>
+  <div id="view"><div class="loading">looking<span class="blink">_</span></div></div>
+</div>
+
+<nav class="bar" aria-label="Modes" data-modes="me">
+  <div class="in">
+    <span class="hint" id="hint"><kbd>c</kbd> casts · <kbd>r</kbd> replies · <kbd>esc</kbd> home</span>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+<script src="/mine.js"></script>
+<script src="/kit.js"></script>
+<script src="/me.js"></script>
+</body>
+</html>

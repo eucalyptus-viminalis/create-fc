@@ -151,3 +151,8 @@ export async function thread<C extends Shaped>(who: string, hash: string, viewer
     more: b.replyCount - b.replies.length,
   };
 }
+
+// After a delete, so no page shows the cast from the cache.
+export function forgetThreads() {
+  cache.clear();
+}
