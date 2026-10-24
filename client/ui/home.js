@@ -93,7 +93,11 @@ document.addEventListener("click", async (e) => {
   }
   try {
     $("#signout").textContent = "signing out…";
-    const r = await api("/api/signout", { device: (await mine.device()).id });
+    // Hosted, marking this device offline needs this browser's key. Without it
+    // (site data cleared, or signed in from another browser) sign out anyway.
+    const mineKey = S.me.hosted ? await mine.key.get() : null;
+    const canSign = !S.me.hosted || (mineKey && mineKey.publicKey.toLowerCase() === String(S.me.publicKey).toLowerCase());
+    const r = await api("/api/signout", canSign ? { device: (await mine.device()).id } : {});
     await mine.key.forget(); // hosted: the key lived in this browser
     sfx.toggle();
     // Keys approved in the Farcaster app can't revoke themselves; say so before reloading.
