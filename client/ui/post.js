@@ -375,13 +375,15 @@ async function cast() {
     return;
   }
   clearInterval(tick);
-  const link = S.me?.username ? `https://farcaster.xyz/${encodeURIComponent(S.me.username)}/${r.hash.slice(0, 10)}` : null;
+  // fameboy's own cast page. Only once it's landed: until this node has the
+  // cast, that page couldn't find it.
+  const link = r.landed ? kit.castUrl({ username: S.me.username, fid: S.me.fid, hash: r.hash }) : null;
   $("#ov-r").textContent = r.landed ? "landed" : "sent";
   if (r.landed) sfx.win();
   $("#ov").innerHTML = `<p class="count" style="margin:6px 0 10px">${r.landed ? "cast!" : "sent"}</p>
     <p>${r.landed ? "Your cast is on Farcaster." : "This node hasn't seen it yet."}</p>
     <p class="dim">${r.landed ? "Every node has it now." : "It usually lands within a minute."}</p>
-    <div class="row">${kit.button("write another", { size: "lg", look: "primary", key: "A", attrs: 'id="again"' })}${link ? kit.ext(link, "see it", { cls: "k-btn lg" }) : ""}<a class="k-btn lg" href="/">home</a></div>`;
+    <div class="row">${kit.button("write another", { size: "lg", look: "primary", key: "A", attrs: 'id="again"' })}${link ? `<a class="k-btn lg" href="${esc(link)}">see it</a>` : ""}<a class="k-btn lg" href="/">home</a></div>`;
   // The images now belong to a cast, so clearing the draft keeps them.
   ta.value = ""; S.atts = []; S.link = null; S.dismissed.clear(); S.verified.clear(); store.del(DRAFT); renderAtts(); renderLink(); paint();
   $("#again").addEventListener("click", () => { ov.classList.remove("open"); ta.focus(); });
