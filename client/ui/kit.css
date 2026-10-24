@@ -121,3 +121,12 @@
 .k-menu .k-item:hover, .k-menu .k-item:focus-visible { background: var(--g3); color: var(--g0); }
 .k-menu p { margin: 4px 6px 10px; font-size: 18px; line-height: 1.25; width: 230px; color: var(--g3); white-space: normal; }
 .k-menu .row { display: flex; gap: 8px; padding: 0 4px 4px; }
+
+/* kit.icon: pixel icons for cast buttons */
+.k-ico { width: 18px; height: 18px; fill: currentColor; display: block; flex: none; }
+
+/* kit.quotes: a cast quoted inside another */
+.k-quotes { display: grid; gap: 6px; margin: 4px 0 8px; }
+.k-quote { display: flex; justify-content: space-between; gap: 10px; border: 2px solid var(--g1); padding: 6px 10px; color: var(--g3); text-decoration: none; font-size: 18px; }
+.k-quote span { color: var(--g2); }
+.k-quote:hover { border-color: var(--g3); }
