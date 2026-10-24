@@ -29,6 +29,7 @@ import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
 import { CastNotFound, forgetThreads, lookupCast, thread } from "./thread.ts";
 import { castCard } from "./og-card.ts";
+import { buildInfo } from "./version.ts";
 import type { Hex } from "viem";
 import { colorOf } from "../../node/fameboy-name.mjs";
 
@@ -643,6 +644,8 @@ export async function startUi(port: number, explicit = false, opts: UiOptions = 
 
 async function listenOn(port: number, opts: UiOptions): Promise<string> {
   const token = randomBytes(24).toString("hex");
+  // Read once: it names the code this process loaded, not what's on disk later.
+  const build = buildInfo();
   // Hosted behind a proxy (Caddy), people reach it at its public address.
   const origin = (opts.origin ?? `http://127.0.0.1:${port}`).replace(/\/$/, "");
   ORIGIN = origin;
@@ -700,6 +703,8 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
         // await, so the catch below answers with the error instead of it escaping and stopping the server.
         return await converse(res, c, () => handler(url.searchParams, body));
       }
+      // Public, so anyone can see which commit a copy runs. The code is open source.
+      if (path === "/version") return send(res, 200, build);
       if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token, path);
       if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token, path);
       if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token, path);
