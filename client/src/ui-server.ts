@@ -39,7 +39,28 @@ const TYPES: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
+  ".png": "image/png",
 };
+
+// Link previews (Farcaster, X, iMessage) don't run the page's scripts, so every
+// page carries the same card: ui/og.png, drawn from assets/fameboy-og.html
+// (make fameboy-og). Previews need absolute links, hence this server's origin.
+const OG_DESCRIPTION = "A Farcaster client that reads from its own node. Sign in with your phone. It's playtime, not scrolltime.";
+function ogTags(path: string) {
+  return [
+    `<meta name="description" content="${OG_DESCRIPTION}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="fameboy" />`,
+    `<meta property="og:url" content="${ORIGIN}${encodeURI(path)}" />`,
+    `<meta property="og:title" content="fameboy" />`,
+    `<meta property="og:description" content="${OG_DESCRIPTION}" />`,
+    `<meta property="og:image" content="${ORIGIN}/og.png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="fameboy: a clear keycap beside the words It's playtime, not scrolltime, over the client's mode bar." />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+  ].join("\n  ");
+}
 
 // ------------------------------------------------------------ data shaping
 
@@ -495,12 +516,12 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   return raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
 }
 
-async function serveFile(res: ServerResponse, root: string, rel: string, token?: string) {
+async function serveFile(res: ServerResponse, root: string, rel: string, token?: string, urlPath = "/") {
   const path = normalize(join(root, rel));
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token);
+    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token).replace("</head>", `  ${ogTags(urlPath)}\n</head>`);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -586,15 +607,16 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
         // await, so the catch below answers with the error instead of it escaping and stopping the server.
         return await converse(res, c, () => handler(url.searchParams, body));
       }
-      if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token);
-      if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token);
-      if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token);
-      if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token);
-      if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token);
-      if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token);
+      if (path === "/" || path === "/home.html") return serveFile(res, UI_DIR, "home.html", token, path);
+      if (path === "/signin" || path === "/signin.html") return serveFile(res, UI_DIR, "signin.html", token, path);
+      if (path === "/post" || path === "/post.html") return serveFile(res, UI_DIR, "post.html", token, path);
+      if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token, path);
+      if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token, path);
+      if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token, path);
+      if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.
-      if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token);
+      if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path);
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
