@@ -12,9 +12,19 @@
 @media (max-width: 900px) {
   .ib-top .me-links { margin-left: 0; }
 }
+/* phones: share is just its icon, so the four fit on one line */
+@media (max-width: 480px) {
+  .me-list .me-acts .me-word { display: none; }
+}
 
-/* reply, recast, like, share under each cast */
-.me-list .ct-c .ft { gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-.me-list .ct-c .ft .k-btn { font-size: 14px; padding: 5px 8px 4px; min-width: 44px; }
-.me-list .ct-c .ft .k-btn[aria-disabled="true"] { opacity: .5; cursor: default; }
+/* reply, recast, like, share under each cast: the same outlined button,
+   a pixel icon and a number. A recast of yours shows as a filled icon. */
+.me-list .me-acts { gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.me-list .me-acts .k-btn { font-size: 14px; padding: 5px 8px 4px; }
+.me-list .me-acts .k-lbl { display: inline-flex; align-items: center; gap: 6px; }
+.me-list .me-acts .k-ico { width: 18px; height: 18px; }
+.me-list .me-acts .k-btn.on .k-ico { background: var(--g3); fill: var(--g0); box-shadow: 0 0 0 2px var(--g3); }
+.me-pop { position: relative; display: inline-flex; }
+.me-pop .k-menu { left: 0; right: auto; min-width: 170px; }
 .me-list .ct-c .inline { margin-top: 10px; }
+.me-quoting { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--g1); color: var(--g2); font-size: 18px; overflow-wrap: anywhere; }

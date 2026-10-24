@@ -36,6 +36,20 @@
   const HAMMER_ROWS = [[0, 0, 3], [0, 1, 9], [0, 2, 10], [0, 3, 9], [0, 4, 3], [4, 4, 2], [4, 5, 2], [4, 6, 2], [4, 7, 2], [4, 8, 2], [4, 9, 2]]; // [x, y, width]
   const hammer = (cls = "ico") => `<svg class="${cls}" viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${HAMMER_ROWS.map(([x, y, w]) => `<rect x="${x}" y="${y}" width="${w}" height="1"/>`).join("")}</svg>`;
 
+  // Pixel icons for cast buttons, drawn in the text colour on a 9x9 grid.
+  // kit.icon(name): reply, recast, heart (outline), heart-on (filled), share.
+  const ICONS = {
+    reply: ["...#.....", "..##.....", ".#######.", "..##....#", "...#....#", "........#", "........#", ".....###.", "........."],
+    recast: [".#.......", "###.####.", ".#.....#.", ".#.....#.", ".#.....#.", ".#.....#.", ".####.###", ".......#.", "........."],
+    heart: [".##...##.", "#..#.#..#", "#...#...#", "#.......#", ".#.....#.", "..#...#..", "...#.#...", "....#....", "........."],
+    "heart-on": [".##...##.", "####.####", "#########", "#########", ".#######.", "..#####..", "...###...", "....#....", "........."],
+    share: ["....#....", "...###...", "..#.#.#..", "....#....", "#...#...#", "#.......#", "#.......#", "#########", "........."],
+  };
+  const icon = (name) =>
+    `<svg class="k-ico" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${ICONS[name]
+      .flatMap((row, y) => [...row].map((c, x) => (c === "#" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : "")))
+      .join("")}</svg>`;
+
   // ---------------------------------------------------------------- basics
   const $ = (sel) => document.querySelector(sel);
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -404,5 +418,9 @@
     return { html, wire, open: () => M.open !== null };
   })();
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu };
+  // The casts a cast quotes, each a box that opens it.
+  const quotes = (list) =>
+    list?.length ? `<div class="k-quotes">${list.map((q) => `<a class="k-quote" href="/${encodeURIComponent(`!${q.fid}`)}/${esc(q.hash)}">quoting a cast <span>${esc(q.hash.slice(0, 10))} →</span></a>`).join("")}</div>` : "";
+
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes };
 })();

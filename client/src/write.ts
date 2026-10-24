@@ -96,7 +96,8 @@ const sendAndConfirm = (bytes: Uint8Array, read: () => Promise<unknown>, wantPre
 
 const opts = (by: Author) => ({ fid: by.fid, network: FarcasterNetwork.MAINNET });
 
-export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string[]; dryRun?: boolean } = {}, by?: Author) {
+// A quote cast is a cast that embeds another by its id: o.quote.
+export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string[]; quote?: CastRef; dryRun?: boolean } = {}, by?: Author) {
   const key = by ?? (await localAuthor());
   const body = await extractMentions(text);
   const bytes = new TextEncoder().encode(body.text).length;
@@ -107,7 +108,7 @@ export async function cast(text: string, o: { replyTo?: CastRef; embeds?: string
       {
         ...body,
         type: CastType.CAST,
-        embeds: (o.embeds ?? []).map((url) => ({ url })),
+        embeds: [...(o.embeds ?? []).map((url) => ({ url })), ...(o.quote ? [{ castId: { fid: o.quote.fid, hash: hexToBytes(o.quote.hash) } }] : [])],
         embedsDeprecated: [],
         parentCastId: o.replyTo ? { fid: o.replyTo.fid, hash: hexToBytes(o.replyTo.hash) } : undefined,
       },

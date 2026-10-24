@@ -129,6 +129,7 @@ type CastView = {
   text: string;
   time: string;
   embeds: string[];
+  quotes?: { fid: number; hash: string }[]; // casts this one quotes
   replyTo?: { fid: number; hash: string };
   channel?: string;
   app?: { fid: number; name: string; pfp?: string };
@@ -164,6 +165,8 @@ async function shape(casts: Message[]): Promise<CastView[]> {
       text: withMentions(b.text, b.mentions, b.mentionsPositions, people),
       time: new Date((m.data.timestamp + FARCASTER_EPOCH) * 1000).toISOString(),
       embeds: b.embeds.map((e) => ("url" in e ? e.url : `cast ${e.castId.hash.slice(0, 10)}`)),
+      // casts this one quotes
+      quotes: b.embeds.flatMap((e) => ("castId" in e && e.castId ? [{ fid: e.castId.fid, hash: e.castId.hash }] : [])),
       replyTo: b.parentCastId ?? undefined,
       channel: b.parentUrl?.split("/").pop() ?? undefined,
       app: appFid === undefined ? undefined : { fid: appFid, name: people.get(appFid)?.username ?? `!${appFid}`, pfp: people.get(appFid)?.pfp },
@@ -511,10 +514,14 @@ const routes: Record<string, Handler> = {
   "POST /api/cast": async (_q, b) => {
     const text = String(b.text ?? "").trim();
     const embeds = Array.isArray(b.embeds) ? (b.embeds as unknown[]).filter((u): u is string => typeof u === "string" && EMBED_URL.test(u)) : [];
-    if (embeds.length > 2) throw new NodeError("a cast holds two attachments at most");
-    if (!text && !embeds.length) throw new NodeError("nothing to post");
+    // A quote cast embeds the cast it quotes, which counts as an attachment.
+    const q = b.quote as { fid?: unknown; hash?: unknown } | undefined;
+    const quote = q ? { fid: Number(q.fid), hash: String(q.hash ?? "").toLowerCase() as Hex } : undefined;
+    if (quote && (!Number.isInteger(quote.fid) || quote.fid <= 0 || !/^0x[0-9a-f]{40}$/.test(quote.hash))) throw new NodeError("a quote needs the cast's fid and full hash");
+    if (embeds.length + (quote ? 1 : 0) > 2) throw new NodeError("a cast holds two attachments at most");
+    if (!text && !embeds.length && !quote) throw new NodeError("nothing to post");
     const replyTo = b.replyTo as { fid: number; hash: Hex } | undefined;
-    return cast(text, { replyTo, embeds }, await author());
+    return cast(text, { replyTo, embeds, quote }, await author());
   },
   // A link's preview card: title, description, image, site (unfurl.ts).
   "GET /api/unfurl": async (q) => unfurl(String(q.get("url") ?? "")),

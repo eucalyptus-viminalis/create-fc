@@ -30,6 +30,7 @@ function card(c, extra = "") {
       <div class="who"><b>${esc(c.author?.display ?? name(c))}</b><span class="dim">${esc(name(c))}</span><a class="t" href="${castUrl(c)}" title="${esc(when(c.time))}">${ago(c.time)}</a>${kit.castMenu.html(c, S.me)}</div>
       <div class="tx">${rich(c.text)}</div>
       ${embeds(c.embeds)}
+      ${kit.quotes(c.quotes)}
       ${extra}
     </div>
   </article>`;
@@ -69,6 +70,7 @@ function render() {
     <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? name(c))}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`}${c.app ? ` · via @${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div>${kit.castMenu.html(c, S.me)}</div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
+    ${kit.quotes(c.quotes)}
     <div class="meta"><span>${esc(when(c.time))}</span><span>↩ ${c.replies}</span><span>⟲ ${c.recasts}</span><span>♥ ${c.likes}</span></div>
     <div class="acts">${acts}</div>
     ${S.reply === c.hash ? replyBox(c) : ""}
