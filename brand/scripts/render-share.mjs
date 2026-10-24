@@ -6,10 +6,14 @@
 //   site/<slug>/index.html      the share page
 //   site/img/share/<slug>.jpg   its preview, 1200x630: the document on its own desk
 //
-// Run the site first (pnpm site:dev), then: pnpm share:render [site URL] [public URL]
+// The front page's own preview, site/img/share/home.jpg, is the hero ad on its desk. It has no share
+// page: site/index.html points its og:image at it.
+//
+// Run the site first (pnpm site:dev), then: pnpm share:render [site URL] [public URL] [--only=slug,...]
 //   site URL    where to photograph the documents (default http://localhost:5173/)
 //   public URL  where the pages will live, for the absolute links previews need
 //               (default https://createfc.org/)
+//   --only      render just these slugs, e.g. --only=home
 // Uses your installed Chrome. Re-run it after a document changes how it looks or the site moves.
 import path from 'node:path';
 import fs from 'node:fs';
@@ -18,12 +22,16 @@ import { chromium } from 'playwright';
 
 const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const out = path.join(repo, 'site');
-const base = (process.argv[2] || 'http://localhost:5173/').replace(/\/?$/, '/');
-const pub = (process.argv[3] || 'https://createfc.org/').replace(/\/?$/, '/');
+const args = process.argv.slice(2).filter(a => !a.startsWith('--only='));
+const only = process.argv.find(a => a.startsWith('--only='))?.slice(7).split(',');
+const base = (args[0] || 'http://localhost:5173/').replace(/\/?$/, '/');
+const pub = (args[1] || 'https://createfc.org/').replace(/\/?$/, '/');
 
 // slug: the share address; id: the section it opens; shot: the document itself, without its desk;
-// whole: show a tall document whole instead of large and cropped
+// whole: show a tall document whole instead of large and cropped; wide: fill the card's width and let
+// the bottom run off, so the text stays readable; noPage: picture only, no share page
 const DOCS = [
+  { slug: 'home', id: 'hero', shot: '#hero .page', wide: true, noPage: true },
   { slug: 'agent', id: 'agent', shot: '#agent .sheet',
     title: 'Let an agent set up your own Farcaster',
     desc: 'A service order for Claude Code, Codex or any agent that runs commands. It asks before spending money, and never for a seed phrase or token.' },
@@ -86,7 +94,7 @@ await page.addStyleTag({ content: '.cbd, .docnav { display: none !important; } *
 await page.waitForTimeout(1200);
 const card = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 
-for (const d of DOCS) {
+for (const d of DOCS.filter(d => !only || only.includes(d.slug))) {
   const el = page.locator(d.shot).first();
   await el.scrollIntoViewIfNeeded();
   await page.waitForTimeout(400);
@@ -99,8 +107,10 @@ for (const d of DOCS) {
   // Wide documents fit whole. Tall ones would be too small to read in a preview, so they're shown
   // large, from the top, running off the bottom edge.
   const { width, height } = await el.boundingBox();
-  const tall = !d.whole && height / width > .8;
-  const img = tall
+  const tall = d.wide || (!d.whole && height / width > .8);
+  const img = d.wide
+    ? 'width:1140px;max-width:none;margin-top:28px;transform:rotate(-.8deg);transform-origin:50% 0'
+    : tall
     ? 'width:780px;margin-top:44px;transform:rotate(-1.2deg);transform-origin:50% 0'
     : 'max-width:1080px;max-height:540px;transform:rotate(-1deg)';
   await card.setContent(`<!doctype html><html><body style="margin:0">
@@ -109,6 +119,7 @@ for (const d of DOCS) {
     </div></body></html>`);
   await card.waitForTimeout(150);
   await card.screenshot({ path: path.join(out, 'img', 'share', d.slug + '.jpg'), type: 'jpeg', quality: 86 });
+  if (d.noPage) { console.log(`wrote site/img/share/${d.slug}.jpg`); continue; }
   fs.mkdirSync(path.join(out, d.slug), { recursive: true });
   fs.writeFileSync(path.join(out, d.slug, 'index.html'), sharePage(d));
   console.log(`wrote site/${d.slug}/ and site/img/share/${d.slug}.jpg`);
