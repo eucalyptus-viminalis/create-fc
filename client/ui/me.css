@@ -12,3 +12,9 @@
 @media (max-width: 900px) {
   .ib-top .me-links { margin-left: 0; }
 }
+
+/* reply, recast, like, share under each cast */
+.me-list .ct-c .ft { gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.me-list .ct-c .ft .k-btn { font-size: 14px; padding: 5px 8px 4px; min-width: 44px; }
+.me-list .ct-c .ft .k-btn[aria-disabled="true"] { opacity: .5; cursor: default; }
+.me-list .ct-c .inline { margin-top: 10px; }
