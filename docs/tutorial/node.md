@@ -38,7 +38,11 @@ Reads already work while it catches up; only the newest casts are missing. You c
 
 ```
 $ ssh root@<ip> fc-node status
-catching up: 18.9 h behind, gaining about 4 s per second (~4.7 h to go).
+measuring catch-up speed (10 s)...
+  shard 0: 3s behind
+  shard 1: 3.8 h behind, gaining 4.8 s per second (~48 min to go)
+  shard 2: 2s behind
+catching up: 3.8 h behind, ~48 min to go.
 
 $ ssh root@<ip> fc-node status
   shard 0: 1s behind
@@ -47,7 +51,16 @@ $ ssh root@<ip> fc-node status
 in sync. Run command 2 on your own computer.
 ```
 
-The first is our demo node right after loading; the second is the same node a few hours later. During setup, `fc-node status` shows the snapshot's progress instead. On your own computer, `fameboy status` reports the same numbers.
+The first is our demo node with one shard still catching up; the second is a node in sync. While a node is behind, `fc-node status` takes two readings 10 seconds apart and works out the speed and time to go from them. During setup, `fc-node status` shows the snapshot's progress instead. On your own computer, `fameboy status` reports the same "behind" numbers.
+
+If a shard's height doesn't change between the two readings, it says so:
+
+```
+  shard 1: 3.8 h behind and STUCK at block 49477354: no new blocks in 61 s
+stuck: shard 1 stopped taking blocks. ...
+```
+
+Our demo node did this on snapchain 0.14.3: shard 1 panicked on one block (`merkle trie root hash mismatch`) and crashed again on every restart. Upgrading to 0.15.0 with `cd ~/snapchain && ./snapchain.sh upgrade` fixed it.
 
 ## Reading the numbers
 

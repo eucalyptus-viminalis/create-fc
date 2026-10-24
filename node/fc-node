@@ -19,12 +19,47 @@ LOG=/var/log/fc-node-setup.log
 case "${1:-status}" in
   logs) exec tail -n 30 -F "$LOG" ;;
   status)
+    t0=$(date +%s.%N)
     info=$(curl -s -m 5 localhost:3381/v1/info || true)
     if [ -n "$info" ] && echo "$info" | jq -e .shardInfos >/dev/null 2>&1; then
-      echo "$info" | jq -r '.shardInfos | sort_by(.shardId)[] | "  shard \(.shardId): \(.blockDelay)s behind"'
       worst=$(echo "$info" | jq '[.shardInfos[].blockDelay] | max')
-      if [ "$worst" -lt 10 ]; then echo "in sync. Run command 2 on your own computer."
-      else awk -v w="$worst" 'BEGIN { printf "catching up: %.1f h behind, gaining about 4 s per second (~%.1f h to go).\n", w/3600, w/4/3600 }'; fi
+      if [ "$worst" -lt 10 ]; then
+        echo "$info" | jq -r '.shardInfos | sort_by(.shardId)[] | "  shard \(.shardId): \(.blockDelay)s behind"'
+        echo "in sync. Run command 2 on your own computer."
+      else
+        # Measure the speed rather than assume one: a shard can stop taking
+        # blocks (a panic on one block) while blockDelay just keeps growing.
+        echo "measuring catch-up speed (10 s)..."
+        sleep 10
+        t1=$(date +%s.%N)
+        info2=$(curl -s -m 5 localhost:3381/v1/info || true)
+        if [ -z "$info2" ] || ! echo "$info2" | jq -e .shardInfos >/dev/null 2>&1; then info2=$info; t1=$t0; fi
+        jq -nr --argjson a "$info" --argjson b "$info2" --argjson t0 "$t0" --argjson t1 "$t1" '
+          def dur: if . < 120 then "\(floor) s" elif . < 7200 then "\(./60 | round) min" else "\((./360 | round) / 10) h" end;
+          ($t1 - $t0) as $el
+          | ($a.shardInfos | map({key: (.shardId | tostring), value: .}) | from_entries) as $before
+          | [$b.shardInfos | sort_by(.shardId)[] | $before[.shardId | tostring] as $p
+              | {id: .shardId, d: .blockDelay, h: .maxHeight,
+                 moved: (if $p and $el > 0 then .maxHeight - $p.maxHeight else null end),
+                 gain: (if $p and $el > 0 then ($p.blockDelay - .blockDelay) / $el else null end)}] as $sh
+          | [$sh[] | select(.d >= 10)] as $behind
+          | [$behind[] | select(.moved == 0) | .id | tostring] as $stuck
+          | ($sh[]
+              | if .d < 10 then "  shard \(.id): \(.d)s behind"
+                elif .moved == 0 then "  shard \(.id): \(.d | dur) behind and STUCK at block \(.h): no new blocks in \($el | round) s"
+                elif .gain == null then "  shard \(.id): \(.d | dur) behind"
+                elif .gain <= 0 then "  shard \(.id): \(.d | dur) behind, not gaining (\(.moved) blocks in \($el | round) s)"
+                else "  shard \(.id): \(.d | dur) behind, gaining \(.gain * 10 | round / 10) s per second (~\(.d / .gain | dur) to go)" end),
+            (if ($stuck | length) > 0 then
+               "stuck: shard \($stuck | join(", ")) stopped taking blocks. Restarting will not help if it panicked on one; see why:\n  docker logs snapchain-snapchain-1 2>&1 | grep -A1 panicked\nIf it did, a newer snapchain may fix it: cd ~/snapchain && ./snapchain.sh upgrade"
+             elif any($behind[]; .gain == null) then
+               "catching up: \([$behind[].d] | max | dur) behind. The node stopped answering, so the speed is unknown; run fc-node status again."
+             elif any($behind[]; .gain <= 0) then
+               "catching up: \([$behind[].d] | max | dur) behind, not gaining yet. Check again in a few minutes."
+             else
+               "catching up: \([$behind[].d] | max | dur) behind, ~\([$behind[] | .d / .gain] | max | dur) to go."
+             end)'
+      fi
       if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
       else echo "companion: not running (re-run command 1 to install it)"; fi
       if [ -f /var/lib/fc-fameboy/url ]; then
