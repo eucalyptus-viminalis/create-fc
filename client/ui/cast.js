@@ -27,7 +27,7 @@ function card(c, extra = "") {
   return `<article class="ct-c" data-href="${castUrl(c)}">
     ${pic(c.author?.pfp)}
     <div class="body">
-      <div class="who"><b>${esc(c.author?.display ?? name(c))}</b><span class="dim">${esc(name(c))}</span><a class="t" href="${castUrl(c)}" title="${esc(when(c.time))}">${ago(c.time)}</a></div>
+      <div class="who"><b>${esc(c.author?.display ?? name(c))}</b><span class="dim">${esc(name(c))}</span><a class="t" href="${castUrl(c)}" title="${esc(when(c.time))}">${ago(c.time)}</a>${kit.castMenu.html(c, S.me)}</div>
       <div class="tx">${rich(c.text)}</div>
       ${embeds(c.embeds)}
       ${extra}
@@ -66,7 +66,7 @@ function render() {
     : `${kit.button("sign in to like or reply", { look: "primary", attrs: "data-signin" })}<span class="dim small">Anyone can read this. Signing in lets you join in.</span>`;
 
   const focus = `<article class="tile read ct-focus" id="focus">
-    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? name(c))}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`}${c.app ? ` · via @${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
+    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? name(c))}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`}${c.app ? ` · via @${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div>${kit.castMenu.html(c, S.me)}</div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta"><span>${esc(when(c.time))}</span><span>↩ ${c.replies}</span><span>⟲ ${c.recasts}</span><span>♥ ${c.likes}</span></div>
@@ -146,6 +146,17 @@ function toggleReply(hash) {
   render();
 }
 
+// After a delete: the open cast is gone, so go up to the cast it answered,
+// or home. A reply or a cast above: show the conversation without it.
+async function gone(hash) {
+  if (hash === S.d.cast.hash) {
+    const up = S.d.ancestors[S.d.ancestors.length - 1];
+    await kit.wait(700);
+    return location.replace(up ? castUrl(up) : "/");
+  }
+  await load(true);
+}
+
 async function copyLink() {
   try { await navigator.clipboard.writeText(location.href); toast("Link copied."); sfx.tick(); }
   catch { toast("Copy it from the address bar."); }
@@ -189,6 +200,8 @@ async function load(fresh = false) {
   document.title = `${name(d.cast)}${snip ? `: “${snip.length > 50 ? `${snip.slice(0, 49)}…` : snip}”` : ""} · ${window.theme?.name ?? "fameboy"}`;
   render();
 }
+
+kit.castMenu.wire(render, gone);
 
 (async () => {
   if (!rawHash) { $("#view").innerHTML = `<div class="tile empty">That's not a cast address.</div>`; return; }

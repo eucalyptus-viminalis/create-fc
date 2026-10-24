@@ -49,3 +49,11 @@
   .ct-c { padding: 10px 4px; }
   .ct-up .ct-c::before { left: 23px; }
 }
+
+
+/* where the "…" sits (kit.castMenu) */
+.ct-c .who .k-dots { margin-left: 2px; }
+.ct-c .k-dots-btn { width: 28px; height: 22px; }
+.ct-c .k-dots-btn svg { width: 15px; height: 4px; }
+.ct-focus { position: relative; }
+.ct-focus .head .k-dots { margin-left: auto; }

@@ -20,14 +20,14 @@ import { appsFor, keysOfUser } from "./filter.ts";
 import { fileAuthor, forgetKey, hostedMode, loadKey, localAuthor, revokeKey, type Author } from "./keys.ts";
 import { Conversation, answer, browserAuthor } from "./remote-sign.ts";
 import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
-import { cast, follow, react } from "./write.ts";
+import { cast, deleteCast, follow, react } from "./write.ts";
 import { legacyState } from "./legacy.ts";
 import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, setDeviceLabel, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
-import { CastNotFound, lookupCast, thread } from "./thread.ts";
+import { CastNotFound, forgetThreads, lookupCast, thread } from "./thread.ts";
 import { castCard } from "./og-card.ts";
 import type { Hex } from "viem";
 import { colorOf } from "../../node/fameboy-name.mjs";
@@ -521,6 +521,29 @@ const routes: Record<string, Handler> = {
   // Image space on your node (images.ts). Uploads come in as raw bytes; see the server below.
   "GET /api/images/usage": async () => imageUsage(await author()),
   "POST /api/images/delete": async (_q, b) => deleteImage(await author(), String(b.name ?? "")),
+  // Your own casts, newest first, for the me page: a page of 100 at a time,
+  // as casts or replies. next: where the following page starts, if any.
+  "GET /api/me/casts": async (q) => {
+    const fid = await myFid();
+    const replies = q.get("replies") === "1";
+    const page = await get<Page>("/v1/castsByFid", { fid, pageSize: 100, reverse: true, pageToken: q.get("next") || undefined });
+    const mine = page.messages.filter((m) => m.data.castAddBody && Boolean(m.data.castAddBody.parentCastId) === replies);
+    return { casts: await shape(mine), next: page.nextPageToken || null };
+  },
+  // Delete one of your own casts. The node would refuse anyone else's, but
+  // checking first gives a clear answer.
+  "POST /api/cast/delete": async (_q, b) => {
+    const hash = String(b.hash ?? "").toLowerCase();
+    if (!/^0x[0-9a-f]{40}$/.test(hash)) throw new NodeError("deleting needs the cast's full hash");
+    const by = await author();
+    await get<Message>("/v1/castById", { fid: by.fid, hash }).catch(() => {
+      throw new NodeError("that isn't one of your casts, or it's already deleted");
+    });
+    const r = await deleteCast(hash as Hex, by);
+    feedCache.delete(by.fid);
+    forgetThreads();
+    return r;
+  },
   "POST /api/react": async (_q, b) =>
     react(b.kind === "recast" ? "recast" : "like", b.target as { fid: number; hash: Hex }, b.on !== false, await author()),
   // Follow by username or fid.
@@ -671,6 +694,7 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token, path);
       if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token, path);
       if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token, path);
+      if (path === "/me" || path === "/me.html") return serveFile(res, UI_DIR, "me.html", token, path);
       if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token, path);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.

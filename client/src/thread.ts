@@ -156,3 +156,8 @@ export async function thread<C extends Shaped>(who: string, hash: string, viewer
 export async function lookupCast(who: string, hash: string): Promise<Message> {
   return findCast(await fidOf(who), hash);
 }
+
+// After a delete, so no page shows the cast from the cache.
+export function forgetThreads() {
+  cache.clear();
+}

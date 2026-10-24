@@ -4,7 +4,9 @@
 .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* kit.ext: a link that leaves fameboy, with a pixel arrow after it. */
-.ext { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+/* position: relative keeps the hidden "(opens in a new tab)" inside the link,
+   so a long link cut short with an ellipsis can't widen the page. */
+.ext { position: relative; color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .ext-arrow { display: inline-block; width: 0.5em; height: 0.5em; margin-left: 0.18em; vertical-align: 0.42em; fill: currentColor; }
 .ext:hover .ext-arrow, .ext:focus-visible .ext-arrow { transform: translate(1px, -1px); }
 .ext:has(img) { text-decoration: none; }
@@ -108,3 +110,14 @@
 .mode.tool:hover .ico { animation: tap .4s steps(2, jump-none) 1; transform-origin: 50% 100%; }
 @keyframes tap { 50% { transform: rotate(-24deg); } }
 @media (prefers-reduced-motion: reduce) { .mode.tool:hover .ico { animation: none; } }
+
+/* kit.castMenu: "…" in the top-right corner of your own casts, with delete in it */
+.k-dots { position: relative; flex: none; align-self: flex-start; }
+.k-dots-btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 26px; color: var(--g2); border: 2px solid transparent; }
+.k-dots-btn svg { width: 19px; height: 5px; fill: currentColor; display: block; }
+.k-dots-btn:hover, .k-dots-btn:focus-visible, .k-dots-btn[aria-expanded="true"] { color: var(--g3); border-color: var(--g3); }
+.k-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; background: var(--g0); border: var(--b) solid var(--g3); box-shadow: 4px 4px 0 var(--g3); padding: 6px; cursor: default; }
+.k-menu .k-item { all: unset; box-sizing: border-box; display: block; width: 100%; cursor: pointer; padding: 6px 10px; font: 20px/1.1 var(--vt); color: var(--g3); white-space: nowrap; }
+.k-menu .k-item:hover, .k-menu .k-item:focus-visible { background: var(--g3); color: var(--g0); }
+.k-menu p { margin: 4px 6px 10px; font-size: 18px; line-height: 1.25; width: 230px; color: var(--g3); white-space: normal; }
+.k-menu .row { display: flex; gap: 8px; padding: 0 4px 4px; }
