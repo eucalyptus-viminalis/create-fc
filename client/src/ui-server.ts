@@ -27,7 +27,8 @@ import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
 import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
-import { CastNotFound, thread } from "./thread.ts";
+import { CastNotFound, lookupCast, thread } from "./thread.ts";
+import { castCard } from "./og-card.ts";
 import type { Hex } from "viem";
 import { colorOf } from "../../node/fameboy-name.mjs";
 
@@ -58,23 +59,55 @@ const FORGE_OG = {
   image: "og-forge.png",
   alt: "link forge: a hammer striking a link on an anvil, beside a farcaster.xyz cast link turned into a demo.createfc.org one.",
 };
-function ogTags(path: string) {
+// A cast page's card is drawn for that cast (og-card.ts), at /og/cast/<fid>/<hash>.png.
+type Og = { title: string; description: string; image: string; alt: string; type?: string };
+const attr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function ogTags(path: string, og?: Og) {
   const forge = path === "/forge" || path === "/forge.html";
-  const title = forge ? FORGE_OG.title : "fameboy";
-  const description = forge ? FORGE_OG.description : OG_DESCRIPTION;
+  const o = og ?? (forge ? FORGE_OG : { title: "fameboy", description: OG_DESCRIPTION, image: OG_IMAGE, alt: OG_ALT });
   return [
-    `<meta name="description" content="${description}" />`,
-    `<meta property="og:type" content="website" />`,
+    `<meta name="description" content="${attr(o.description)}" />`,
+    `<meta property="og:type" content="${og?.type ?? "website"}" />`,
     `<meta property="og:site_name" content="fameboy" />`,
     `<meta property="og:url" content="${ORIGIN}${encodeURI(path)}" />`,
-    `<meta property="og:title" content="${title}" />`,
-    `<meta property="og:description" content="${description}" />`,
-    `<meta property="og:image" content="${ORIGIN}/${forge ? FORGE_OG.image : OG_IMAGE}" />`,
+    `<meta property="og:title" content="${attr(o.title)}" />`,
+    `<meta property="og:description" content="${attr(o.description)}" />`,
+    `<meta property="og:image" content="${ORIGIN}/${o.image}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${forge ? FORGE_OG.alt : OG_ALT}" />`,
+    `<meta property="og:image:alt" content="${attr(o.alt)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
   ].join("\n  ");
+}
+
+// The card for a cast page, when the cast can be found in a couple of seconds.
+// Only hosted: on your own computer nobody else can fetch a preview.
+async function castOg(path: string): Promise<Og | undefined> {
+  if (LOCAL_ONLY) return undefined;
+  const [, who, hash] = path.split("/");
+  try {
+    const find = Promise.all([lookupCast(decodeURIComponent(who ?? ""), hash ?? "").then((m) => shape([m])), instance()]);
+    const [[c], { name: copy }] = await Promise.race([find, new Promise<never>((_, no) => setTimeout(() => no(new Error("slow")), 2_500).unref())]);
+    const handle = c!.author.username ? `@${c!.author.username}` : `fid ${c!.fid}`;
+    const name = c!.author.display || handle;
+    const text = c!.text.replace(/\s+/g, " ").trim();
+    return {
+      type: "article",
+      title: `${name}${name === handle ? "" : ` (${handle})`} on ${copy}`,
+      description: text.length > 200 ? `${text.slice(0, 199)}…` : text || "A cast on Farcaster.",
+      image: `og/cast/${c!.fid}/${c!.hash}.png`,
+      alt: `${handle}'s cast${text ? `: ${text.length > 120 ? `${text.slice(0, 119)}…` : text}` : ""}`,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+// The PNG itself: anyone may fetch it, since casts are public.
+const OG_CAST = /^\/og\/cast\/(\d+)\/(0x[0-9a-f]{40})\.png$/;
+async function castOgImage(fid: string, hash: string): Promise<Uint8Array> {
+  const [[c], counts, look] = await Promise.all([lookupCast(fid, hash).then((m) => shape([m])), countsOf(Number(fid), hash), instance()]);
+  return castCard({ ...c!, ...counts }, { name: look.name, hex: look.hex, host: new URL(ORIGIN).host });
 }
 
 // ------------------------------------------------------------ data shaping
@@ -301,6 +334,17 @@ function instance() {
   return value;
 }
 
+// Likes, recasts and replies on one cast.
+async function countsOf(fid: number, hash: string) {
+  const count = (path: string, params: Record<string, string | number>) => get<Page>(path, { ...params, pageSize: 1000 }).then((p) => p.messages.length, () => 0);
+  const [likes, recasts, replies] = await Promise.all([
+    count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Like" }),
+    count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Recast" }),
+    count("/v1/castsByParent", { fid, hash }),
+  ]);
+  return { likes, recasts, replies };
+}
+
 const routes: Record<string, Handler> = {
   "GET /api/instance": async () => instance(),
   "GET /api/status": async () => {
@@ -350,13 +394,7 @@ const routes: Record<string, Handler> = {
   "GET /api/inbox/counts": async (q) => {
     const fid = Number(q.get("fid")), hash = q.get("hash") ?? "";
     if (!Number.isInteger(fid) || !/^0x[0-9a-f]{40}$/i.test(hash)) throw new NodeError("counts need fid and hash");
-    const count = (path: string, params: Record<string, string | number>) => get<Page>(path, { ...params, pageSize: 1000 }).then((p) => p.messages.length, () => 0);
-    const [likes, recasts, replies] = await Promise.all([
-      count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Like" }),
-      count("/v1/reactionsByCast", { target_fid: fid, target_hash: hash, reaction_type: "Recast" }),
-      count("/v1/castsByParent", { fid, hash }),
-    ]);
-    return { likes, recasts, replies };
+    return countsOf(fid, hash);
   },
   // Who's on this node. Each call is also your heartbeat, so the page calls it
   // every 30 s with its device id and status (online or invisible).
@@ -531,12 +569,12 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
   return raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
 }
 
-async function serveFile(res: ServerResponse, root: string, rel: string, token?: string, urlPath = "/") {
+async function serveFile(res: ServerResponse, root: string, rel: string, token?: string, urlPath = "/", og?: Og) {
   const path = normalize(join(root, rel));
   if (!path.startsWith(root)) return send(res, 404, "not found", "text/plain");
   try {
     let data: Buffer | string = await readFile(path);
-    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token).replace("</head>", `  ${ogTags(urlPath)}\n</head>`);
+    if (token && rel.endsWith(".html")) data = data.toString().replace("__FAMEBOY_TOKEN__", token).replace("</head>", `  ${ogTags(urlPath, og)}\n</head>`);
     send(res, 200, data, TYPES[extname(path)] ?? "application/octet-stream");
   } catch {
     send(res, 404, "not found", "text/plain");
@@ -636,7 +674,13 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token, path);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.
-      if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path);
+      if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path, await castOg(path));
+      const og = path.match(OG_CAST);
+      if (og) {
+        const png = await castOgImage(og[1]!, og[2]!);
+        res.writeHead(200, { "content-type": "image/png", "cache-control": "public, max-age=600", "x-content-type-options": "nosniff" });
+        return res.end(png);
+      }
       return serveFile(res, UI_DIR, path.slice(1));
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);

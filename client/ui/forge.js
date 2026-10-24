@@ -129,7 +129,7 @@ function show(f, who, tag) {
   $("#url").innerHTML = `<span class="dim">${esc(DEMO.replace("https://", ""))}</span>${esc(pathOf(f))}`;
   const here = location.origin !== DEMO;
   $("#acts").innerHTML = `${kit.button("copy", { look: "primary", size: "lg", key: "c", attrs: "data-copy" })}
-    ${kit.ext(S.url, "open on the demo", { cls: "k-btn lg", arrow: true })}
+    ${kit.ext(S.url, "open cast", { cls: "k-btn lg", arrow: true })}
     ${here ? `<a class="k-btn lg quiet" href="${esc(pathOf(f))}" title="Open it on this copy of fameboy">view here</a>` : ""}`;
   $("#who").innerHTML = who ?? `<span class="dim">checking the cast on your node<span class="blink">_</span></span>`;
   $("#out-tag").textContent = tag ?? "";
