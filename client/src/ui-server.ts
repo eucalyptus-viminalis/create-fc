@@ -51,18 +51,28 @@ const TYPES: Record<string, string> = {
 let OG_IMAGE = "og.png";
 let OG_ALT = "fameboy: a clear keycap beside the words It's playtime, built with create-fc.";
 const OG_DESCRIPTION = "A Farcaster client that reads from its own node. Sign in with your phone. Built with create-fc.";
+// The link forge has its own card, ui/og-forge.png, drawn from assets/forge-og.html.
+const FORGE_OG = {
+  title: "link forge · fameboy",
+  description: "Farcaster link in, fameboy link out. Paste a cast link from farcaster.xyz and get the same cast on fameboy.",
+  image: "og-forge.png",
+  alt: "link forge: a hammer striking a link on an anvil, beside a farcaster.xyz cast link turned into a demo.createfc.org one.",
+};
 function ogTags(path: string) {
+  const forge = path === "/forge" || path === "/forge.html";
+  const title = forge ? FORGE_OG.title : "fameboy";
+  const description = forge ? FORGE_OG.description : OG_DESCRIPTION;
   return [
-    `<meta name="description" content="${OG_DESCRIPTION}" />`,
+    `<meta name="description" content="${description}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="fameboy" />`,
     `<meta property="og:url" content="${ORIGIN}${encodeURI(path)}" />`,
-    `<meta property="og:title" content="fameboy" />`,
-    `<meta property="og:description" content="${OG_DESCRIPTION}" />`,
-    `<meta property="og:image" content="${ORIGIN}/${OG_IMAGE}" />`,
+    `<meta property="og:title" content="${title}" />`,
+    `<meta property="og:description" content="${description}" />`,
+    `<meta property="og:image" content="${ORIGIN}/${forge ? FORGE_OG.image : OG_IMAGE}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:image:alt" content="${OG_ALT}" />`,
+    `<meta property="og:image:alt" content="${forge ? FORGE_OG.alt : OG_ALT}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
   ].join("\n  ");
 }
@@ -623,7 +633,7 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/inbox" || path === "/inbox.html") return serveFile(res, UI_DIR, "inbox.html", token, path);
       if (path === "/apps" || path === "/apps.html") return serveFile(res, UI_DIR, "apps.html", token, path);
       if (path === "/keys" || path === "/keys.html") return serveFile(res, UI_DIR, "keys.html", token, path);
-      if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token);
+      if (path === "/forge" || path === "/forge.html") return serveFile(res, UI_DIR, "forge.html", token, path);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.
       if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path);
