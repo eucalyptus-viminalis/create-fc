@@ -14,3 +14,4 @@ social-preview:
 fameboy-og:
 	bash scripts/capture_social_preview.sh assets/fameboy-og.html client/ui/og.png "$(SOCIAL_VIEWPORT)"
 	bash scripts/capture_social_preview.sh assets/fameboy-og.html client/ui/og-demo.createfc.org.png "$(SOCIAL_VIEWPORT)" demo
+	bash scripts/capture_social_preview.sh assets/forge-og.html client/ui/og-forge.png "$(SOCIAL_VIEWPORT)"

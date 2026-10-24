@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1200">
+  <title>link forge link preview</title>
+  <!-- The link preview for fameboy's /forge page (client/ui/og-forge.png): the anvil mid-strike,
+       "link forge", and a Farcaster link turned into a fameboy one. Same frame, greys and grain as
+       assets/fameboy-og.html. Render: make fameboy-og -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root { --g0: #dcdcd2; --g1: #a6a69d; --g2: #57574f; --g3: #1c1c1a; --fc: #8a63d2; --safe: 48px; --c: 15px;
+      --px: "Silkscreen", monospace; --vt: "VT323", monospace; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1200px; height: 630px; overflow: hidden; }
+    body { background: var(--g0); color: var(--g3); font-family: var(--vt); -webkit-font-smoothing: antialiased; }
+    .card { position: relative; width: 1200px; height: 630px; overflow: hidden; border: 14px solid var(--g3); }
+    /* the client's grain and pixel grid */
+    .card::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: .32; mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .card::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+      background: repeating-linear-gradient(0deg, rgb(0 0 0 / .045) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgb(0 0 0 / .03) 0 1px, transparent 1px 3px); }
+
+    .main { position: absolute; left: var(--safe); right: var(--safe); top: 34px; height: 440px; display: flex; align-items: center; gap: 40px; }
+
+    /* the anvil scene from client/ui/forge.css, on a grid of --c cells, at the moment the hammer lands */
+    .scene { position: relative; flex: none; width: calc(var(--c) * 26); height: calc(var(--c) * 26); filter: drop-shadow(8px 10px 0 rgb(28 28 26 / .16)); }
+    .scene::after { content: ""; position: absolute; left: calc(var(--c) * 2); right: calc(var(--c) * 2); bottom: calc(var(--c) * -1); height: var(--c);
+      background: repeating-linear-gradient(90deg, var(--g1) 0 var(--c), transparent var(--c) calc(var(--c) * 2)); }
+    .anvil { position: absolute; left: calc(var(--c) * 5); bottom: 0; width: calc(var(--c) * 16); height: calc(var(--c) * 9); fill: var(--g3); }
+    .ingot { position: absolute; left: calc(var(--c) * 9.75); top: calc(var(--c) * 16); width: calc(var(--c) * 5.5); height: var(--c);
+      background: color-mix(in srgb, var(--fc) 80%, var(--g3)); }
+    .hammer { position: absolute; left: calc(var(--c) * 15); top: calc(var(--c) * 1); width: calc(var(--c) * 10); height: calc(var(--c) * 10);
+      transform-origin: 50% 100%; transform: rotate(-62deg); fill: var(--g3); }
+    .sparks { position: absolute; left: calc(var(--c) * 12.5); top: calc(var(--c) * 16); }
+    .sparks i { position: absolute; width: var(--s); height: var(--s); background: var(--g3); transform: translate(var(--dx), var(--dy)); }
+    .sparks i:nth-child(3n) { background: var(--fc); }
+
+    .text { min-width: 0; flex: 1; }
+    .word { font-family: var(--px); -webkit-font-smoothing: none; font-size: 96px; line-height: .9; letter-spacing: -.01em; }
+    .head { font-size: 44px; line-height: 1; margin-top: 22px; }
+    .head .blink { color: var(--fc); }
+
+    /* in and out: a Farcaster link goes in purple, a fameboy link comes out in ink */
+    .swap { margin-top: 34px; display: grid; gap: 10px; font-size: 34px; line-height: 1; }
+    .swap .row { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+    .swap .tag { flex: none; width: 62px; text-align: center; font: 18px/1 var(--px); -webkit-font-smoothing: none; padding: 6px 0 5px; }
+    .swap .in .tag { color: var(--g3); border: 3px solid var(--g3); }
+    .swap .out .tag { background: var(--g3); color: var(--g0); border: 3px solid var(--g3); }
+    .swap .in .host { color: var(--fc); }
+    .swap .in .url { color: var(--g2); }
+    .swap .out .url { border: 3px dashed var(--g2); padding: 6px 10px 5px; margin: -9px 0 -8px -3px; }
+    .swap .path { color: var(--g2); }
+
+    .credit { position: absolute; left: var(--safe); right: var(--safe); bottom: 44px; padding-top: 26px; border-top: 3px dashed var(--g1);
+      display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .credit span { font-size: 36px; line-height: 1; color: var(--g2); }
+    .credit .by { display: flex; align-items: center; gap: 18px; }
+    .credit img { height: 44px; width: auto; display: block; }
+    .credit .tool { display: flex; align-items: center; gap: 12px; }
+    .credit .tool img { height: 40px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="main">
+      <div class="scene" aria-hidden="true">
+        <!-- kit.js's 10x10 hammer -->
+        <svg class="hammer" viewBox="0 0 10 10" shape-rendering="crispEdges"><rect x="0" y="0" width="3" height="1"/><rect x="0" y="1" width="9" height="1"/><rect x="0" y="2" width="10" height="1"/><rect x="0" y="3" width="9" height="1"/><rect x="0" y="4" width="3" height="1"/><rect x="4" y="4" width="2" height="1"/><rect x="4" y="5" width="2" height="1"/><rect x="4" y="6" width="2" height="1"/><rect x="4" y="7" width="2" height="1"/><rect x="4" y="8" width="2" height="1"/><rect x="4" y="9" width="2" height="1"/></svg>
+        <div class="ingot"></div>
+        <svg class="anvil" viewBox="0 0 16 9" shape-rendering="crispEdges">
+          <rect x="0" y="0" width="15" height="1"/><rect x="2" y="1" width="13" height="1"/><rect x="4" y="2" width="10" height="1"/>
+          <rect x="5" y="3" width="8" height="1"/><rect x="6" y="4" width="6" height="2"/><rect x="5" y="6" width="8" height="1"/><rect x="3" y="7" width="12" height="2"/>
+        </svg>
+        <div class="sparks">
+          <i style="--s:15px;--dx:-120px;--dy:-90px"></i><i style="--s:10px;--dx:-80px;--dy:-140px"></i><i style="--s:15px;--dx:-150px;--dy:-30px"></i>
+          <i style="--s:10px;--dx:-40px;--dy:-120px"></i><i style="--s:15px;--dx:-100px;--dy:-170px"></i><i style="--s:15px;--dx:-170px;--dy:-110px"></i>
+          <i style="--s:10px;--dx:-60px;--dy:-60px"></i><i style="--s:10px;--dx:-190px;--dy:-60px"></i><i style="--s:15px;--dx:-20px;--dy:-180px"></i>
+        </div>
+      </div>
+      <div class="text">
+        <div class="word">link forge</div>
+        <div class="head">Farcaster link in, fameboy link out<span class="blink">_</span></div>
+        <div class="swap">
+          <div class="row in"><span class="tag">IN</span><span class="url"><span class="host">farcaster.xyz</span><span class="path">/kenny/0xd0c4ec07</span></span></div>
+          <div class="row out"><span class="tag">OUT</span><span class="url">demo.createfc.org<span class="path">/kenny/0xd0c4ec07</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="credit">
+      <span class="tool"><img src="../client/logo/fameboy.svg" alt=""><span>a fameboy tool</span></span>
+      <span class="by"><span>built with</span><img src="../brand/logo/create-fc-lockup.svg" alt="create-fc"></span>
+    </div>
+  </div>
+</body>
+</html>
