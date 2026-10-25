@@ -1,6 +1,6 @@
 # Host fameboy for others
 
-Most people will never run their own client. With one command, your node can host fameboy for them: they open a web address, approve on their phone, and use Farcaster through your node. Nothing to install.
+Most people will never run their own client. With one command, your node can host fameboy for them: they open a web address, sign in with their phone or their seed phrase, and use Farcaster through your node. Nothing to install.
 
 This page covers turning it on, the address it gets, who can sign in, and what the people using it trust you with.
 
@@ -48,15 +48,28 @@ It checks the domain points at your server before it switches. `fc-node client s
 
 ## Who can sign in
 
-Anyone, by default. People open the address, scan a code with their phone and approve in the Farcaster app. To limit it to people you invite:
+Anyone, by default. People open the address and pick a way in:
+
+- **Approve on your phone:** scan a code and approve in the Farcaster app. Needs the app account.
+- **Use your seed phrase:** type it on the page. The page signs a new key in their browser, and the phrase never reaches your server ([ADR 006](https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/adr/006-hosted-seed-phrase-sign-in.md)). For people without the Farcaster app. It works without an app account too.
+
+To limit it to people you invite:
 
 ```bash
 ssh root@<ip> fc-node signin invite
 ```
 
-Then make a code for each person with `fc-node invite <name>`, as in [Share your node](./share-your-node#_3-choose-who-can-sign-in). `fc-node signin open` lets anyone in again. People already signed in stay signed in either way.
+Then make a code for each person with `fc-node invite <name>`, as in [Share your node](./share-your-node#_3-choose-who-can-sign-in). Both ways in need the code then. `fc-node signin open` lets anyone in again. People already signed in stay signed in either way.
 
-Open sign-in can't cost you money or touch anyone's account. Its risk is your app's reputation: every cast made through your copy says "via" your app account, so a spammer signing in would put your app's name on their spam. If that happens, switch to invite-only.
+To offer phone sign-in only:
+
+```bash
+ssh root@<ip> fc-node signin phrase off
+```
+
+`fc-node signin phrase on` brings seed phrase sign-in back.
+
+Open sign-in can't cost you money or touch anyone's account. Its risk is your app's reputation: every cast made through a phone sign-in says "via" your app account, so a spammer signing in would put your app's name on their spam. If that happens, switch to invite-only. Casts from a seed phrase sign-in say "via" the person's own account instead.
 
 ## What people trust you with
 
@@ -65,19 +78,19 @@ fameboy is built so a hosted copy holds as little as possible ([ADR 003](https:/
 | | |
 | --- | --- |
 | **Their key** | Stays in their browser. Their browser makes it, and it can't be copied out, even by the page. Your server only ever sees the public half. Every cast, like and follow is signed in their browser. |
-| **Their seed phrase** | Never asked for. A hosted copy has no seed phrase sign-in at all. |
+| **Their seed phrase** | Only if they choose seed phrase sign-in. It stays in their browser: the page uses it to sign one new key, then forgets it. Your server sees only their account's address and the signatures. |
 | **Their cleared and saved casts, last visit** | Stay in their browser too. Your server keeps nothing about the people who use it. |
 | **Who's online** | The companion sees each device's address and when it checks in, in memory only, forgotten 90 seconds after it leaves. |
 | **Their reads** | Come from your node. If it's down or behind, so is their feed. |
-| **The page itself** | This is the real trust: they run the code your server sends. Someone who controls your server could change that code. That's true of every web app, the Farcaster app's website included. |
+| **The page itself** | This is the real trust: they run the code your server sends. Someone who controls your server could change that code. That's true of every web app, the Farcaster app's website included. It matters most for seed phrase sign-in: changed code could steal the phrase, and with it the account. The page warns them before they type it. |
 
 If your server is broken into, the intruder gets your app account (its custody key lives on the server) but no one's key. They could change the page for people who visit after that, so keep the server patched and the root login to your SSH key.
 
 ## What it's like for them
 
-- **Signing in:** scan, approve, done. Their phone may ask them to pay a small onchain fee for the approval.
+- **Signing in:** scan, approve, done. Their phone may ask them to pay a small onchain fee for the approval. Or type their seed phrase: no fee, and no Farcaster app needed. The account needs storage, as every account that has cast does.
 - **One key per browser:** a laptop and a phone each sign in once, and each has its own key.
-- **Signing out:** **sign out** deletes the key from that browser. A key approved on a phone stays valid on Farcaster until they remove it from their connected apps in the Farcaster app.
+- **Signing out:** **sign out** deletes the key from that browser. The key stays valid on Farcaster until they remove it from their connected apps in the Farcaster app, or it goes unused for 30 days (seed phrase sign-in only).
 - **Their cleared and saved casts are per browser.** Clearing a cast on a laptop doesn't clear it on a phone.
 - **Browsers:** recent Chrome, Safari or Firefox. Older ones can't make the key and say so.
 

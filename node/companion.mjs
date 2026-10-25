@@ -8,6 +8,7 @@
 //   POST /v1/presence    "I'm here" from a fameboy, every ~30 s (signed)
 //   GET  /v1/signin      can people sign in here by approving on their phone?
 //   POST /v1/signin      start a phone sign-in for a key (an invite code, if the node asks for one)
+//   POST /v1/signin/phrase   may a hosted fameboy go ahead with a seed phrase sign-in? (ADR 006)
 //   POST /v1/images      upload an image for a cast (signed, people on this node)
 //   DELETE /v1/images/<file>   give an image's space back (signed, its uploader)
 //   GET  /v1/images/usage      how much of your image space you've used (signed)
@@ -26,7 +27,10 @@
 // key is made on their own computer or in their browser: only its public half
 // comes here. Sign-in is open by default, so a hosted fameboy lets anyone in
 // (ADR 003); `fc-node signin invite` makes each request need an invite code
-// from `fc-node invite`. Each address gets 20 tries an hour. A hosted
+// from `fc-node invite`. Each address gets 20 tries an hour. Seed phrase
+// sign-in on a hosted fameboy (ADR 006) never shows this server the phrase,
+// but follows the same invite rule and limit; `fc-node signin phrase off`
+// turns it off. A hosted
 // fameboy on this server names its visitor in x-clearcast-client, which is
 // only believed from this machine.
 //
@@ -55,6 +59,7 @@ const MAX_DEVICES = 5_000;
 const APP_FILE = process.env.APP_ACCOUNT_FILE ?? "/state/app-account.json";
 const INVITES_FILE = process.env.INVITES_FILE ?? "/state/invites";
 const SIGNIN_FILE = process.env.SIGNIN_FILE ?? "/state/signin"; // "open" (the default) or "invite"
+const PHRASE_FILE = process.env.PHRASE_FILE ?? "/state/signin-phrase"; // "off", else on
 const FARCASTER_API = "https://api.farcaster.xyz";
 const IMAGES_DIR = process.env.IMAGES_DIR ?? "/images";
 const LEDGER_FILE = process.env.LEDGER_FILE ?? "/ledger/images.json";
@@ -181,6 +186,23 @@ function inviteOnly() {
   } catch {
     return false;
   }
+}
+
+// Written by `fc-node signin phrase off`. No file means on.
+function phraseOn() {
+  try {
+    return readFileSync(PHRASE_FILE, "utf8").trim() !== "off";
+  } catch {
+    return true;
+  }
+}
+
+// A hosted fameboy asks before it submits a key from a seed phrase sign-in.
+function phraseAllowed(b, ip) {
+  if (!phraseOn()) return [403, "seed phrase sign-in is off on this node"];
+  if (limited(ip)) return [429, "too many sign-ins from here. Try again in an hour."];
+  if (inviteOnly() && !inviteOk(b.invite)) return [403, "that invite code doesn't work on this node"];
+  return [200, { ok: true }];
 }
 
 // Written by `fc-node invite`: one code per line, then a tab and a note.
@@ -431,7 +453,11 @@ createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/v1/signin") {
       const app = appAccount();
-      return send(res, 200, { phone: Boolean(app), appFid: app?.fid ?? null, invite: inviteOnly() });
+      return send(res, 200, { phone: Boolean(app), appFid: app?.fid ?? null, invite: inviteOnly(), phrase: phraseOn() });
+    }
+    if (req.method === "POST" && url.pathname === "/v1/signin/phrase") {
+      const [status, body] = phraseAllowed(await readBody(req), clientOf(req));
+      return send(res, status, body);
     }
     if (req.method === "POST" && url.pathname === "/v1/signin") {
       const [status, body] = await startSignIn(await readBody(req), clientOf(req));
