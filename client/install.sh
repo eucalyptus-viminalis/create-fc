@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<your node>:3381
 #
 # Needs Node.js 22.18 or newer and git. Installs into ~/.fameboy and puts
-# `fameboy` in ~/.local/bin. Run it again to update.
+# `fameboy` in ~/.local/bin. To update later: fameboy update (or run this again).
 set -euo pipefail
 
 REPO="${FC_REPO:-https://github.com/eucalyptus-viminalis/create-fc}"

@@ -8,6 +8,7 @@ import { setUsername } from "./username.ts";
 import { startUi } from "./ui-server.ts";
 import { setUpAppAccount } from "./app-account.ts";
 import { setProfile } from "./profile.ts";
+import { update } from "./update.ts";
 import { loadAppAccount } from "./signin.ts";
 import { createInterface } from "node:readline/promises";
 import { newAccount } from "./new-account.ts";
@@ -23,6 +24,8 @@ Usage:
                                        keys stay in their browsers. Listens on 127.0.0.1;
                                        put a proxy like Caddy in front for https
   fameboy status                     Is the node in sync?
+  fameboy update                     Update fameboy to the newest version. Keeps your
+                                       sign-in and node address
   fameboy new-account [--recovery 0x..] [--dry-run]
                                        Register a new Farcaster account (~$0.20 of ETH
                                        on Optimism), for you or as the app account
@@ -156,6 +159,16 @@ async function main() {
       console.log(`hosted fameboy is listening on 127.0.0.1 for ${url}  (node: ${NODE})`);
       console.log("Each person signs in with their phone or their seed phrase; phrases and keys stay in their browsers. Ctrl-C to stop.");
       return new Promise<void>(() => {});
+    }
+    case "update": {
+      const r = update();
+      if (r.from === r.to) {
+        console.log(`fameboy is up to date (${r.to.slice(0, 7)}).`);
+        break;
+      }
+      console.log(`updated fameboy: ${r.from.slice(0, 7)} → ${r.to.slice(0, 7)}${r.compare ? `\nwhat changed: ${r.compare}` : ""}`);
+      console.log("If fameboy ui is running, stop it (Ctrl-C) and start it again.");
+      break;
     }
     case "login":
       return login(Boolean(values["dry-run"]));
