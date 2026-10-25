@@ -2,7 +2,7 @@
 
 ## Status
 
-**accepted** (2026-10-25). Built in `client/src/phrase-browser.ts` (the browser), `client/src/phrase-signin.ts` (the server) and `client/ui/signin.js`.
+**implemented** (2026-10-25). Live on demo.createfc.org. Built in `client/src/phrase-browser.ts` (the browser), `client/src/phrase-signin.ts` (the server) and `client/ui/signin.js`.
 
 ## Context
 
@@ -67,5 +67,6 @@ The crypto runs in one checked-in browser bundle, `client/ui/vendor/phrase-brows
 
 | Date | Commit | Change |
 | --- | --- | --- |
-| 2026-10-25 | | Created, status proposed |
-| 2026-10-25 | | Accepted and built |
+| 2026-10-25 | e6aeedb | Created, status proposed |
+| 2026-10-25 | e6aeedb | Accepted and built (PR #34) |
+| 2026-10-25 | (this commit) | Implemented: deployed to demo.createfc.org |
