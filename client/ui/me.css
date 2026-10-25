@@ -28,3 +28,47 @@
 .me-pop .k-menu { left: 0; right: auto; min-width: 170px; }
 .me-list .ct-c .inline { margin-top: 10px; }
 .me-quoting { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--g1); color: var(--g2); font-size: 18px; overflow-wrap: anywhere; }
+
+/* your profile: picture on the left, then name, username, fid and bio, each
+   with an edit button (not the fid). Editing opens the row in place. */
+.me-card { margin: 4px 0 18px; }
+.me-prof { display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: start; }
+.me-pic { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.me-pic img, .me-pic .nopic { width: 112px; height: 112px; border: var(--b) solid var(--g3); background: var(--g1); object-fit: cover; display: block; filter: grayscale(1) contrast(1.1); box-sizing: border-box; }
+.me-fields { display: flex; flex-direction: column; min-width: 0; }
+.me-row { display: grid; grid-template-columns: 92px 1fr auto; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 2px dashed var(--g1); font-size: 20px; }
+.me-row:last-child { border-bottom: 0; }
+.me-row.editing { grid-template-columns: 92px 1fr; }
+.me-k { font: 13px var(--px); -webkit-font-smoothing: none; text-transform: lowercase; color: var(--g2); }
+.me-v { min-width: 0; overflow-wrap: anywhere; }
+.me-row .k-btn { font-size: 14px; padding: 4px 8px 3px; }
+.me-lock { white-space: nowrap; }
+.me-v input, .me-v textarea, .me-link input, .me-v input[type=password] { width: 100%; box-sizing: border-box; font: 20px/1.25 var(--vt); color: var(--g3); background: transparent; border: var(--b) solid var(--g3); padding: 6px 8px; outline: none; }
+.me-v textarea { resize: vertical; min-height: 70px; }
+.me-v input:focus, .me-v textarea:focus, .me-link input:focus { box-shadow: 3px 3px 0 var(--g2); }
+.me-v input::placeholder, .me-v textarea::placeholder, .me-link input::placeholder { color: var(--g1); }
+.me-meta { display: flex; gap: 10px; align-items: baseline; margin-top: 4px; }
+.me-left { font-size: 16px; color: var(--g2); }
+.me-left.over { color: var(--g3); font-weight: bold; }
+.me-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.me-err { margin: 8px 0 0; padding: 6px 10px; background: var(--g3); color: var(--g0); font-size: 18px; }
+.me-bad { color: var(--g3); font-weight: bold; }
+.me-status { margin: 6px 0; min-height: 1.2em; }
+.me-at { display: flex; align-items: center; gap: 4px; }
+.me-at span { font-size: 22px; }
+.me-v .warn { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 10px; border: 2px dashed var(--g2); margin: 6px 0 8px; font-size: 18px; }
+.me-v .warn p { margin: 0 0 2px; }
+.me-v .warn .bang { font: 16px var(--px); -webkit-font-smoothing: none; }
+.me-pfp-edit { margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--g1); }
+.me-pfp-edit .me-btns { margin-top: 0; }
+.me-link { display: flex; gap: 8px; margin-top: 6px; }
+.me-link input { flex: 1; min-width: 0; }
+
+@media (max-width: 560px) {
+  .me-prof { grid-template-columns: 1fr; }
+  .me-pic { flex-direction: row; align-items: center; }
+  .me-pic img, .me-pic .nopic { width: 80px; height: 80px; }
+  .me-row, .me-row.editing { grid-template-columns: 1fr auto; }
+  .me-row .me-k { grid-column: 1 / -1; }
+  .me-row.editing .me-v { grid-column: 1 / -1; }
+}

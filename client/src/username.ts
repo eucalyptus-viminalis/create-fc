@@ -17,13 +17,14 @@
 // first gives the current name back (a transfer to fid 0), then claims the
 // new one. If the claim fails after that, it tries to take the old name back.
 
-import { FarcasterNetwork, Message as MessageProto, UserDataType, ViemLocalEip712Signer, makeUserDataAdd, makeUserNameProofClaim } from "@farcaster/core";
-import { bytesToHex } from "viem";
-import { appSigner, loadKey, registerAppKey, type Custody } from "./keys.ts";
+import { FarcasterNetwork, Message as MessageProto, UserDataType, ViemLocalEip712Signer, makeUserDataAdd, makeUserDataAddData, makeUserNameProofClaim } from "@farcaster/core";
+import { bytesToHex, type Hex } from "viem";
+import { appSigner, currentCustody, loadKey, registerAppKey, type Author, type Custody } from "./keys.ts";
 import { NodeError, get, post, submitUntil } from "./node.ts";
 import { profile } from "./read.ts";
 import { loadAppAccount, saveAppAccount } from "./signin.ts";
-import { setProfile } from "./profile.ts";
+import { editProfile, setProfile } from "./profile.ts";
+import { build } from "./write.ts";
 import { avatarFor, colorOf } from "../../node/fameboy-name.mjs";
 
 const FNAMES = "https://fnames.farcaster.xyz";
@@ -63,17 +64,24 @@ async function transfer(custody: Custody, name: string, from: number, to: number
   const sig = await new ViemLocalEip712Signer(custody.account).signUserNameProofClaim(claim);
   if (sig.isErr()) throw new NodeError(`couldn't sign the name transfer: ${sig.error.message}`);
   if (dryRun) return;
+  await postTransfer(custody.fid, { name, from, to, owner: custody.account.address, timestamp, signature: bytesToHex(sig.value) });
+}
+
+// A transfer signed by the custody key: here, or in the browser (the me page).
+export type SignedTransfer = { name: string; from: number; to: number; owner: Hex; timestamp: number; signature: Hex };
+
+async function postTransfer(fid: number, t: SignedTransfer) {
   const res = await fetch(`${FNAMES}/transfers`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name, from, to, fid: custody.fid, owner: custody.account.address, timestamp, signature: bytesToHex(sig.value) }),
+    body: JSON.stringify({ ...t, fid }),
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     const body = await res.text();
     if (/THROTTLED/.test(body)) {
       // Names can change at most once every 28 days, counted from the fid's last transfer.
-      const last = await fnameGet(`fid=${custody.fid}`).catch(() => undefined);
+      const last = await fnameGet(`fid=${fid}`).catch(() => undefined);
       const t = (last as (Transfer & { timestamp?: number }) | undefined)?.timestamp;
       const when = t ? ` @${last!.username} was claimed on ${new Date(t * 1000).toLocaleString()}, so the next change works from about ${new Date((t + 28 * 86400) * 1000).toLocaleString()}.` : "";
       throw new NodeError(`the fname server says this account changed its name too recently: names can change once every 28 days.${when}`);
@@ -131,13 +139,8 @@ export async function setUsername(name: string, custody: Custody, o: { dryRun?: 
   // 3. wait for the username proof to reach your node, then set the name
   if (!o.dryRun) {
     log("waiting for the username proof to reach your node...");
-    const until = Date.now() + 5 * 60_000;
-    for (;;) {
-      const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name }).catch(() => undefined);
-      if (proof?.fid === custody.fid) break;
-      if (Date.now() > until) throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run fameboy username ${name} again later; it will skip the claim.`);
-      await new Promise((r) => setTimeout(r, 5000));
-    }
+    if (!(await proofArrives(name, custody.fid)))
+      throw new NodeError(`the proof for @${name} hasn't reached your node after 5 minutes. Run fameboy username ${name} again later; it will skip the claim.`);
   }
 
   const msg = await makeUserDataAdd(
@@ -168,4 +171,57 @@ async function matchAvatar(name: string, key: Parameters<typeof setProfile>[0], 
   } catch (e) {
     log(`couldn't set the picture: ${e instanceof Error ? e.message : e}. Set it later: fameboy profile${key.fid === (await loadAppAccount())?.fid ? " --app-account" : ""} --pfp ${avatarFor(name)}`);
   }
+}
+
+async function proofArrives(name: string, fid: number, ms = 5 * 60_000): Promise<boolean> {
+  const until = Date.now() + ms;
+  for (;;) {
+    const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name }).catch(() => undefined);
+    if (proof?.fid === fid) return true;
+    if (Date.now() > until) return false;
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+}
+
+// ------------------------------------------------------- from the me page
+
+// What the me page needs before it asks for a seed phrase: whether the name
+// can be had, the address that must sign for it, and a timestamp to sign.
+export async function renameCheck(name: string, fid: number) {
+  const n = name.trim().toLowerCase().replace(/^@/, "");
+  const { status, current } = await nameStatus(n, fid, true);
+  return { name: n, status, current: current ?? null, custody: await currentCustody(fid), timestamp: Math.floor(Date.now() / 1000) };
+}
+
+// Change the username with transfers the browser signed with the custody key
+// (phrase-browser.ts), so the seed phrase never reaches this server. Then the
+// app key (by) sets USERNAME, as fameboy username does.
+export async function renameSigned(by: Author, b: { name?: unknown; release?: unknown; claim?: unknown }) {
+  const name = String(b.name ?? "");
+  const { status, current } = await nameStatus(name, by.fid, true);
+  const owner = await currentCustody(by.fid);
+  const valid = (t: unknown, n: string, from: number, to: number): t is SignedTransfer => {
+    const x = t as Partial<SignedTransfer> | undefined;
+    return !!x && x.name === n && x.from === from && x.to === to && String(x.owner).toLowerCase() === owner && Number.isInteger(x.timestamp) && /^0x[0-9a-f]{130}$/i.test(String(x.signature));
+  };
+  if (status === "replace") {
+    if (!valid(b.release, current!, by.fid, 0)) throw new NodeError(`giving up @${current} needs a signature from your account's key`);
+    await postTransfer(by.fid, b.release).catch((e) => {
+      throw new NodeError(`${e instanceof Error ? e.message : e} Nothing was changed: you still have @${current}.`);
+    });
+  }
+  if (status !== "already-yours") {
+    if (!valid(b.claim, name, 0, by.fid)) throw new NodeError(`claiming @${name} needs a signature from your account's key`);
+    await postTransfer(by.fid, b.claim).catch((e) => {
+      throw new NodeError(`${e instanceof Error ? e.message : e}${status === "replace" ? ` @${current} was given up, so your profile keeps showing it until a new name is set. Try again later.` : ""}`);
+    });
+  }
+  if (!(await proofArrives(name, by.fid)))
+    throw new NodeError(`Farcaster gave you @${name}, but your node hasn't seen it after 5 minutes. Try again in a while: it will skip straight to setting it.`);
+  const { bytes } = await build(by, makeUserDataAddData({ type: UserDataType.USERNAME, value: name }, { fid: by.fid, network: FarcasterNetwork.MAINNET }));
+  if (!(await submitUntil(bytes, async () => (await profile(by.fid)).username === name)))
+    throw new NodeError(`sent the new username, but your node doesn't show @${name} yet. Reload in a minute.`);
+  // An @fameboy<color> name with no picture yet gets the keycap in its colour.
+  if (colorOf(name) && !(await profile(by.fid)).pfp) await editProfile(by, { pfp: avatarFor(name) }).catch(() => {});
+  return profile(by.fid);
 }

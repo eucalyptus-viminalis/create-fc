@@ -56,6 +56,8 @@ A bar along the bottom switches between views, by click or number key: **1** hom
 
 ![The requests panel open over the apps page: 1,313 calls to the node across 5 routes, castsByFid called 1,043 times, and signersByFid expanded into single requests, each with a copy curl button.](/tutorial/fameboy-requests.png)
 
+**Me.** Your profile at the top: picture, display name, username, fid and bio, each with an edit button except the fid, which never changes. A new picture can be uploaded to your node or linked. Below it, your own casts and replies.
+
 **Requests.** The tab above the bottom bar, on every page, opens every call the page made to your node, grouped by route. Each one has a copy curl button, so you can run it yourself and get the same answer.
 
 ## Reading from the terminal
@@ -119,7 +121,7 @@ A seed phrase is the master key to an account. Whoever has it can post as you, m
 
 ## A username
 
-`fameboy username alice` claims a name and sets it. It's the one step that uses a service other than your node: the fname server at `fnames.farcaster.xyz`, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.
+`fameboy username alice` claims a name and sets it. The **me** page does the same from the browser: it asks for your seed phrase, signs the claim with it in the page, and forgets it. It's the one step that uses a service other than your node: the fname server at `fnames.farcaster.xyz`, run by Farcaster, free, no key. Your custody key signs the claim, the fname server countersigns, the proof reaches the network and then your node, and only then will the node accept a message setting your username.
 
 ## Filtering by the app that posted
 

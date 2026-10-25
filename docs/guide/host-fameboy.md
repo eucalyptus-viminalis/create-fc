@@ -78,7 +78,7 @@ fameboy is built so a hosted copy holds as little as possible ([ADR 003](https:/
 | | |
 | --- | --- |
 | **Their key** | Stays in their browser. Their browser makes it, and it can't be copied out, even by the page. Your server only ever sees the public half. Every cast, like and follow is signed in their browser. |
-| **Their seed phrase** | Only if they choose seed phrase sign-in. It stays in their browser: the page uses it to sign one new key, then forgets it. Your server sees only their account's address and the signatures. |
+| **Their seed phrase** | Only if they choose seed phrase sign-in, or change their username on the **me** page. It stays in their browser: the page uses it to sign, then forgets it. Your server sees only their account's address and the signatures. |
 | **Their cleared and saved casts, last visit** | Stay in their browser too. Your server keeps nothing about the people who use it. |
 | **Who's online** | The companion sees each device's address and when it checks in, in memory only, forgotten 90 seconds after it leaves. |
 | **Their reads** | Come from your node. If it's down or behind, so is their feed. |

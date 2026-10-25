@@ -50,6 +50,10 @@ The crypto runs in one checked-in browser bundle, `client/ui/vendor/phrase-brows
 
 `fameboy ui` on your own computer is unchanged.
 
+### Later: changing your username (2026-10-25)
+
+The me page edits the profile: picture, display name and bio are messages the app key signs, so they need no phrase. A username also needs a name from Farcaster's fname server, which only the custody key can claim. The me page asks for the phrase for that alone, the same way: the browser derives the custody key, checks it owns the account (it must match the address the server names), and signs the fname transfers itself (`signName`, `custodyFor` in `phrase-browser.ts`). The server only relays the signed transfers to the fname server, then sets the username with the app key. The operator switch covers it too: with `fc-node signin phrase off`, the me page says to change the username in the Farcaster app.
+
 ## Consequences
 
 - People without the Farcaster app can sign in to a hosted copy. That fills the gap ADR 005 pointed out for hosted sign-in.
@@ -69,4 +73,5 @@ The crypto runs in one checked-in browser bundle, `client/ui/vendor/phrase-brows
 | --- | --- | --- |
 | 2026-10-25 | e6aeedb | Created, status proposed |
 | 2026-10-25 | e6aeedb | Accepted and built (PR #34) |
-| 2026-10-25 | (this commit) | Implemented: deployed to demo.createfc.org |
+| 2026-10-25 | 3e3eb84 | Implemented: deployed to demo.createfc.org |
+| 2026-10-25 | (this commit) | Username changes on the me page use the same in-browser signing |

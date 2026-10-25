@@ -22,6 +22,8 @@ import { Conversation, answer, browserAuthor } from "./remote-sign.ts";
 import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
 import { cast, deleteCast, follow, react } from "./write.ts";
 import { legacyState } from "./legacy.ts";
+import { editProfile } from "./profile.ts";
+import { renameCheck, renameSigned } from "./username.ts";
 import { finishPhraseKey, phraseAccount, preparePhraseKey, type PrepareRequest } from "./phrase-signin.ts";
 import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, setDeviceLabel, sinceLastVisit } from "./home.ts";
@@ -115,14 +117,20 @@ async function castOgImage(fid: string, hash: string): Promise<Uint8Array> {
 // ------------------------------------------------------------ data shaping
 
 const profiles = new Map<number, Promise<Profile>>();
+// Kept 10 minutes, so names and pictures people change show up. Your own
+// edits (the me page) replace yours at once.
+const profileAt = new Map<number, number>();
 const profileOf = (fid: number) => {
   let p = profiles.get(fid);
-  if (!p) {
+  if (!p || Date.now() - (profileAt.get(fid) ?? 0) > 10 * 60_000) {
     p = profile(fid).catch(() => ({ fid }));
     profiles.set(fid, p);
+    profileAt.set(fid, Date.now());
+    if (profiles.size > 50_000) profiles.clear(), profileAt.clear();
   }
   return p;
 };
+const freshProfile = (p: Profile) => (profiles.set(p.fid, Promise.resolve(p)), profileAt.set(p.fid, Date.now()), p);
 
 type CastView = {
   hash: string;
@@ -417,6 +425,25 @@ const routes: Record<string, Handler> = {
     const key = await loadKey().catch(() => undefined);
     if (!key) return null;
     return { ...(await profileOf(key.fid)), scopes: key.scopes, publicKey: key.publicKey };
+  },
+  // ---- your profile, edited on the me page
+  // What can be changed here: the username needs the seed phrase, typed on
+  // the page (phrase-browser.ts), which a hosted node's owner can turn off.
+  "GET /api/profile/edit": async () => {
+    await myFid();
+    return { rename: LOCAL_ONLY || (await nodeSignInOptions())?.phrase === true };
+  },
+  // Display name, picture URL and bio. Each changed one is a USER_DATA_ADD.
+  "POST /api/profile": async (_q, b) => {
+    const pick = (k: string) => (typeof b[k] === "string" ? (b[k] as string).trim() : undefined);
+    const r = await editProfile(await author(), { display: pick("display"), pfp: pick("pfp"), bio: pick("bio") });
+    return { changed: r.changed, profile: freshProfile(r.profile) };
+  },
+  "GET /api/username/check": async (q) => renameCheck(q.get("name") ?? "", await myFid()),
+  // Transfers the browser signed with the custody key; the phrase stays there.
+  "POST /api/username": async (_q, b) => {
+    if (!LOCAL_ONLY && (await nodeSignInOptions())?.phrase !== true) throw new NodeError("this fameboy doesn't take seed phrases. Change your username in the Farcaster app.");
+    return freshProfile(await renameSigned(await author(), b));
   },
   "GET /api/feed": async (q) => {
     const fid = await myFid();

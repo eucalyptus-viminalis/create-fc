@@ -12,6 +12,8 @@ import {
   GASLESS_KEY_ADD_TYPE,
   GASLESS_KEY_EIP_712_DOMAIN,
   GASLESS_SIGNED_KEY_REQUEST_TYPE,
+  eip712,
+  makeUserNameProofClaim,
   Message as MessageProto,
   NobleEd25519Signer,
   SignatureScheme,
@@ -20,7 +22,7 @@ import {
   makeKeyAddBody,
   makeMessageWithSignature,
 } from "@farcaster/core";
-import { GASLESS_DOMAIN, KEY_ADD_TYPES, KEY_REQUEST_TYPES, custody, normalize, check } from "../src/phrase-browser.ts";
+import { GASLESS_DOMAIN, KEY_ADD_TYPES, KEY_REQUEST_TYPES, NAME_DOMAIN, NAME_TYPES, custody, custodyFor, normalize, check } from "../src/phrase-browser.ts";
 import { SCOPES, TTL, validate } from "../src/keys.ts";
 import { keyAddData } from "../src/phrase-signin.ts";
 
@@ -83,4 +85,18 @@ test("builds a KEY_ADD that passes the node's stateless checks", { skip: !online
   const signature = (await app.signMessageHash(hash))._unsafeUnwrap();
   const m = (await makeMessageWithSignature(data, { signature, signatureScheme: SignatureScheme.ED25519, signer: Buffer.from(key.slice(2), "hex") }))._unsafeUnwrap();
   assert.equal((await validate(MessageProto.encode(m).finish())).valid, true);
+});
+
+test("signs username claims exactly as fameboy username does", async () => {
+  assert.deepEqual(NAME_DOMAIN, eip712.USERNAME_PROOF_EIP_712_TYPES.domain);
+  assert.deepEqual(NAME_TYPES, eip712.USERNAME_PROOF_EIP_712_TYPES.types);
+  const account = mnemonicToAccount(HARDHAT, { addressIndex: 2 });
+  const timestamp = Math.floor(Date.now() / 1000);
+  const want = (await new ViemLocalEip712Signer(account).signUserNameProofClaim(makeUserNameProofClaim({ name: "alice", owner: account.address, timestamp })))._unsafeUnwrap();
+  const c = custodyFor(HARDHAT, account.address.toLowerCase());
+  assert.equal(c.path, "m/44'/60'/0'/0/2");
+  assert.equal(await c.signName({ name: "alice", timestamp }), bytesToHex(want));
+  await assert.rejects(c.signName({ name: "-alice", timestamp }), /valid username/);
+  await assert.rejects(c.signName({ name: "alice", timestamp: timestamp - 3 * 86_400 }), /timestamp/);
+  assert.throws(() => custodyFor(HARDHAT, "0x000000000000000000000000000000000000dead"), /isn't the one/);
 });

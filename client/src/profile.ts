@@ -3,10 +3,11 @@
 // and onchain keys can sign anything). The picture is a URL: Farcaster stores
 // the link, not the image.
 
-import { FarcasterNetwork, Message as MessageProto, UserDataType, makeUserDataAdd } from "@farcaster/core";
-import { appSigner, type AppKey } from "./keys.ts";
+import { FarcasterNetwork, Message as MessageProto, UserDataType, makeUserDataAdd, makeUserDataAddData } from "@farcaster/core";
+import { appSigner, type AppKey, type Author } from "./keys.ts";
 import { NodeError, submitUntil } from "./node.ts";
 import { profile } from "./read.ts";
+import { build } from "./write.ts";
 
 export type ProfileFields = { display?: string; pfp?: string; bio?: string };
 
@@ -37,4 +38,24 @@ export async function setProfile(key: AppKey, fields: ProfileFields, log: (s: st
     const ok = await submitUntil(MessageProto.encode(msg.value).finish(), async () => (await profile(key.fid))[k] === value);
     log(ok ? `${FIELDS[k].what} set` : `sent the ${FIELDS[k].what}, but your node doesn't show it yet`);
   }
+}
+
+// The same, signed by any Author: the key file here, or a hosted fameboy's
+// browser (remote-sign.ts). Used by the me page. An empty value clears the field.
+export async function editProfile(by: Author, fields: ProfileFields) {
+  checkProfile(fields);
+  const current = await profile(by.fid);
+  const changed: (keyof ProfileFields)[] = [];
+  for (const [k, value] of Object.entries(fields) as [keyof ProfileFields, string | undefined][]) {
+    if (value === undefined || (current[k] ?? "") === value) continue;
+    const { bytes } = await build(by, makeUserDataAddData({ type: FIELDS[k].type, value }, { fid: by.fid, network: FarcasterNetwork.MAINNET }));
+    const landed = await submitUntil(bytes, async () => ((await profile(by.fid))[k] ?? "") === value).catch((e) => {
+      // A key approved without USER_DATA_ADD (older fameboy logins) is refused here.
+      if (/scope|not authorized|invalid signer/i.test(String(e))) throw new NodeError("this app key can't edit your profile. Sign out, then sign in again for one that can.");
+      throw e;
+    });
+    if (!landed) throw new NodeError(`sent the new ${FIELDS[k].what}, but your node doesn't show it yet. Reload in a minute.`);
+    changed.push(k);
+  }
+  return { changed, profile: await profile(by.fid) };
 }

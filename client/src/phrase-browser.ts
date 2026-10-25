@@ -1,5 +1,5 @@
-// Seed phrase sign-in on a hosted fameboy: the part that runs in the browser
-// (ADR 006). Built into ui/vendor/phrase-browser.js by `pnpm build:browser`,
+// Seed phrase sign-in on a hosted fameboy, and username changes on the me
+// page: the part that runs in the browser (ADR 006). Built into ui/vendor/phrase-browser.js by `pnpm build:browser`,
 // which exposes it as window.phraseBrowser.
 //
 // The phrase and the custody key it unlocks stay inside this module. The page
@@ -70,7 +70,21 @@ export type Custody = {
   // Both signatures for adding `key` (this browser's app key) to `fid`. The
   // account names itself as the app asking for the key, as fameboy login does.
   sign(o: { fid: number; key: string; nonce: number; deadline: number }): Promise<{ keyAdd: Hex; request: Hex }>;
+  // A username transfer for the fname server: "give <name> to this address"
+  // (a claim) or, for the name held now, giving it back. Same signature.
+  signName(o: { name: string; timestamp: number }): Promise<Hex>;
 };
+
+// Farcaster's username proofs (EIP_712_USERNAME_* in @farcaster/core; a test checks they match).
+export const NAME_DOMAIN = { name: "Farcaster name verification", version: "1", chainId: 1, verifyingContract: "0xe3be01d99baa8db9905b33a3ca391238234b79d1" } as const;
+export const NAME_TYPES = {
+  UserNameProof: [
+    { name: "name", type: "string" },
+    { name: "timestamp", type: "uint256" },
+    { name: "owner", type: "address" },
+  ],
+} as const;
+const FNAME = /^[a-z0-9][a-z0-9-]{0,15}$/;
 
 // The custody account at m/44'/60'/0'/0/<index>.
 export function custody(rawPhrase: string, index: number): Custody {
@@ -104,5 +118,22 @@ export function custody(rawPhrase: string, index: number): Custody {
       });
       return { keyAdd, request };
     },
+    async signName({ name, timestamp }) {
+      if (!FNAME.test(name)) throw new Error(`"${name}" isn't a valid username`);
+      // Unix seconds from the server's clock; allow a day for this one's.
+      if (!Number.isInteger(timestamp) || Math.abs(timestamp - Date.now() / 1000) > 86_400) throw new Error("bad timestamp");
+      return account.signTypedData({ domain: NAME_DOMAIN, types: NAME_TYPES, primaryType: "UserNameProof", message: { name, timestamp: BigInt(timestamp), owner: account.address } });
+    },
   };
+}
+
+// The custody account among m/44'/60'/0'/0/0-9 whose address is `address`,
+// derived here without asking anyone. Throws if the phrase doesn't own it.
+export function custodyFor(rawPhrase: string, address: string): Custody {
+  const want = address.toLowerCase();
+  for (let i = 0; i < MAX_INDEX; i++) {
+    const c = custody(rawPhrase, i);
+    if (c.address.toLowerCase() === want) return c;
+  }
+  throw new Error("this phrase isn't the one for this account");
 }
