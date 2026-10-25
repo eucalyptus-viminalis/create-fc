@@ -2,7 +2,9 @@
 // (GET /api/signin/options):
 //   - approve on your phone: with this computer's own app account, or the
 //     node's (fc-companion), which needs an invite code from the node's owner
-//   - your seed phrase: only while fameboy listens on this computer alone
+//   - your seed phrase: on this computer, the local server signs with it; on
+//     a hosted fameboy (browserPhrase), this page signs with it and the
+//     server never sees it (ADR 006)
 //   - a terminal, and making an account: only on your own computer
 // On a hosted fameboy (browser: true) this browser makes the app key and
 // keeps it (mine.key); only its public half goes to the server.
@@ -57,6 +59,10 @@ function waysFrom(o) {
         : ["This node can't vouch for keys yet.", "One command turns this on."],
     },
   ];
+  // Hosted: the phrase stays in this browser. Only use a copy you trust.
+  if (o.browserPhrase) {
+    ways.push({ id: "phrase", name: "use your seed phrase", tag: "stays in this browser", desc: ["Type your phrase on this page.", "It never leaves this browser.", "Only do this on sites you trust."] });
+  }
   if (o.phrase) {
     ways.push(
       { id: "phrase", name: "use your seed phrase", tag: "stays on this computer", desc: ["Type your phrase on this page.", "Your phrase never leaves this computer.", "fameboy signs one key, then forgets it."] },
@@ -74,7 +80,7 @@ function choose() {
   const menu = ways
     .map((w, i) => `<button class="opt"${i === S.sel ? " aria-current" : ""} data-i="${i}"><span class="cur">▶</span><span class="name">${w.name}</span>${w.tag ? `<span class="tag">${w.tag}</span>` : "<span></span>"}<span class="desc">${w.desc.map((d) => `<p>${d}</p>`).join("")}</span></button>`)
     .join("");
-  const hosted = S.opts.phrase ? "" : `<p class="dim" style="margin-top:18px">Someone else runs this fameboy. So it never asks for your phrase.</p>`;
+  const hosted = S.opts.phrase || S.opts.browserPhrase ? "" : `<p class="dim" style="margin-top:18px">Someone else runs this fameboy. So it never asks for your phrase.</p>`;
   show(
     head() + intro + `<section class="tile"><h2><span>${ways.length > 1 ? "choose a way" : "one way in"}</span><span>${ways.length > 1 ? `${ways.length} ways` : "shared fameboy"}</span></h2><div>${menu}</div></section>` + hosted,
     `<span><kbd>↑</kbd><kbd>↓</kbd> choose</span><span><kbd>A</kbd>/<kbd>↵</kbd> go</span><a class="dim" href="/">back home</a>`,
@@ -95,7 +101,7 @@ function open() {
   sfx.open();
   const id = S.ways[S.sel].id;
   if (id === "phone") return S.opts.app ? phoneStart() : S.opts.node?.phone ? (S.opts.node.inviteRequired ? invite() : phoneStart()) : setup();
-  if (id === "phrase") return phrase();
+  if (id === "phrase") return S.opts.browserPhrase && S.opts.node?.inviteRequired && !S.typedInvite ? invite(undefined, "phrase") : phrase();
   if (id === "terminal") return terminal("use a terminal", "fameboy login", ["Run this in your own terminal.", "It asks for your seed phrase there."]);
   if (id === "new") return terminal("make an account", "fameboy new-account", ["Run this in your own terminal.", "It costs about $0.20 of ETH.", "Then sign in here."]);
 }
@@ -116,10 +122,11 @@ function setup() {
   keyHandler = backKeys;
 }
 
-function invite(error) {
+// then: which way asked for the code, "phone" or "phrase".
+function invite(error, then = "phone") {
   S.screen = "invite";
   show(
-    head("approve on your phone") +
+    head(then === "phrase" ? "use your seed phrase" : "approve on your phone") +
       tile("invite code", "from a friend", `
         <p>Got a code from a friend? Pop it in.</p>
         <p class="dim">Codes keep this node for friends only. ${kit.ext(`${DOCS}/guide/share-your-node#why-codes`, "Why?")}</p>
@@ -134,7 +141,7 @@ function invite(error) {
     const code = $("#invite-input").value.trim();
     if (!code) return;
     S.typedInvite = code;
-    phoneStart(code);
+    then === "phrase" ? phrase() : phoneStart(code);
   });
   keyHandler = backKeys;
 }
@@ -207,23 +214,27 @@ const PHRASE_STEPS = ["Find your account", "Check your storage", "Sign a new key
 
 function phrase(error) {
   S.screen = "phrase"; S.run++;
+  const browser = S.opts.browserPhrase;
+  const warning = browser
+    ? `<div class="warn"><span class="bang">!</span><div><p>Whoever holds a phrase owns the account.</p><p>Whoever runs this site serves this page.</p><p>Trust them? Go ahead. Unsure? Use your phone.</p></div></div>`
+    : `<div class="warn"><span class="bang">!</span><div><p>Whoever holds a phrase owns the account.</p></div></div>`;
   show(
     head("use your seed phrase") +
-      tile("type your seed phrase", "stays on this computer", `
-        <p>fameboy signs one key, then forgets it.</p>
-        <p class="dim">It saves and sends nothing else.</p>
+      tile("type your seed phrase", browser ? "stays in this browser" : "stays on this computer", `
+        <p>${browser ? "This page signs one key, then forgets it." : "fameboy signs one key, then forgets it."}</p>
+        <p class="dim">${browser ? "The phrase never leaves this browser." : "It saves and sends nothing else."}</p>
         <form class="field" id="phrase-form" autocomplete="off">
           <input type="password" id="phrase-input" autofocus placeholder="12 or 24 words" autocomplete="off" spellcheck="false" aria-label="Seed phrase">
           ${go(error ? "try again" : "sign in", "↵", 'type="submit"')}
         </form>
-        ${error ? `<div class="err">${error.map((l) => `<p>${esc(l)}</p>`).join("")}</div>` : `<div class="warn"><span class="bang">!</span><div><p>Whoever holds a phrase owns the account.</p></div></div>`}`),
+        ${error ? `<div class="err">${error.map((l) => `<p>${esc(l)}</p>`).join("")}</div>` : warning}`),
   );
   $("#phrase-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const input = $("#phrase-input");
     const words = input.value;
     input.value = ""; // the page keeps nothing
-    if (words.trim()) phraseRun(words);
+    if (words.trim()) (browser ? browserPhraseRun : phraseRun)(words);
   });
   keyHandler = backKeys;
 }
@@ -246,6 +257,9 @@ function phraseProgress(lines) {
 
 function phraseError(message) {
   if (/none of the first/.test(message)) return ["No account uses this phrase.", "fameboy checked ten addresses."];
+  if (/too many/.test(message)) return ["Too many tries from here.", "Wait an hour, then try again."];
+  if (/seed phrase sign-in is off|too old for seed phrase/.test(message)) return ["This node turned seed phrases off.", "Sign in with your phone instead."];
+  if (/gasless keys, the maximum/.test(message)) return ["This account has too many keys.", "Remove some in the Farcaster app."];
   if (/invalid|checksum|words|mnemonic|phrase/i.test(message) && !/node/i.test(message)) return ["These words don't form a phrase.", "Check spelling and word order."];
   if (/no storage units/.test(message)) return ["This account has no storage.", "Rent storage, then try again."];
   if (/didn't appear within/.test(message)) return ["This node never saw the key.", "Check that this node is in sync."];
@@ -280,6 +294,82 @@ async function phraseRun(words) {
     if (p.at !== last) { if (last >= 0) sfx.step(); last = p.at; }
     paint(p);
     if (st.done) return done();
+  }
+}
+
+// Hosted (ADR 006): this page does what fameboy login does. The phrase and
+// the account key it unlocks stay in vendor/phrase-browser.js; the server
+// gets an address, two signatures and this browser's new app key.
+let cryptoP;
+const phraseCrypto = () =>
+  (cryptoP ??= new Promise((resolve, reject) => {
+    const el = document.createElement("script");
+    el.src = "/vendor/phrase-browser.js";
+    el.onload = () => (window.phraseBrowser ? resolve(window.phraseBrowser) : reject(new Error("couldn't load the signing code")));
+    el.onerror = () => { cryptoP = undefined; reject(new Error("couldn't load the signing code")); };
+    document.head.append(el);
+  }));
+const hexBytes = (h) => new Uint8Array(h.slice(2).match(/../g).map((b) => parseInt(b, 16)));
+
+async function browserPhraseRun(words) {
+  S.screen = "working";
+  const run = ++S.run;
+  const p = { at: 0, notes: {}, slow: false, tried: 0 };
+  const paint = () =>
+    show(
+      head("use your seed phrase") +
+        tile("signing you in", p.at === 0 ? "searching" : "", `
+          ${steps(PHRASE_STEPS, p.at, p.notes)}
+          ${p.at === 0 && p.slow ? `<div class="bar">${Array.from({ length: 10 }, (_, i) => `<i class="${i < p.tried ? "on" : ""}"></i>`).join("")}</div><p class="dim small">The first address had no account. Checking nine more.</p>` : ""}
+          ${p.at >= 3 ? `<p class="dim small">This page already forgot your phrase.</p>` : p.at === 0 && p.slow ? "" : `<p class="dim small">This can take up to a minute.</p>`}`),
+      `<a class="dim" href="/">back home</a>`,
+    );
+  const step = (at, note) => { if (note) p.notes[p.at] = note; if (at !== p.at) sfx.step(); p.at = at; if (run === S.run) paint(); };
+  paint();
+  keyHandler = null;
+  if (!(await mine.key.supported())) return phrase(["This browser can't make the key.", "Try a recent Chrome, Safari or Firefox."]);
+  try {
+    const pc = await phraseCrypto();
+    // 1. Find the account: m/44'/60'/0'/0/0 first, as most wallets use it.
+    const look = async (i) => {
+      const c = pc.custody(words, i);
+      const a = await api("/api/signin/phrase/account", { address: c.address });
+      p.tried++;
+      if (run === S.run && p.at === 0) paint();
+      return a.fid ? { c, a } : null;
+    };
+    let found = await look(0);
+    if (!found) {
+      p.slow = true; paint();
+      found = (await Promise.all([1, 2, 3, 4, 5, 6, 7, 8, 9].map(look))).find(Boolean);
+    }
+    words = ""; // from here only the one account key is kept, until it signs
+    if (!found) throw new Error("none of the first 10 addresses");
+    let { c, a } = found;
+    step(1, `fid ${a.fid}`);
+    // 2. Storage, and room for one more key.
+    if (!a.storage) throw new Error("no storage units");
+    if (a.full) throw new Error("gasless keys, the maximum");
+    step(2, `${a.storage} ${a.storage === 1 ? "unit" : "units"}`);
+    // 3. A new app key for this browser, approved by the account key.
+    const key = await mine.key.create();
+    const sigs = await c.sign({ fid: a.fid, key, nonce: a.nonce, deadline: a.deadline });
+    const address = c.address;
+    c = found = null;
+    step(3);
+    const prep = await api("/api/signin/phrase/prepare", { address, fid: a.fid, key, nonce: a.nonce, deadline: a.deadline, keyAdd: sigs.keyAdd, request: sigs.request, invite: S.typedInvite ?? "" });
+    // 4. The new key signs the message that adds it. 5. Wait for the node.
+    const sig = await mine.key.signPending(hexBytes(prep.hash));
+    step(4);
+    const r = await api("/api/signin/phrase/finish", { id: prep.id, sig });
+    await mine.key.confirm(r.fid);
+    await mine.key.session();
+    if (run === S.run) return done();
+  } catch (e) {
+    if (run !== S.run) return;
+    sfx.error();
+    if (/invite code doesn't work/.test(e.message)) { S.typedInvite = undefined; return invite(e.message, "phrase"); }
+    return phrase(phraseError(e.message));
   }
 }
 
@@ -344,5 +434,7 @@ document.addEventListener("click", async (e) => {
     return show(head() + tile("can't start", "", `<div class="err"><p>${esc(e.message)}</p></div>`));
   }
   S.ways = waysFrom(S.opts);
+  // No phone sign-in here yet: start on the seed phrase, if offered.
+  if (S.ways[0].tag === "needs setup") S.sel = Math.max(0, S.ways.findIndex((w) => w.id === "phrase"));
   choose();
 })();

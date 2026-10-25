@@ -9,8 +9,10 @@
 #                                  host fameboy here for people who don't run their own:
 #                                  https://<app account's name>.<ip>.sslip.io (fameboy.<ip>… without
 #                                  one), or your own domain
-#   fc-node signin [open|invite]   who can sign in by phone: anyone (open, the default)
+#   fc-node signin [open|invite]   who can sign in: anyone (open, the default)
 #                                  or only people with an invite code
+#   fc-node signin phrase [on|off] whether hosted fameboy offers seed phrase sign-in
+#                                  (on by default; the phrase stays in the browser)
 #   fc-node invite [note]          make an invite code for a friend
 #   fc-node invite list | revoke <code>
 set -uo pipefail
@@ -97,14 +99,23 @@ case "${1:-status}" in
   signin)
     f=/var/lib/fc-companion/signin
     case "${2:-}" in
-      open) rm -f "$f"; echo "Sign-in is open: anyone can sign in by approving on their phone." ;;
+      open) rm -f "$f"; echo "Sign-in is open: anyone can sign in." ;;
+      phrase)
+        p=/var/lib/fc-companion/signin-phrase
+        case "${3:-}" in
+          on) rm -f "$p"; echo "Hosted fameboy offers seed phrase sign-in. The phrase stays in each person's browser." ;;
+          off) printf 'off\n' > "$p"; chown 1000:1000 "$p"; echo "Hosted fameboy no longer offers seed phrase sign-in. People already signed in stay signed in." ;;
+          "") if [ "$(cat "$p" 2>/dev/null)" = off ]; then echo "off: hosted fameboy offers phone sign-in only (fc-node signin phrase on to change)"
+              else echo "on: hosted fameboy offers seed phrase sign-in, done in the browser (fc-node signin phrase off to change)"; fi ;;
+          *) echo "usage: fc-node signin phrase [on|off]"; exit 1 ;;
+        esac ;;
       invite)
         printf 'invite\n' > "$f"; chown 1000:1000 "$f"
         echo "Sign-in needs an invite code now. Make one: fc-node invite"
         echo "People already signed in stay signed in." ;;
       "") if [ "$(cat "$f" 2>/dev/null)" = invite ]; then echo "invite: only people with a code (fc-node invite) can sign in"
-          else echo "open: anyone can sign in by approving on their phone (fc-node signin invite to change)"; fi ;;
-      *) echo "usage: fc-node signin [open|invite]"; exit 1 ;;
+          else echo "open: anyone can sign in (fc-node signin invite to change)"; fi ;;
+      *) echo "usage: fc-node signin [open|invite] | signin phrase [on|off]"; exit 1 ;;
     esac
     ;;
   invite)
@@ -129,5 +140,5 @@ case "${1:-status}" in
         [ -f /var/lib/fc-companion/app-account.json ] || echo "Phone sign-in is off until you run: fc-node app-account" ;;
     esac
     ;;
-  *) echo "usage: fc-node status | logs | app-account [show|remove] | client [domain|sslip|off] | signin [open|invite] | invite [note|list|revoke <code>]"; exit 1 ;;
+  *) echo "usage: fc-node status | logs | app-account [show|remove] | client [domain|sslip|off] | signin [open|invite] | signin phrase [on|off] | invite [note|list|revoke <code>]"; exit 1 ;;
 esac

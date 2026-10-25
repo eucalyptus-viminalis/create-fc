@@ -20,6 +20,8 @@
 // On a hosted fameboy, your app key lives here too:
 //   mine.key.supported()   can this browser make Ed25519 keys?
 //   mine.key.create()      make a key for a sign-in; returns its public half (hex)
+//   mine.key.signPending(bytes)  sign with the key still waiting for approval
+//                          (the KEY_ADD that adds it, in seed phrase sign-in)
 //   mine.key.confirm(fid)  the sign-in was approved: keep that key as yours
 //   mine.key.get()         { fid, publicKey } or null
 //   mine.key.sign(text)    sign with it; returns the signature (hex)
@@ -184,6 +186,11 @@
       const publicKey = hex(await crypto.subtle.exportKey("raw", pair.publicKey));
       await update("key-pending", () => ({ publicKey, privateKey: pair.privateKey }));
       return publicKey;
+    },
+    async signPending(bytes) {
+      const p = await get("key-pending");
+      if (!p?.privateKey) throw new Error("no key is waiting for approval in this browser");
+      return hex(await crypto.subtle.sign({ name: "Ed25519" }, p.privateKey, bytes));
     },
     async confirm(fid) {
       if (!Number.isInteger(fid) || fid <= 0) throw new Error("the sign-in finished without an fid");

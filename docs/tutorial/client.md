@@ -4,7 +4,7 @@
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://<ip>:3381
 ```
 
-You can run this as soon as the node is catching up. [`install.sh`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/install.sh) clones the repo into `~/.fameboy/app`, installs three dependencies (`@farcaster/core`, `viem`, `@scure/bip39`), saves your node's address in `~/.fameboy/config.json`, and puts `fameboy` in `~/.local/bin`. Node.js runs the TypeScript directly, with no build step. To update fameboy later, run the same command again; your sign-in is kept.
+You can run this as soon as the node is catching up. [`install.sh`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/install.sh) clones the repo into `~/.fameboy/app`, installs three dependencies (`@farcaster/core`, `viem`, `@scure/bip39`), saves your node's address in `~/.fameboy/config.json`, and puts `fameboy` in `~/.local/bin`. Node.js runs the TypeScript directly, with no build step. To update fameboy later, run `fameboy update`, or the same command again; your sign-in is kept.
 
 ::: tip There is no npm package
 `npm create fc` runs an unrelated package someone else published in 2022. Install with the command above.
@@ -113,6 +113,7 @@ A seed phrase is the master key to an account. Whoever has it can post as you, m
 
 - **Prefer approving on your phone.** The app shows a request, the Farcaster app approves the key, and the phrase never leaves your phone. In fameboy that's the first sign-in option above.
 - **Read before you paste.** Only give a seed phrase to software from developers you trust, after reading what it does with it. For fameboy that's [`client/src/keys.ts`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/src/keys.ts): held in memory, used for one signature, never written or sent.
+- **On someone else's fameboy,** seed phrase sign-in runs in your browser, and the phrase never reaches their server ([`client/src/phrase-browser.ts`](https://github.com/eucalyptus-viminalis/create-fc/blob/main/client/src/phrase-browser.ts)). But you run the page they serve, so only type it on a copy run by someone you trust.
 - **Not through an AI's shell.** We learned this one live: run through a coding assistant's shell, the account script's output, phrase included, landed in the chat transcript. Run phrase commands in your own terminal.
 - **No account yet?** `fameboy new-account` registers one for about $0.20 of ETH on Optimism and shows its phrase once. Add `--recovery` with an address you control.
 

@@ -29,26 +29,20 @@ import {
   makeKeyRemoveBodySelfRevoke,
 } from "@farcaster/core";
 import { NODE, get, post, submitUntil, NodeError } from "./node.ts";
+import { KEY_SCOPES, KEY_TTL } from "./phrase-browser.ts";
 
 export const KEY_DIR = process.env.FC_HOME ?? join(homedir(), ".fameboy");
 export const KEY_FILE = join(KEY_DIR, "appkey.json");
 
-// The message types our app key may sign. The node rejects anything else
-// signed with it. KEY_ADD and KEY_REMOVE can never be scopes, so a leaked app
-// key can't mint more keys or revoke yours.
-export const SCOPES = [
-  MessageType.CAST_ADD,
-  MessageType.CAST_REMOVE,
-  MessageType.REACTION_ADD,
-  MessageType.REACTION_REMOVE,
-  MessageType.LINK_ADD,
-  MessageType.LINK_REMOVE,
-  MessageType.USER_DATA_ADD, // profile fields: username, display name, bio, pfp
-];
+// The message types our app key may sign (phrase-browser.ts, shared with a
+// hosted fameboy's browsers). The node rejects anything else signed with it.
+// KEY_ADD and KEY_REMOVE can never be scopes, so a leaked app key can't mint
+// more keys or revoke yours.
+export const SCOPES = KEY_SCOPES.map((n) => n as MessageType);
 
 // Sliding expiry: every message the key signs pushes this window forward.
 // 30 days unused and the key dies on its own. The protocol maximum is 90 days.
-export const TTL = 30 * 24 * 60 * 60;
+export const TTL = KEY_TTL;
 
 // How far down the derivation path to look for the custody address. Farcaster
 // apps and most wallets use the first address (index 0), m/44'/60'/0'/0/0.
@@ -128,7 +122,7 @@ type OnChainEvent = {
 
 // Ask your own node which FID an address holds. The node keeps the onchain
 // ID Registry events, so this needs no Ethereum RPC.
-async function fidForAddress(address: string): Promise<number | undefined> {
+export async function fidForAddress(address: string): Promise<number | undefined> {
   try {
     // Fast when the address owns an FID. For one that doesn't, the node
     // scans every ID registry event before saying so: 30-40 s on mainnet.

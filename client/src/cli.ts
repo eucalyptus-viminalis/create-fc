@@ -154,7 +154,7 @@ async function main() {
       if (!values.origin || !/^https?:\/\/[^/]+\/?$/.test(values.origin)) throw new NodeError("fameboy serve needs --origin, the address people open, e.g. --origin https://fameboy.example.com");
       const url = await startUi(Number(values.port ?? 4748), values.port !== undefined, { hosted: true, origin: values.origin });
       console.log(`hosted fameboy is listening on 127.0.0.1 for ${url}  (node: ${NODE})`);
-      console.log("Each person signs in with their phone; keys stay in their browsers. Ctrl-C to stop.");
+      console.log("Each person signs in with their phone or their seed phrase; phrases and keys stay in their browsers. Ctrl-C to stop.");
       return new Promise<void>(() => {});
     }
     case "login":

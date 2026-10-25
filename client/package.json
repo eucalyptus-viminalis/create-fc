@@ -14,11 +14,13 @@
     "fameboy": "node src/cli.ts",
     "check": "tsc --noEmit",
     "test": "node --test \"test/*.test.ts\"",
-    "coverage": "node scripts/api-coverage.ts"
+    "coverage": "node scripts/api-coverage.ts",
+    "build:browser": "esbuild src/phrase-browser.ts --bundle --format=iife --global-name=phraseBrowser --minify --target=es2022 --legal-comments=eof --outfile=ui/vendor/phrase-browser.js"
   },
   "devDependencies": {
     "@types/node": "26.6.5",
     "@types/qrcode": "1.5.5",
+    "esbuild": "0.25.10",
     "typescript": "7.0.2"
   },
   "dependencies": {

@@ -22,6 +22,7 @@ import { Conversation, answer, browserAuthor } from "./remote-sign.ts";
 import { challenge, clearCookie, readSession, sessionCookie, signerActive, startSession, type Session } from "./session.ts";
 import { cast, deleteCast, follow, react } from "./write.ts";
 import { legacyState } from "./legacy.ts";
+import { finishPhraseKey, phraseAccount, preparePhraseKey, type PrepareRequest } from "./phrase-signin.ts";
 import { NoAppAccount, appSignInStatus, browserSignInStatus, loadAppAccount, nodeSignInOptions, phraseSignInStatus, savedInvite, startAppSignIn, startBrowserSignIn, startNodeSignIn, startPhraseSignIn } from "./signin.ts";
 import { checkDevice, companionStatus, conditions, leaveNode, live, nodeOverview, presence, setDeviceLabel, sinceLastVisit } from "./home.ts";
 import { deleteImage, imageUsage, uploadImage } from "./images.ts";
@@ -267,7 +268,8 @@ type Handler = (q: URLSearchParams, body: Record<string, unknown>) => Promise<un
 //           it signs with the key file in ~/.fameboy.
 //   hosted  fameboy serve. Other people use it over the network. Each
 //           person's key stays in their browser and a session cookie says who
-//           they are (session.ts). It never accepts a seed phrase or uses a key file.
+//           they are (session.ts). It never receives a seed phrase or uses a
+//           key file: seed phrase sign-in runs in the browser (ADR 006).
 let LOCAL_ONLY = true;
 let ORIGIN = ""; // where people reach this server; requests must come from here
 let SECURE = false; // https, so cookies get Secure
@@ -441,7 +443,9 @@ const routes: Record<string, Handler> = {
       return {
         app: null,
         node: node ? { phone: node.phone, app: nodeApp ? { fid: nodeApp.fid, username: nodeApp.username } : null, invite: null, inviteRequired: node.invite !== false } : null,
+        // Seed phrase sign-in, done in the browser (ADR 006), unless the node's owner turned it off.
         phrase: false,
+        browserPhrase: node?.phrase === true,
         browser: true,
       };
     }
@@ -485,6 +489,20 @@ const routes: Record<string, Handler> = {
     return { job: startPhraseSignIn(String(b.phrase ?? "")) };
   },
   "GET /api/signin/phrase": async (q) => phraseSignInStatus(q.get("job") ?? ""),
+  // Hosted seed phrase sign-in (ADR 006, phrase-signin.ts). The phrase stays
+  // in the browser; these only see an address, signatures and public data.
+  "POST /api/signin/phrase/account": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer: use /api/signin/phrase");
+    return phraseAccount(String(b.address ?? ""), here().client);
+  },
+  "POST /api/signin/phrase/prepare": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer: use /api/signin/phrase");
+    return preparePhraseKey(b as PrepareRequest, here().client);
+  },
+  "POST /api/signin/phrase/finish": async (_q, b) => {
+    if (LOCAL_ONLY) throw new NodeError("this fameboy runs on your computer: use /api/signin/phrase");
+    return finishPhraseKey(b);
+  },
   // Sign out: revoke the app key on Farcaster when it can revoke itself (keys
   // from a seed phrase sign-in can; keys approved in the Farcaster app can't),
   // then delete it from this computer either way.

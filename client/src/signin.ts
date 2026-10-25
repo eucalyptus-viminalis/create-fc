@@ -127,7 +127,9 @@ export async function startAppSignIn() {
 
 // --- 1b. the node vouches (fc-companion's app account)
 
-export type NodeSignIn = { phone: boolean; appFid: number | null; invite?: boolean } | null; // invite: whether sign-in needs a code
+// invite: whether sign-in needs a code. phrase: whether a hosted fameboy may
+// offer seed phrase sign-in (ADR 006); an older companion doesn't say, so no.
+export type NodeSignIn = { phone: boolean; appFid: number | null; invite?: boolean; phrase?: boolean } | null;
 
 // Can this node's companion start phone sign-ins? null: no companion.
 export async function nodeSignInOptions(): Promise<NodeSignIn> {
