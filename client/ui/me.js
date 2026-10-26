@@ -287,7 +287,7 @@ function card(c) {
         ${kit.button(`${icon(n?.liked ? "heart-on" : "heart")}<span>${num(n, "likes")}</span>`, { disabled: !n, attrs: `data-act="like" data-hash="${c.hash}" title="${n?.liked ? "Unlike" : "Like"}" aria-label="${n?.liked ? "Unlike" : "Like"}"` })}
         ${kit.button(`${icon("share")}<span class="me-word">share</span>`, { attrs: `data-act="share" data-hash="${c.hash}" title="Copy a link to this cast" aria-label="Share: copy a link"` })}
       </div>
-      ${S.compose?.hash === c.hash ? composer(c) : ""}
+      ${S.compose?.hash === c.hash ? replyBox() : ""}
     </div>
   </article>`;
 }
@@ -302,7 +302,7 @@ function recastMenu(c, n) {
 }
 
 // A reply opens in place, under the cast.
-function composer() {
+function replyBox() {
   return `<div class="inline" data-reply-box><textarea placeholder="Reply to your cast" aria-label="Reply">${esc(S.draft)}</textarea>
     <div class="row"><span class="dim small">replying to yourself</span><span class="left">320</span>${kit.button("cast", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div></div>`;
 }

@@ -1,0 +1,63 @@
+/* composer.js: the box you write a cast in, on the post page and in the
+   quote cast window. Builds on home.css (tokens, .dim, .small, beat). */
+
+.cz-editor { position: relative; }
+.cz-text { display: block; width: 100%; box-sizing: border-box; min-height: 168px; resize: vertical; font: 22px/1.25 var(--vt); color: var(--g3); background: transparent; border: var(--b) solid var(--g3); padding: 12px; outline: none; -webkit-font-smoothing: antialiased; }
+.cz-text:focus { box-shadow: 4px 4px 0 var(--g2); }
+.cz-text::placeholder { color: var(--g1); }
+.cz-text[readonly] { opacity: .6; }
+/* the mirror measures where the caret is, for the @ menu: same type as the box */
+.cz-mirror { position: absolute; visibility: hidden; white-space: pre-wrap; overflow-wrap: break-word; font: 22px/1.25 var(--vt); padding: 12px; border: var(--b) solid transparent; top: 0; left: 0; right: 0; box-sizing: border-box; }
+
+/* @ menu */
+.cz-menu { position: absolute; z-index: 20; width: 300px; max-width: 100%; border: var(--b) solid var(--g3); background: var(--g0); box-shadow: 4px 4px 0 var(--g3); display: none; }
+.cz-menu.open { display: block; }
+.cz-menu .hd { font: 16px/1 var(--px); -webkit-font-smoothing: none; background: var(--g3); color: var(--g0); padding: 6px 8px 5px; }
+.cz-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; width: 100%; padding: 6px 8px; border-top: 2px dashed var(--g1); }
+.cz-menu button:first-of-type { border-top: 0; }
+.cz-menu button[aria-selected="true"] { background: var(--g3); color: var(--g0); }
+.cz-menu .av { width: 26px; height: 26px; box-sizing: border-box; background: var(--g1); border: 2px solid var(--g3); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; }
+.cz-menu .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cz-menu .nm span, .cz-menu .rel { color: var(--g2); font-size: 16px; }
+.cz-menu button[aria-selected="true"] .nm span, .cz-menu button[aria-selected="true"] .rel { color: var(--g1); }
+.cz-menu .ft { padding: 6px 8px; font-size: 16px; color: var(--g2); border-top: 2px solid var(--g3); }
+
+/* images */
+.cz-atts { display: flex; gap: 12px; flex-wrap: wrap; }
+.cz-atts:not(:empty) { margin-top: 12px; }
+.cz .att { position: relative; width: 148px; border: var(--b) solid var(--g3); background: var(--g1); }
+.cz .att img { display: block; width: 100%; height: 110px; object-fit: cover; }
+.cz .att .meta { font-size: 16px; padding: 4px 6px; background: var(--g0); border-top: 2px solid var(--g3); display: flex; justify-content: space-between; gap: 6px; }
+.cz .att .x { all: unset; cursor: pointer; position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; text-align: center; background: var(--g3); color: var(--g0); font: 16px/24px var(--px); -webkit-font-smoothing: none; }
+.cz .att .up { position: absolute; left: 0; right: 0; bottom: 30px; height: 8px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; padding: 0 6px; }
+.cz .att .up i { background: var(--g0); opacity: .5; } .cz .att .up i.on { background: var(--g3); opacity: 1; }
+.cz .att.failed img { opacity: .4; }
+.cz-drop { outline: 3px dashed var(--g2); outline-offset: 4px; }
+
+/* toolbar and counter */
+.cz-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.cz-counter { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.cz-cells { display: grid; grid-template-columns: repeat(32, 4px); gap: 2px; height: 16px; }
+.cz-cells i { background: var(--g1); opacity: .45; } .cz-cells i.on { background: var(--g3); opacity: 1; }
+.cz-cells.over i.on { animation: beat .5s steps(2, jump-none) infinite; }
+.cz-left { font: 16px/1 var(--px); -webkit-font-smoothing: none; min-width: 64px; text-align: right; }
+.cz-left.over { background: var(--g3); color: var(--g0); padding: 3px 5px 2px; }
+@media (max-width: 900px) {
+  .cz-counter { margin-left: 0; width: 100%; justify-content: space-between; }
+}
+
+/* link cards (composer.card): in the composer, and small in a preview */
+.cz-link:not(:empty) { margin-top: 12px; }
+.lcard { position: relative; border: var(--b) solid var(--g3); background: var(--g0); }
+.lcard .limg { display: block; width: 100%; aspect-ratio: 1.91 / 1; max-height: 200px; object-fit: cover; border-bottom: 2px solid var(--g3); background: var(--g1); }
+.lcard .limg.wait { animation: beat 1s steps(2, jump-none) infinite; }
+.lcard .lmeta { padding: 8px 10px 10px; }
+.lcard .lsite { color: var(--g2); font-size: 16px; }
+.lcard .ltitle { font-size: 20px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lcard .ldesc { color: var(--g2); font-size: 16px; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lcard .x { all: unset; cursor: pointer; position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; text-align: center; background: var(--g3); color: var(--g0); font: 16px/24px var(--px); -webkit-font-smoothing: none; z-index: 2; }
+.lcard .lbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; height: 8px; padding: 6px 10px 0; }
+.lcard .lbar i { background: var(--g1); opacity: .5; }
+.lcard .lbar i.on { background: var(--g3); opacity: 1; }
+.lcard .lbar i.now { background: var(--g3); animation: beat .6s steps(2, jump-none) infinite; }
+.lcard.mini .limg { aspect-ratio: 2 / 1; max-height: 160px; }

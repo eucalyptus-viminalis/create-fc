@@ -1,18 +1,15 @@
 // fameboy post mode: write a cast, @-mention people, attach up to two images.
-// Images upload to your own node (fc-companion) and the cast links to them.
-// The counter counts bytes, the way Farcaster does: mentions are cut out of
-// the text before it's sent, so they're free.
+// The box you write in is composer.js (the quote cast window uses it too):
+// it counts bytes, looks up mentions, uploads images to your own node
+// (fc-companion) and makes a card for the first link. This page adds what's
+// around it: a preview, what counts, your image space, and drafts.
 
 const { $, esc, api, store, tone, toast, SignedOut } = kit;
-const LIMIT = 320, MAX_EMBEDS = 2, MB = 1024 * 1024;
-const enc = new TextEncoder();
-// A name can hold dots (vitalik.eth) but never ends in one, so "@alice." is @alice.
-const MENTION = /(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi;
-
+const { LIMIT, MAX_EMBEDS, MENTION } = composer;
+const MB = 1024 * 1024;
 
 // ------------------------------------------------------------------ sound
 const sfx = {
-  move: () => tone(880, 0, 0.025, 0.02),
   pick: () => { tone(660, 0, 0.04); tone(990, 0.04, 0.05); },
   add: () => tone(523, 0, 0.05),
   over: () => tone(165, 0, 0.12, 0.04),
@@ -21,15 +18,9 @@ const sfx = {
 };
 
 // ------------------------------------------------------------------ state
-const ta = $("#text");
 const S = {
   me: null,
-  atts: [], // { id, preview, name?, url?, size, progress (0-10), error? }
-  link: null, // the first link in the text: { url, stage (1 reach, 2 read, 3 image), card?, error? }
-  dismissed: new Set(), // links whose card you removed: they stay text only
-  verified: new Map(), // username -> profile; these mentions are free
   usage: null,
-  menu: { open: false, items: [], sel: 0, start: 0, q: "" },
   draftId: null, // the saved draft open in the composer, if any
   held: [], // { names, until }: images an undo can still bring back
   asking: false, // clear or open is asking about an unsaved cast
@@ -38,56 +29,46 @@ const S = {
 // Saved drafts are separate (see "drafts" below).
 const DRAFT = "cc-post-draft";
 
-// ------------------------------------------------------------------ bytes
-function measure(text) {
-  let mentions = 0;
-  const sent = text.replace(MENTION, (m, pre, u) => (S.verified.has(u.toLowerCase()) ? (mentions++, pre) : m));
-  return {
-    bytes: enc.encode(sent).length,
-    mentions,
-    emoji: [...text].filter((ch) => enc.encode(ch).length >= 3).length, // most emoji are 4 bytes, some 3
-    letters: [...text].length,
-  };
-}
+let cz; // the composer (composer.js)
+cz = composer.create($("#editor"), {
+  placeholder: "What's clear to you today?",
+  drop: $("#compose"),
+  // An image stays on the node while a saved draft or an undo still needs it.
+  keeps: (name) => drafts().some((d) => d.atts.some((a) => a.name === name)) || S.held.some((h) => h.until > Date.now() && h.names.includes(name)),
+  onChange: () => cz && paint(),
+  onUsage: (u, err) => {
+    if (err) $("#space").innerHTML = `<p class="dim">${esc(/companion/.test(err.message) ? "This node's companion isn't answering." : err.message)}</p>`;
+    else { S.usage = u; paintSpace(); }
+  },
+});
+const ta = cz.ta;
+const release = (names) => cz.release(names);
 
+// ------------------------------------------------------------------ paint
 function paint() {
-  const t = ta.value, m = measure(t), left = LIMIT - m.bytes, over = left < 0;
-  const on = Math.min(32, Math.ceil((m.bytes / LIMIT) * 32));
-  $("#cells").className = "cells" + (over ? " over" : "");
-  $("#cells").innerHTML = Array.from({ length: 32 }, (_, i) => `<i class="${i < on ? "on" : ""}"></i>`).join("");
-  $("#left").className = "left" + (over ? " over" : "");
-  $("#left").textContent = over ? `${-left} over` : `${left}`;
-  $("#left").title = over ? "Cut some words to cast." : `${left} bytes left`;
-
-  const ready = S.atts.filter((a) => a.url);
-  const used = S.atts.length + (S.link ? 1 : 0);
-  const busy = S.atts.some((a) => !a.url && !a.error);
-  const empty = !t.trim() && !ready.length;
-  const block = over ? "Cut some words first." : empty ? "Write something first." : busy ? "Wait for images to upload." : "";
+  const t = ta.value, m = cz.state(), ready = cz.atts.filter((a) => a.url);
+  const block = m.block;
   $("#cast").setAttribute("aria-disabled", String(Boolean(block)));
   $("#cast").title = block;
-  $("#slots").textContent = `${used} of ${MAX_EMBEDS} embeds`;
-  const noHosting = S.usage && !S.usage.hosting;
-  $("#add-image").setAttribute("aria-disabled", String(used >= MAX_EMBEDS || Boolean(noHosting)));
 
   $("#pv-text").innerHTML = t.trim()
-    ? esc(t).replace(MENTION, (m, pre, u) => (S.verified.has(u.toLowerCase()) ? `${pre}<span class="m">@${u}</span>` : m))
+    ? esc(t).replace(MENTION, (x, pre, u) => (cz.verified.has(u.toLowerCase()) ? `${pre}<span class="m">@${u}</span>` : x))
     : `<span class="dim">Your cast shows up here.</span>`;
-  $("#pv-pics").innerHTML = S.atts.map((a) => `<img src="${esc(a.url ?? a.preview)}" alt="">`).join("");
-  $("#pv-link").innerHTML = S.link?.card ? card(S.link, true) : "";
+  $("#pv-pics").innerHTML = cz.atts.map((a) => `<img src="${esc(a.url ?? a.preview)}" alt="">`).join("");
+  $("#pv-link").innerHTML = cz.link?.card ? composer.card(cz.link, true) : "";
   $("#counts").innerHTML = `
     <tr><td>letters typed</td><td>${m.letters}</td></tr>
     <tr><td>bytes sent</td><td>${m.bytes} of ${LIMIT}</td></tr>
     <tr><td>mentions, free</td><td>${m.mentions}</td></tr>
     <tr><td>emoji, 3 or 4 bytes each</td><td>${m.emoji}</td></tr>
-    <tr><td>embeds${S.link ? ", 1 link" : ""}</td><td>${S.atts.length + (S.link ? 1 : 0)} of ${MAX_EMBEDS}</td></tr>`;
+    <tr><td>embeds${cz.link ? ", 1 link" : ""}</td><td>${cz.atts.length + (cz.link ? 1 : 0)} of ${MAX_EMBEDS}</td></tr>`;
 
   const st = draftState(), saved = findDraft(S.draftId);
   $("#title").textContent = saved ? "draft" : "new cast";
   $("#saved").textContent = st === "saved" ? `draft saved ${since(saved.at)}` : st === "changed" ? "changes not saved" : st === "new" ? "not saved" : "";
   $("#saved").classList.toggle("unsaved", st === "new" || st === "changed");
   $("#save .k-lbl").textContent = st === "changed" ? "save changes" : "save draft";
-  const noSave = busy ? "Wait for images to upload." : empty ? "Write something first." : st === "saved" ? "Already saved." : "";
+  const noSave = m.busy ? "Wait for images to upload." : !t.trim() && !ready.length ? "Write something first." : st === "saved" ? "Already saved." : "";
   $("#save").setAttribute("aria-disabled", String(Boolean(noSave)));
   $("#save").title = noSave;
   const noClear = !touched() ? "Nothing to clear." : "";
@@ -108,261 +89,6 @@ function keepWorkingCopy() {
   }, 300);
 }
 
-// ------------------------------------------------------------------ @ menu
-function caretXY() {
-  const mirror = $("#mirror");
-  mirror.style.width = ta.offsetWidth + "px";
-  mirror.textContent = ta.value.slice(0, ta.selectionStart);
-  const mark = document.createElement("span");
-  mark.textContent = "​";
-  mirror.appendChild(mark);
-  return { x: mark.offsetLeft, y: mark.offsetTop - ta.scrollTop + 28 };
-}
-
-let lookup = 0;
-async function updateMenu() {
-  const before = ta.value.slice(0, ta.selectionStart);
-  const m = before.match(/(^|\s)@([a-z0-9.-]{0,20})$/i);
-  if (!m) return closeMenu();
-  const q = m[2].toLowerCase(), start = ta.selectionStart - m[2].length - 1;
-  const run = ++lookup;
-  let res;
-  try { res = await api(`/api/mentions?q=${encodeURIComponent(q)}`); } catch { return closeMenu(); }
-  if (run !== lookup) return;
-  const items = res.people;
-  S.menu = { open: true, items, sel: q === S.menu.q ? Math.min(S.menu.sel, Math.max(0, items.length - 1)) : 0, start, q };
-  drawMenu(res);
-  // Profiles of the people you follow are still arriving: ask again shortly.
-  if (res.loading) setTimeout(() => { if (S.menu.open && run === lookup) updateMenu(); }, 800);
-}
-function drawMenu(res) {
-  const { items, sel, q } = S.menu;
-  const { x, y } = caretXY();
-  const el = $("#menu");
-  el.style.left = Math.max(0, Math.min(x, ta.offsetWidth - 300)) + "px";
-  el.style.top = y + 6 + "px";
-  el.classList.add("open");
-  const foot = res?.loading ? "Loading people you follow…" : q.length > 1 && !items.some((p) => p.username === q) ? "Type the full name for anyone else." : "↑↓ choose · ↵ or tab to add";
-  el.innerHTML = `<div class="hd">mention</div>` +
-    (items.length
-      ? items.map((p, i) => `<button role="option" aria-selected="${i === sel}" data-i="${i}">${p.pfp ? `<img class="av" src="${esc(p.pfp)}" alt="" referrerpolicy="no-referrer">` : `<span class="av"></span>`}<span class="nm"><b>@${esc(p.username)}</b> <span>${esc(p.display ?? "")}</span></span><span class="rel">${esc(p.relation)}</span></button>`).join("")
-      : `<div class="ft">${q ? "No one you follow matches." : "Start typing a name."}</div>`) +
-    `<div class="ft">${foot}</div>`;
-  el.querySelectorAll("button").forEach((b) => b.addEventListener("mousedown", (e) => { e.preventDefault(); S.menu.sel = +b.dataset.i; pick(); }));
-}
-function closeMenu() { lookup++; S.menu.open = false; $("#menu").classList.remove("open"); }
-function pick() {
-  const p = S.menu.items[S.menu.sel];
-  if (!p) return;
-  const v = ta.value, end = ta.selectionStart;
-  ta.value = v.slice(0, S.menu.start) + "@" + p.username + " " + v.slice(end);
-  const pos = S.menu.start + p.username.length + 2;
-  ta.setSelectionRange(pos, pos);
-  S.verified.set(p.username.toLowerCase(), p);
-  closeMenu(); sfx.pick(); paint(); ta.focus();
-}
-
-// A name typed by hand becomes a mention once this node knows it.
-let checkT;
-function checkTypedMentions() {
-  clearTimeout(checkT);
-  checkT = setTimeout(async () => {
-    const names = [...ta.value.matchAll(MENTION)].map((m) => m[2].toLowerCase()).filter((u) => !S.verified.has(u));
-    for (const u of new Set(names)) {
-      const res = await api(`/api/mentions?q=${encodeURIComponent(u)}`).catch(() => null);
-      const hit = res?.people.find((p) => p.username?.toLowerCase() === u);
-      if (hit) { S.verified.set(u, hit); paint(); }
-    }
-  }, 600);
-}
-
-ta.addEventListener("input", () => { paint(); updateMenu(); checkTypedMentions(); scheduleLink(); });
-ta.addEventListener("click", updateMenu);
-ta.addEventListener("blur", () => setTimeout(closeMenu, 150));
-ta.addEventListener("keydown", (e) => {
-  const mn = S.menu;
-  if (mn.open && mn.items.length) {
-    if (e.key === "ArrowDown") { mn.sel = (mn.sel + 1) % mn.items.length; sfx.move(); drawMenu(); e.preventDefault(); return; }
-    if (e.key === "ArrowUp") { mn.sel = (mn.sel + mn.items.length - 1) % mn.items.length; sfx.move(); drawMenu(); e.preventDefault(); return; }
-    if (e.key === "Enter" || e.key === "Tab") { pick(); e.preventDefault(); return; }
-  }
-  if (mn.open && e.key === "Escape") { closeMenu(); e.preventDefault(); e.stopPropagation(); }
-});
-$("#add-at").addEventListener("click", () => {
-  const p = ta.selectionStart, v = ta.value, pad = p && !/\s$/.test(v.slice(0, p)) ? " " : "";
-  ta.value = v.slice(0, p) + pad + "@" + v.slice(p);
-  ta.focus();
-  ta.setSelectionRange(p + pad.length + 1, p + pad.length + 1);
-  paint(); updateMenu();
-});
-
-// ------------------------------------------------------------------ images
-// Shrink big photos before they leave this computer: 1600 px wide is plenty
-// for a cast, and it keeps your image space for more pictures. GIFs stay as
-// they are, so they keep moving.
-async function shrink(file) {
-  if (file.type === "image/gif" || (file.size < 1.5 * MB && file.type !== "image/heic")) return file;
-  const img = await createImageBitmap(file).catch(() => null);
-  if (!img) return file;
-  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-  const type = file.type === "image/png" ? "image/png" : "image/jpeg";
-  const blob = await new Promise((r) => c.toBlob(r, type, 0.85));
-  return blob && blob.size < file.size ? blob : file;
-}
-
-async function upload(blob, att) {
-  // Uploading needs a presence heartbeat, which names this browser.
-  const device = await mine.device((await kit.me())?.fid);
-  return new Promise((resolve, reject) => {
-    const x = new XMLHttpRequest();
-    x.open("POST", "/api/images");
-    x.setRequestHeader("x-fameboy-token", kit.TOKEN);
-    x.setRequestHeader("x-fameboy-device", device.id);
-    x.setRequestHeader("x-fameboy-status", device.status);
-    x.setRequestHeader("content-type", "application/octet-stream");
-    x.upload.onprogress = (e) => { if (e.lengthComputable) { att.progress = Math.min(9, Math.floor((e.loaded / e.total) * 10)); renderAtts(); } };
-    x.onload = () => {
-      let json = {};
-      try { json = JSON.parse(x.responseText); } catch {}
-      if (x.status !== 200) return reject(new Error(json.error ?? `upload failed (${x.status})`));
-      // Hosted: the upload waits for this browser to sign it (mine.js).
-      json.sign ? mine.key.answer(json).then((j) => resolve(j.data), reject) : resolve(json.data);
-    };
-    x.onerror = () => reject(new Error("upload failed: is fameboy still running?"));
-    x.send(blob);
-  });
-}
-
-async function addFiles(files) {
-  for (const f of files) {
-    if (!/^image\/(png|jpeg|gif|webp)$/.test(f.type)) { toast("Only PNG, JPEG, GIF or WebP."); continue; }
-    if (S.atts.length + (S.link ? 1 : 0) >= MAX_EMBEDS) { sfx.over(); toast(S.link ? "Two embeds max. Remove the link card or an image." : "Two embeds max. Remove one first."); break; }
-    if (S.usage && !S.usage.hosting) { toast("This node doesn't host images yet."); break; }
-    const att = { id: Math.random().toString(36).slice(2), preview: URL.createObjectURL(f), size: f.size, progress: 0 };
-    S.atts.push(att); sfx.add(); renderAtts(); paint();
-    try {
-      const blob = await shrink(f);
-      att.size = blob.size;
-      if (S.usage && blob.size > S.usage.fileCap) throw new Error(`Images max out at ${S.usage.fileCap / MB} MB.`);
-      const r = await upload(blob, att);
-      Object.assign(att, { url: r.url, name: r.name, size: r.size, progress: 10 });
-      S.usage = { ...S.usage, ...r.usage, hosting: true };
-      paintSpace();
-      // Removed while it uploaded: nothing will use it, so give its space back.
-      if (!S.atts.includes(att)) { release([r.name]); continue; }
-    } catch (e) {
-      att.error = e.message;
-      sfx.over();
-      toast(e.message, 3500);
-    }
-    renderAtts(); paint();
-  }
-}
-
-async function removeAtt(id) {
-  const i = S.atts.findIndex((a) => a.id === id);
-  if (i < 0) return;
-  const [a] = S.atts.splice(i, 1);
-  renderAtts(); paint();
-  // Not cast yet: give its space back, unless a saved draft still uses it.
-  if (a.name) release([a.name]);
-}
-
-// Delete images from this node that nothing here uses any more: not the
-// composer, not a saved draft, not something an undo could bring back.
-function inUse(name) {
-  const now = Date.now();
-  return S.atts.some((a) => a.name === name) ||
-    drafts().some((d) => d.atts.some((a) => a.name === name)) ||
-    S.held.some((h) => h.until > now && h.names.includes(name));
-}
-function release(names) {
-  for (const name of new Set(names)) {
-    if (!name || inUse(name)) continue;
-    api("/api/images/delete", { name }).then((r) => { S.usage = { ...S.usage, ...r.usage }; paintSpace(); }, () => {});
-  }
-}
-
-function renderAtts() {
-  $("#atts").innerHTML = S.atts.map((a) => {
-    const status = a.error ? "failed" : a.url ? "on this node" : "uploading";
-    const bar = !a.url && !a.error ? `<div class="up">${Array.from({ length: 10 }, (_, j) => `<i class="${j < a.progress ? "on" : ""}"></i>`).join("")}</div>` : "";
-    return `<div class="att${a.error ? " failed" : ""}" title="${esc(a.error ?? "")}"><img src="${esc(a.url ?? a.preview)}" alt=""><div class="meta"><span>${status}</span><span>${Math.max(1, Math.round(a.size / 1024))} KB</span></div>${bar}<button class="x" data-id="${a.id}" aria-label="Remove image">x</button></div>`;
-  }).join("");
-  $("#atts").querySelectorAll(".x").forEach((b) => b.addEventListener("click", () => removeAtt(b.dataset.id)));
-}
-
-$("#add-image").addEventListener("click", () => { if ($("#add-image").getAttribute("aria-disabled") !== "true") $("#file").click(); });
-$("#file").addEventListener("change", (e) => { addFiles([...e.target.files]); e.target.value = ""; });
-ta.addEventListener("paste", (e) => { const files = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith("image/")); if (files.length) { e.preventDefault(); addFiles(files); } });
-const box = $("#compose");
-box.addEventListener("dragover", (e) => { e.preventDefault(); box.classList.add("drop"); });
-box.addEventListener("dragleave", () => box.classList.remove("drop"));
-box.addEventListener("drop", (e) => { e.preventDefault(); box.classList.remove("drop"); addFiles([...e.dataTransfer.files]); });
-
-// ------------------------------------------------------------------ link cards
-// The first link in the text gets a card, like other Farcaster apps show, and
-// rides along as an embed so they show it too. Cards come from the page's
-// Open Graph tags (https://ogp.me), with X's twitter: tags as a fallback. Three steps you can watch:
-// reach the site, read its preview tags, load its image. (A page's size isn't
-// known ahead, so the steps are what's measurable, not bytes.)
-const LINK = /https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]}]/gi;
-let linkT, linkRun = 0;
-function scheduleLink() { clearTimeout(linkT); linkT = setTimeout(findLink, 600); }
-function findLink() {
-  const url = [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => !S.dismissed.has(u) && !S.atts.some((a) => a.url === u));
-  if (!url) { if (S.link) { S.link = null; paint(); } renderLink(); return; }
-  if (S.link?.url === url) return;
-  if (S.atts.length >= MAX_EMBEDS) { S.link = null; renderLink(); paint(); return; } // no slot: it stays text
-  startLink(url);
-}
-async function startLink(url) {
-  const run = ++linkRun;
-  S.link = { url, stage: 1 };
-  renderLink(); paint();
-  let card;
-  try { card = await api(`/api/unfurl?url=${encodeURIComponent(url)}`); }
-  catch (e) { if (run === linkRun) { S.link = { url, stage: 3, error: e.message }; renderLink(); paint(); } return; }
-  if (run !== linkRun) return;
-  S.link = { url, stage: 2, card };
-  sfx.add(); renderLink(); paint();
-  if (!card.image) { S.link.stage = 3; renderLink(); return; }
-  const img = new Image();
-  img.referrerPolicy = "no-referrer";
-  img.onload = () => { if (run === linkRun) { S.link.stage = 3; renderLink(); paint(); } };
-  img.onerror = () => { if (run === linkRun) { S.link.card = { ...card, image: undefined }; S.link.stage = 3; renderLink(); paint(); } };
-  img.src = card.image;
-}
-const STAGES = ["reaching", "reading", "loading image"];
-function card(l, mini = false) {
-  const c = l.card ?? {}, host = (() => { try { return new URL(l.url).hostname.replace(/^www\./, ""); } catch { return l.url; } })();
-  const loading = l.stage < 3;
-  const bar = loading ? `<div class="lbar" title="${STAGES[l.stage - 1]} ${esc(host)}">${[1, 2, 3].map((i) => `<i class="${i < l.stage ? "on" : i === l.stage ? "now" : ""}"></i>`).join("")}</div>` : "";
-  const img = c.image && l.stage === 3 ? `<img class="limg" src="${esc(c.image)}" alt="" referrerpolicy="no-referrer">` : c.image ? `<div class="limg wait"></div>` : "";
-  const none = `No ${kit.ext("https://ogp.me", "OG", { title: "Open Graph, the tags pages use for link cards" })} metadata found.`;
-  const text = l.error
-    ? `<div class="lsite">${esc(host)}</div><div class="ldesc">${none}</div>`
-    : c.title || c.description
-      ? `<div class="lsite">${esc(c.site ?? host)}</div>${c.title ? `<div class="ltitle">${esc(c.title)}</div>` : ""}${c.description && !mini ? `<div class="ldesc">${esc(c.description)}</div>` : ""}`
-      : `<div class="lsite">${esc(host)}</div><div class="ldesc">${loading ? `${STAGES[l.stage - 1]}…` : none}</div>`;
-  return `<div class="lcard${mini ? " mini" : ""}">${img}${bar}<div class="lmeta">${text}</div>${mini ? "" : `<button class="x" id="link-x" aria-label="Remove the link card">x</button>`}</div>`;
-}
-function renderLink() {
-  // A removed card can come back while its link is still in the text.
-  const back = !S.link && S.atts.length < MAX_EMBEDS ? [...ta.value.matchAll(LINK)].map((m) => m[0]).find((u) => S.dismissed.has(u)) : null;
-  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
-  $("#linkcard").innerHTML = S.link ? card(S.link) : back ? kit.button(`+ card for ${esc(host(back))}`, { attrs: `id="link-back" data-url="${esc(back)}"` }) : "";
-  $("#link-back")?.addEventListener("click", (e) => { S.dismissed.delete(e.currentTarget.dataset.url); sfx.add(); paint(); findLink(); });
-  $("#link-x")?.addEventListener("click", () => {
-    S.dismissed.add(S.link.url); S.link = null; linkRun++;
-    renderLink(); paint(); toast("Card removed. The link stays as text.");
-    findLink();
-  });
-}
-
 // ------------------------------------------------------------------ image space
 const fmtMB = (b) => (!b ? "0 MB" : b >= 1024 * MB ? `${(b / 1024 / MB).toFixed(1)} GB` : b >= MB ? `${(b / MB).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 function paintSpace() {
@@ -377,11 +103,6 @@ function paintSpace() {
     <div class="space" title="${Math.round((u.used / u.cap) * 100)}% used">${Array.from({ length: 25 }, (_, i) => `<i class="${i < on ? "on" : ""}"></i>`).join("")}</div>
     <p class="dim small">${u.files} ${u.files === 1 ? "image" : "images"} · ${fmtMB(u.cap - u.used)} left · ${fmtMB(u.fileCap)} per image</p>
     <p class="note">This node holds ${fmtMB(u.nodeUsed)} of ${fmtMB(u.nodeCap)} for everyone. Images live as long as this server.</p>`;
-}
-async function loadSpace() {
-  try { S.usage = await api("/api/images/usage"); }
-  catch (e) { $("#space").innerHTML = `<p class="dim">${esc(/companion/.test(e.message) ? "This node's companion isn't answering." : e.message)}</p>`; return; }
-  paintSpace(); paint();
 }
 
 // ------------------------------------------------------------------ drafts
@@ -399,17 +120,12 @@ const findDraft = (id) => (id ? drafts().find((d) => d.id === id) ?? null : null
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const since = (iso) => { const a = kit.ago(iso); return a === "now" ? "just now" : `${a} ago`; };
 
-const snapshot = () => ({
-  text: ta.value,
-  atts: S.atts.filter((a) => a.url).map(({ url, name, size }) => ({ url, name, size })),
-  mentions: [...S.verified.values()],
-  dismissed: [...S.dismissed],
-});
+const snapshot = () => cz.snapshot();
 // What a cast would send: its words, its images, the link cards it drops.
 const sig = (d) => JSON.stringify([d.text ?? "", (d.atts ?? []).map((a) => a.url), [...(d.dismissed ?? [])].sort()]);
-const uploading = () => S.atts.some((a) => !a.url && !a.error);
-const isEmpty = () => !ta.value.trim() && !S.atts.some((a) => !a.error);
-const touched = () => ta.value !== "" || S.atts.length > 0 || S.draftId !== null;
+const uploading = () => cz.state().busy;
+const isEmpty = () => !ta.value.trim() && !cz.atts.some((a) => !a.error);
+const touched = () => ta.value !== "" || cz.atts.length > 0 || S.draftId !== null;
 
 // empty · new (words, not saved) · saved (matches its draft) · changed
 function draftState() {
@@ -420,15 +136,8 @@ function draftState() {
 
 // Put a draft (or a working copy) in the composer. id: the saved draft it is.
 function load(d, id = null) {
-  ta.value = d.text ?? "";
-  S.verified.clear();
-  for (const p of d.mentions ?? []) if (p.username) S.verified.set(p.username.toLowerCase(), p);
-  S.atts = (d.atts ?? []).map((a) => ({ id: Math.random().toString(36).slice(2), url: a.url, name: a.name, size: a.size, progress: 10 }));
-  S.dismissed.clear();
-  for (const u of d.dismissed ?? []) S.dismissed.add(u);
-  S.link = null; linkRun++;
   S.draftId = id;
-  closeMenu(); renderAtts(); renderLink(); findLink(); paint();
+  cz.load(d);
 }
 const reset = () => load({});
 
@@ -518,13 +227,13 @@ function ask(kind, st) {
     kit.button(`${changed ? "save changes" : "save draft"}, then ${kind}`, { size: "lg", look: "primary", key: "↵", attrs: 'data-ch="save"' }) +
     kit.button(kind === "clear" ? "clear anyway" : "open without saving", { size: "lg", attrs: 'data-ch="discard"' }) +
     kit.button("keep writing", { size: "lg", look: "quiet", key: "esc", attrs: 'data-ch="cancel"' });
-  S.asking = true; ta.readOnly = true; closeMenu(); bar.classList.add("asking"); sfx.over();
+  S.asking = true; cz.setReadOnly(true); bar.classList.add("asking"); sfx.over();
   const btns = [...box.querySelectorAll("[data-ch]")];
   btns[0].focus();
   return new Promise((res) => {
     const done = (ch) => {
       removeEventListener("keydown", key, true); box.onclick = null;
-      bar.classList.remove("asking"); box.innerHTML = ""; S.asking = false; ta.readOnly = false;
+      bar.classList.remove("asking"); box.innerHTML = ""; S.asking = false; cz.setReadOnly(false);
       res(ch);
     };
     const key = (e) => {
@@ -585,7 +294,7 @@ async function cast() {
   const tick = setInterval(() => { if (at < 2) { at++; sfx.step(); $("#ov").innerHTML = drawSteps(at); } }, 700);
   let r;
   try {
-    r = await api("/api/cast", { text: ta.value, embeds: [...S.atts.filter((a) => a.url).map((a) => a.url), ...(S.link ? [S.link.url] : [])].slice(0, MAX_EMBEDS) });
+    r = await api("/api/cast", { text: ta.value, embeds: cz.embeds() });
   } catch (e) {
     clearInterval(tick); sfx.over();
     $("#ov-r").textContent = "didn't send";
@@ -619,10 +328,10 @@ addEventListener("keydown", (e) => {
   if (mod && e.key.toLowerCase() === "s") { if (!$("#overlay").classList.contains("open")) saveAsDraft(); return; }
   if (mod && e.shiftKey && e.key === "Backspace") { e.preventDefault(); if (!$("#overlay").classList.contains("open")) clearAll(); return; }
   if (mod && e.key === "Enter") { e.preventDefault(); if (!$("#overlay").classList.contains("open")) cast(); return; }
-  if (mod && e.key.toLowerCase() === "i") { e.preventDefault(); $("#add-image").click(); return; }
+  if (mod && e.key.toLowerCase() === "i") { e.preventDefault(); cz.pickImage(); return; }
   if (e.key === "Escape") {
     if ($("#overlay").classList.contains("open")) { $("#overlay").classList.remove("open"); return; }
-    if (!S.menu.open) location.href = "/";
+    if (!cz.menuOpen()) location.href = "/";
   }
   if ($("#overlay").classList.contains("open") && (e.key === "a" || e.key === "Enter")) { $("#again")?.click(); }
 });
@@ -642,6 +351,4 @@ addEventListener("keydown", (e) => {
   addEventListener("storage", (e) => { if (e.key === draftsKey()) paint(); });
   paint();
   ta.focus();
-  api("/api/mentions?q=").catch(() => {}); // start loading the people you follow
-  loadSpace();
 })();
