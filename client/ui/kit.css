@@ -143,3 +143,8 @@
 .k-quote { display: flex; justify-content: space-between; gap: 10px; border: 2px solid var(--g1); padding: 6px 10px; color: var(--g3); text-decoration: none; font-size: 18px; }
 .k-quote span { color: var(--g2); }
 .k-quote:hover { border-color: var(--g3); }
+
+/* kit.toast with a button (say, "undo"): it takes clicks while it shows. */
+.toast.act { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; }
+.toast.act.show { pointer-events: auto; }
+.toast .k-btn { background: var(--g0); color: var(--g3); border-color: var(--g0); box-shadow: none; }

@@ -22,8 +22,9 @@
   </header>
 
   <div class="post-grid">
+    <div class="lstack">
     <section class="tile" id="compose">
-      <h2><span>new cast</span><span id="saved"></span></h2>
+      <h2><span id="title">new cast</span><span id="saved"></span></h2>
       <div class="body">
         <div class="editor">
           <textarea id="text" placeholder="What's clear to you today?" spellcheck="true" aria-label="Cast text"></textarea>
@@ -40,11 +41,19 @@
           <span class="counter" title="Farcaster counts bytes, not letters"><span class="cells" id="cells"></span><span class="left" id="left">320</span></span>
         </div>
         <div class="row">
+          <button class="k-btn" id="save" type="button"><span class="k-lbl">save draft</span> <kbd>⌘S</kbd></button>
+          <button class="k-btn quiet" id="clear" type="button">clear <kbd>⌘⇧⌫</kbd></button>
           <span class="note" style="margin:0">Paste or drop images here.</span>
           <button class="k-btn lg primary push" id="cast" type="button">cast <kbd>⌘↵</kbd></button>
         </div>
       </div>
     </section>
+
+    <section class="tile">
+      <h2><span>drafts</span><span>on this computer</span></h2>
+      <div class="body"><div class="dcards" id="drafts"></div></div>
+    </section>
+    </div>
 
     <div class="stack">
       <section class="tile">
@@ -81,8 +90,9 @@
 
 <nav class="bar" aria-label="Modes" data-modes="compose">
   <div class="in">
-    <span class="hint"><kbd>@</kbd> mention · <kbd>⌘V</kbd> paste image · <kbd>⌘↵</kbd> cast · <kbd>esc</kbd> home</span>
+    <span class="hint"><kbd>@</kbd> mention · <kbd>⌘S</kbd> save draft · <kbd>⌘↵</kbd> cast · <kbd>esc</kbd> home</span>
   </div>
+  <div class="in ask" id="ask" role="alertdialog" aria-label="Unsaved cast"></div>
 </nav>
 <div class="toast" id="toast" role="status"></div>
 <script src="/mine.js"></script>

@@ -117,12 +117,22 @@
   }
 
   // ---------------------------------------------------------------- toast
+  // toast(msg, ms, { label, run }): the optional button (say, "undo") runs
+  // run() and closes the toast.
   let toastT;
-  function toast(msg, ms = 2000) {
+  function toast(msg, ms = 2000, action) {
     const t = $("#toast");
     if (!t) return;
-    t.textContent = msg; t.classList.add("show");
-    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), ms);
+    t.textContent = msg;
+    t.classList.toggle("act", Boolean(action));
+    if (action) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "k-btn"; b.textContent = action.label;
+      b.addEventListener("click", () => { clearTimeout(toastT); t.classList.remove("show", "act"); action.run(); });
+      t.append(b);
+    }
+    t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show", "act"), ms);
   }
 
   // ---------------------------------------------------------------- modes bar
