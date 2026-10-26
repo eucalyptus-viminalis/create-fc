@@ -15,7 +15,7 @@ const S = {
   next: { casts: null, replies: null }, // where the next page starts; null: no more
   loading: false,
   counts: new Map(), // hash -> { likes, recasts, replies, liked, recasted }
-  compose: null, // { hash, kind: "reply" | "quote" }: a reply opens under the cast, a quote in a window
+  compose: null, // { hash, kind: "reply" }: the reply box open under a cast (a quote opens kit.quoteCast)
   draft: "", // what you've typed so far, kept across redraws
   pop: null, // the cast whose recast menu is open
   busy: false,
@@ -287,7 +287,7 @@ function card(c) {
         ${kit.button(`${icon(n?.liked ? "heart-on" : "heart")}<span>${num(n, "likes")}</span>`, { disabled: !n, attrs: `data-act="like" data-hash="${c.hash}" title="${n?.liked ? "Unlike" : "Like"}" aria-label="${n?.liked ? "Unlike" : "Like"}"` })}
         ${kit.button(`${icon("share")}<span class="me-word">share</span>`, { attrs: `data-act="share" data-hash="${c.hash}" title="Copy a link to this cast" aria-label="Share: copy a link"` })}
       </div>
-      ${S.compose?.hash === c.hash && S.compose.kind === "reply" ? composer(c) : ""}
+      ${S.compose?.hash === c.hash ? composer(c) : ""}
     </div>
   </article>`;
 }
@@ -307,56 +307,10 @@ function composer() {
     <div class="row"><span class="dim small">replying to yourself</span><span class="left">320</span>${kit.button("cast", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div></div>`;
 }
 
-// A quote opens in a window over the page: your words on top, the cast
-// you're quoting below them. A quote cast is a new cast of yours with this
-// one embedded in it, so it shouldn't look like a reply.
-function quoteWindow(c) {
-  const a = c.author ?? {};
-  return `<section class="tile modal me-qm" role="dialog" aria-modal="true" aria-labelledby="qm-t" data-reply-box>
-    <h2><span id="qm-t">quote cast</span><span><button type="button" class="me-qm-x" data-qclose>close ×</button></span></h2>
-    <div class="body inline">
-      <div class="me-qm-you">${pic(S.me.pfp)}<textarea placeholder="Add a comment" aria-label="Your words about the cast">${esc(S.draft)}</textarea></div>
-      <div class="ct-c me-qm-cast">
-        ${pic(a.pfp)}
-        <div class="me-qm-in">
-          <div class="who"><b>${esc(a.display ?? `@${a.username ?? c.fid}`)}</b>${a.username ? `<span class="dim">@${esc(a.username)}</span>` : ""}<span class="t" title="${esc(when(c.time))}">${ago(c.time)}</span></div>
-          ${c.text ? `<div class="tx">${rich(c.text)}</div>` : ""}
-          ${embeds(c.embeds)}
-        </div>
-      </div>
-      <div class="row"><span class="dim small">a new cast, with this one in it</span><span class="left">320</span>${kit.button("quote", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div>
-    </div>
-  </section>`;
-}
-
-function openQuote(c) {
-  closeQuote();
-  const el = document.createElement("div");
-  el.className = "scrim";
-  el.id = "qm";
-  el.innerHTML = quoteWindow(c);
-  document.body.append(el);
-  document.body.classList.add("me-held");
-  wireReplyBox();
-}
-
-function closeQuote() {
-  const el = $("#qm");
-  if (!el) return;
-  el.remove();
-  document.body.classList.remove("me-held");
-}
-
-// Close whichever box is open, dropping what was typed. After a quote,
-// focus goes back to the cast's recast button.
+// Close the reply box, dropping what was typed.
 function closeCompose() {
-  const was = S.compose;
   S.compose = null; S.draft = "";
-  if (was?.kind === "quote") {
-    closeQuote();
-    render();
-    $(`[data-act="recast-menu"][data-hash="${was.hash}"]`)?.focus();
-  } else render();
+  render();
 }
 
 function render() {
@@ -371,7 +325,7 @@ function render() {
     : S.next[S.tab]
       ? `<p class="ct-note">None in your newest ${plural(pages(S.tab) * 100, "message")}.</p>${more}`
       : `<div class="tile empty">${S.tab === "casts" ? "No casts yet. Compose one." : "No replies yet."}</div>`;
-  if (S.compose?.kind === "reply") wireReplyBox();
+  if (S.compose) wireReplyBox();
 }
 
 function wireReplyBox() {
@@ -388,14 +342,6 @@ function wireReplyBox() {
     if (e.key === "Escape") { e.stopPropagation(); closeCompose(); }
   });
   box.querySelector("[data-send]").addEventListener("click", send);
-  // In the quote window, Tab stays inside it.
-  if (box.matches("[role=dialog]")) box.addEventListener("keydown", (e) => {
-    if (e.key !== "Tab") return;
-    const f = [...box.querySelectorAll("textarea, button, a[href]")].filter((x) => x.offsetParent);
-    const first = f[0], last = f.at(-1);
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  });
 }
 const loaded = { casts: 0, replies: 0 };
 const pages = (tab) => loaded[tab];
@@ -487,14 +433,23 @@ async function share(c) {
   }
 }
 
-function compose(c, kind) {
-  const open = S.compose?.hash === c.hash && S.compose.kind === kind;
-  closeQuote();
-  S.compose = open ? null : { hash: c.hash, kind };
+function compose(c) {
+  const open = S.compose?.hash === c.hash;
+  S.compose = open ? null : { hash: c.hash, kind: "reply" };
   S.draft = ""; S.pop = null;
   tone(880, 0, 0.02, 0.02);
   render();
-  if (S.compose?.kind === "quote") openQuote(c);
+}
+
+// Quote it in kit's window; once it lands, the casts tab loads again with it.
+function quote(c) {
+  S.compose = null; S.draft = ""; S.pop = null;
+  render();
+  kit.quoteCast(c, {
+    me: S.me,
+    focus: () => $(`[data-act="recast-menu"][data-hash="${c.hash}"]`),
+    sent: () => { reset("casts"); if (S.tab === "casts") load("casts"); },
+  });
 }
 
 function toggleMenu(c) {
@@ -512,38 +467,30 @@ function reset(tab) {
 async function send() {
   const box = $("[data-reply-box]"), c = S.compose && find(S.compose.hash);
   if (!box || !c) return;
-  const quote = S.compose.kind === "quote";
   const text = box.querySelector("textarea").value;
-  // A quote can be just the quoted cast; a reply needs words.
-  if ((!quote && !text.trim()) || 320 - enc.encode(text).length < 0) return;
+  if (!text.trim() || 320 - enc.encode(text).length < 0) return;
   const b = box.querySelector("[data-send]");
-  b.setAttribute("aria-disabled", "true"); b.textContent = quote ? "quoting…" : "casting…";
+  b.setAttribute("aria-disabled", "true"); b.textContent = "casting…";
   try {
-    const r = await api("/api/cast", quote ? { text, quote: { fid: c.fid, hash: c.hash } } : { text, replyTo: { fid: c.fid, hash: c.hash } });
+    const r = await api("/api/cast", { text, replyTo: { fid: c.fid, hash: c.hash } });
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.06, 0.1, 0.035));
-    toast(r.landed ? (quote ? "Quoted. It's on Farcaster." : "Replied. It's on Farcaster.") : "Sent. It should land soon.");
+    toast(r.landed ? "Replied. It's on Farcaster." : "Sent. It should land soon.");
     S.compose = null; S.draft = "";
-    if (quote) {
-      closeQuote();
-      reset("casts");
-      if (S.tab === "casts") return load("casts");
-    } else {
-      const n = S.counts.get(c.hash);
-      if (n) n.replies++;
-      reset("replies");
-    }
+    const n = S.counts.get(c.hash);
+    if (n) n.replies++;
+    reset("replies");
     render();
   } catch (e) {
     toast(e.message, 3500);
-    b.removeAttribute("aria-disabled"); b.innerHTML = `${quote ? "quote" : "cast"} <kbd>⌘↵</kbd>`;
+    b.removeAttribute("aria-disabled"); b.innerHTML = `cast <kbd>⌘↵</kbd>`;
   }
 }
 
 const ACTS = {
-  reply: (c) => compose(c, "reply"),
+  reply: compose,
   "recast-menu": toggleMenu,
   recast: (c) => { S.pop = null; react(c, "recast"); },
-  quote: (c) => compose(c, "quote"),
+  quote,
   like: (c) => react(c, "like"),
   share,
 };
@@ -557,13 +504,6 @@ function gone(hash) {
 // ------------------------------------------------------------------ input
 document.addEventListener("click", (e) => {
   const t = e.target;
-  // the quote window: close it, or a click on the dimmed page around it
-  // does when nothing's typed yet
-  const qm = t.closest("#qm");
-  if (qm) {
-    if (t.closest("[data-qclose]") || (t === qm && !qm.querySelector("textarea").value.trim())) closeCompose();
-    return;
-  }
   // the profile card
   const pe = t.closest("[data-pedit]");
   if (pe) return openEdit(pe.dataset.pedit);

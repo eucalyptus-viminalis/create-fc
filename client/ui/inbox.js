@@ -111,7 +111,7 @@ function renderCasts() {
     ${C.tab === "cleared" ? fixed("bring back", n, 'data-bulk="unclear"') : fixed("clear", n, 'data-bulk="clear"')}
     ${fixed("★ save", n, 'data-bulk="save"')}
     ${appTools(d)}
-    <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>o</kbd> open · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
+    <span class="hint"><kbd>j</kbd><kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>e</kbd> clear · <kbd>s</kbd> save · <kbd>l</kbd> like · <kbd>r</kbd> reply · <kbd>q</kbd> quote · <kbd>o</kbd> open · <kbd>u</kbd> undo<br>controller: d-pad move · A like · X select · Y save · B clear</span>`;
   const c = shown.find((x) => x.hash === C.focus);
   // Keep the list where it was: re-rendering would otherwise jump it to the top.
   const oldList = $("#view .mail .list"), keep = oldList && C.listTab === C.tab ? oldList.scrollTop : 0;
@@ -146,6 +146,7 @@ function readPane(c) {
     <div class="acts">
       ${kit.button(C.liked.has(c.hash) ? "♥ liked" : "♥ like", { key: "l", pressed: C.liked.has(c.hash), attrs: 'data-act="like"' })}
       ${kit.button("⟲ recast", { attrs: 'data-act="recast"' })}
+      ${kit.button("❝ quote", { key: "q", attrs: 'data-act="quote" title="Quote this cast in a new one of yours"' })}
       ${kit.button("↩ reply", { look: "primary", key: "r", pressed: C.reply === c.hash, attrs: 'data-act="reply"' })}
       ${kit.button(saved ? "★ saved" : "☆ save", { key: "s", pressed: saved, attrs: 'data-act="save"' })}
       ${C.tab === "saved" ? "" : kit.button(cleared ? "bring back" : "clear", { look: "quiet", key: "e", attrs: `data-act="${cleared ? "unclear" : "clear"}"` })}
@@ -215,6 +216,11 @@ async function castAct(a, hashes) {
     const on = a === "like" ? !C.liked.has(cast.hash) : true;
     if (await react(a, cast, on) && a === "like") on ? C.liked.add(cast.hash) : C.liked.delete(cast.hash);
   } else if (a === "reply") C.reply = C.reply === hashes[0] ? null : hashes[0];
+  else if (a === "quote") {
+    const cast = find(hashes[0]); if (!cast) return;
+    if (C.reply) { C.reply = null; renderCasts(); }
+    return kit.quoteCast(cast, { me: S.me, focus: () => $('[data-act="quote"]') });
+  }
   renderCasts();
 }
 
@@ -314,6 +320,7 @@ function castsKey(k, e) {
   if (k === "s") { castAct("save", C.checked.size ? [...C.checked] : [C.focus]); return true; }
   if (k === "l") { castAct("like", [C.focus]); return true; }
   if (k === "r") { castAct("reply", [C.focus]); e.preventDefault(); return true; }
+  if (k === "q") { castAct("quote", [C.focus]); e.preventDefault(); return true; }
   if (k === "o" && C.focus) { const c = castsShown().find((x) => x.hash === C.focus); if (c) location.href = castUrl(c); return true; }
   if (k === "u" && C.undo) { const u = C.undo; C.undo = null; castAct(u.on ? "unclear" : "clear", u.hashes).then(() => toast("Undone.")); return true; }
   if (k === "escape") { C.checked.clear(); renderCasts(); return true; }
@@ -333,7 +340,7 @@ const prev = {};
   $("#pad").textContent = pads.length ? "controller on" : "no controller";
   for (const p of pads) {
     const edge = (i) => p.buttons[i]?.pressed && !prev[p.index + ":" + i];
-    if (S.view === "casts" && C.data) {
+    if (S.view === "casts" && C.data && !kit.quoteCast.isOpen()) {
       if (edge(12)) castsKey("k", new Event("x"));
       if (edge(13)) castsKey("j", new Event("x"));
       if (edge(0)) castsKey("l", new Event("x"));

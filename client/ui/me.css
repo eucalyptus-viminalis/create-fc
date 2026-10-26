@@ -28,28 +28,6 @@
 .me-pop .k-menu { left: 0; right: auto; min-width: 170px; }
 .me-list .ct-c .inline { margin-top: 10px; }
 
-/* the quote window: your words, then the cast you're quoting in a box */
-body.me-held { overflow: hidden; }
-#qm { align-items: start; padding-top: max(16px, 8vh); }
-.me-qm { width: min(600px, 100%); max-height: calc(100vh - 32px - 8vh); }
-.me-qm > h2 { align-items: baseline; }
-.me-qm-x { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.me-qm-x:focus-visible { outline: 2px dotted var(--g0); outline-offset: 2px; }
-.me-qm > .body.inline { margin-top: 0; }
-.me-qm-you { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: start; }
-.me-qm-you .pf { width: 40px; height: 40px; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; }
-.me-qm-you textarea { min-height: 110px; box-sizing: border-box; }
-.me-qm-cast { margin: 12px 0 0 50px; border: 2px solid var(--g1); cursor: default; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; max-height: 40vh; overflow: auto; }
-.me-qm-cast:hover { background: none; }
-.me-qm-cast .pf { width: 28px; height: 28px; }
-.me-qm-cast .tx { font-size: 19px; }
-.me-qm-cast .pics img { max-height: 200px; }
-.me-qm-cast .who .t { text-decoration: none; }
-@media (max-width: 560px) {
-  #qm { padding: 8px; }
-  .me-qm { max-height: calc(100vh - 16px); }
-  .me-qm-cast { margin-left: 0; }
-}
 
 /* your profile: picture on the left, then name, username, fid and bio, each
    with an edit button (not the fid). Editing opens the row in place. */

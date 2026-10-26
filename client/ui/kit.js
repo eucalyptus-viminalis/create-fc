@@ -443,9 +443,96 @@
     return { html, wire, open: () => M.open !== null };
   })();
 
+  // ---------------------------------------------------------------- quote cast
+  // A quote cast is a new cast of yours with another one embedded in it. It
+  // opens in a window over the page (not under the cast, where it would look
+  // like a reply): your words on top, the cast you're quoting below them.
+  //   kit.quoteCast(cast, { me, focus, sent })
+  //     me     who's signed in, for the picture beside your words
+  //     focus  where focus goes when it closes: an element, or a function
+  //            returning one (for pages that redraw the button)
+  //     sent   runs after the quote lands, with the /api/cast answer
+  //   kit.quoteCast.isOpen()  true while the window shows
+  // Esc or "close ×" closes it. A click on the dimmed page around it does
+  // too, but only while nothing's typed, so a stray click can't lose words.
+  // While it's open, the page's own keys and clicks don't reach the page.
+  const enc = new TextEncoder();
+  let quoteOpen = null;
+  function quoteCast(c, o = {}) {
+    quoteOpen?.();
+    const back = o.focus ?? document.activeElement;
+    const a = c.author ?? {};
+    const when = new Date(c.time).toLocaleString([], { hour: "numeric", minute: "2-digit", day: "numeric", month: "short", year: "numeric" });
+    const el = document.createElement("div");
+    el.className = "scrim k-qm-scrim";
+    el.innerHTML = `<section class="tile modal k-qm" role="dialog" aria-modal="true" aria-labelledby="k-qm-t">
+      <h2><span id="k-qm-t">quote cast</span><span><button type="button" class="k-qm-x" data-qclose>close ×</button></span></h2>
+      <div class="k-qm-body">
+        <div class="k-qm-you">${pic(o.me?.pfp, "k-qm-pf")}<textarea placeholder="Add a comment" aria-label="Your words about the cast"></textarea></div>
+        <div class="k-qm-cast">
+          ${pic(a.pfp, "k-qm-pf")}
+          <div class="k-qm-in">
+            <div class="k-qm-who"><b>${esc(a.display ?? `@${a.username ?? c.fid}`)}</b>${a.username ? `<span>@${esc(a.username)}</span>` : ""}<span class="t" title="${esc(when)}">${ago(c.time)}</span></div>
+            ${c.text ? `<div class="k-qm-tx">${rich(c.text)}</div>` : ""}
+            ${embeds(c.embeds)}
+          </div>
+        </div>
+        <div class="k-qm-row"><span>a new cast, with this one in it</span><span class="k-qm-left">320</span>${button("quote", { look: "primary", key: "⌘↵", attrs: "data-qsend" })}</div>
+      </div>
+    </section>`;
+    document.body.append(el);
+    document.body.classList.add("k-held");
+    const box = el.firstElementChild, ta = box.querySelector("textarea"), left = box.querySelector(".k-qm-left"), send = box.querySelector("[data-qsend]");
+    let busy = false;
+    const close = () => {
+      if (!el.isConnected) return;
+      el.remove();
+      document.body.classList.remove("k-held");
+      quoteOpen = null;
+      (typeof back === "function" ? back() : back)?.focus?.();
+    };
+    const go = async () => {
+      const text = ta.value;
+      if (busy || 320 - enc.encode(text).length < 0) return;
+      busy = true;
+      send.setAttribute("aria-disabled", "true"); send.textContent = "quoting…";
+      try {
+        const r = await api("/api/cast", { text, quote: { fid: c.fid, hash: c.hash } });
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.06, 0.1, 0.035));
+        toast(r.landed ? "Quoted. It's on Farcaster." : "Sent. It should land soon.");
+        close();
+        o.sent?.(r);
+      } catch (e) {
+        busy = false;
+        toast(e.message, 3500);
+        send.removeAttribute("aria-disabled"); send.innerHTML = `<span class="k-lbl">quote</span> <kbd>⌘↵</kbd>`;
+      }
+    };
+    ta.addEventListener("input", () => { const n = 320 - enc.encode(ta.value).length; left.textContent = n < 0 ? `${-n} over` : n; left.classList.toggle("over", n < 0); });
+    el.addEventListener("keydown", (e) => {
+      e.stopPropagation(); // the page's own keys stay off while this is open
+      if (e.key === "Escape" && !busy) { e.preventDefault(); close(); }
+      else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); go(); }
+      else if (e.key === "Tab") { // Tab stays inside the window
+        const f = [...box.querySelectorAll("textarea, button, a[href]")].filter((x) => x.offsetParent);
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f.at(-1).focus(); }
+        else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+    el.addEventListener("click", (e) => {
+      e.stopPropagation(); // links inside still open
+      if (e.target.closest("[data-qclose]") || (e.target === el && !ta.value.trim() && !busy)) close();
+      else if (e.target.closest("[data-qsend]")) go();
+    });
+    quoteOpen = close;
+    tone(880, 0, 0.02, 0.02);
+    ta.focus();
+  }
+  quoteCast.isOpen = () => quoteOpen !== null;
+
   // The casts a cast quotes, each a box that opens it.
   const quotes = (list) =>
     list?.length ? `<div class="k-quotes">${list.map((q) => `<a class="k-quote" href="/${encodeURIComponent(`!${q.fid}`)}/${esc(q.hash)}">quoting a cast <span>${esc(q.hash.slice(0, 10))} →</span></a>`).join("")}</div>` : "";
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes };
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes, quoteCast };
 })();

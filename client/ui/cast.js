@@ -2,7 +2,7 @@
 // page on farcaster.xyz, Bluesky or X. The casts it answers sit above it,
 // replies below. The address is the one farcaster.xyz uses,
 // /<username>/<hash>, so swapping the domain on a farcaster.xyz link opens
-// it here. Anyone can open it; signing in adds like, recast and reply.
+// it here. Anyone can open it; signing in adds like, recast, quote and reply.
 
 const { $, esc, api, tone, toast, ago, pic, rich, embeds, profileUrl, castUrl } = kit;
 const enc = new TextEncoder();
@@ -63,6 +63,7 @@ function render() {
   const acts = S.me
     ? `${kit.button(S.liked ? "♥ liked" : "♥ like", { key: "l", pressed: S.liked, attrs: 'data-act="like"' })}
        ${kit.button(S.recasted ? "⟲ recasted" : "⟲ recast", { pressed: S.recasted, attrs: 'data-act="recast"' })}
+       ${kit.button("❝ quote", { key: "q", attrs: 'data-act="quote" title="Quote this cast in a new one of yours"' })}
        ${kit.button("↩ reply", { look: "primary", key: "r", pressed: S.reply === c.hash, attrs: 'data-act="reply"' })}`
     : `${kit.button("sign in to like or reply", { look: "primary", attrs: "data-signin" })}<span class="dim small">Anyone can read this. Signing in lets you join in.</span>`;
 
@@ -142,6 +143,13 @@ async function react(kind) {
   } catch (e) { toast(e.message, 3500); }
 }
 
+// Quote the open cast in kit's window.
+function quote() {
+  if (!S.me) return signIn();
+  if (S.reply) { S.reply = null; render(); }
+  kit.quoteCast(S.d.cast, { me: S.me, focus: () => $('[data-act="quote"]') });
+}
+
 function toggleReply(hash) {
   if (!S.me) return signIn();
   S.reply = S.reply === hash ? null : hash;
@@ -171,6 +179,7 @@ document.addEventListener("click", (e) => {
   const act = t.closest("[data-act]")?.dataset.act;
   if (act === "like" || act === "recast") return react(act);
   if (act === "reply") return toggleReply(S.d.cast.hash);
+  if (act === "quote") return quote();
   const r = t.closest("[data-reply]");
   if (r) return toggleReply(r.dataset.reply);
   // A click on a card opens that cast, unless it was on a link, a button,
@@ -184,6 +193,7 @@ addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
   if (k === "l") react("like");
   else if (k === "r") { e.preventDefault(); toggleReply(S.d.cast.hash); }
+  else if (k === "q") { e.preventDefault(); quote(); }
   else if (k === "c") copyLink();
   else if (k === "escape") { if (S.reply) { S.reply = null; render(); } else if (history.length > 1) history.back(); else location.href = S.me ? "/inbox" : "/"; }
 });
