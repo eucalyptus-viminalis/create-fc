@@ -148,3 +148,41 @@
 .toast.act { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; }
 .toast.act.show { pointer-events: auto; }
 .toast .k-btn { background: var(--g0); color: var(--g3); border-color: var(--g0); box-shadow: none; }
+
+/* kit.quoteCast: the quote cast window. The dimmed page and the tile come
+   from home.css (.scrim, .tile, .modal); the words box from composer.css. */
+body.k-held { overflow: hidden; }
+body.k-held .toast { z-index: 80; }
+.k-qm-scrim { align-items: start; padding-top: max(16px, 6vh); }
+.k-qm { width: min(640px, 100%); max-height: calc(100vh - 32px - 6vh); }
+.k-qm > h2 { align-items: baseline; }
+.k-qm-x { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.k-qm-x:focus-visible { outline: 2px dotted var(--g0); outline-offset: 2px; }
+.k-qm-body { padding: 14px 14px 16px; }
+.k-qm .k-qm-pf { width: 40px; height: 40px; box-sizing: border-box; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; }
+.k-qm-you { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: start; }
+.k-qm .cz-text { min-height: 120px; }
+.k-qm-cast { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; margin: 12px 0 0 50px; padding: 10px 12px; border: 2px solid var(--g1); max-height: 30vh; overflow: auto; }
+.k-qm-cast .k-qm-pf { width: 28px; height: 28px; }
+.k-qm-in { min-width: 0; }
+.k-qm-who { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.k-qm-who b { font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-qm-who span { color: var(--g2); font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-qm-who .t { margin-left: auto; flex: none; }
+.k-qm-tx { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 6px; font-size: 19px; }
+.k-qm-cast a { color: inherit; text-underline-offset: 3px; }
+.k-qm-cast .pics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin: 4px 0; }
+.k-qm-cast .pics img { width: 100%; max-height: 180px; object-fit: cover; background: var(--g1); border: 2px solid var(--g3); display: block; }
+.k-qm-cast .links { display: grid; gap: 4px; margin: 4px 0; }
+.k-qm-cast .links a { display: block; border: 2px dashed var(--g1); padding: 4px 8px; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-qm-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--g1); }
+.k-qm-row > span:first-child { color: var(--g2); font-size: 16px; margin-right: auto; }
+.k-qm-row[hidden] { display: none; }
+.k-qm-ask > span:first-child { color: var(--g3); }
+@media (max-width: 560px) {
+  .k-qm-scrim { padding: 8px; }
+  .k-qm { max-height: calc(100vh - 16px); }
+  .k-qm-cast { margin-left: 0; }
+  .k-qm-you { grid-template-columns: 1fr; }
+  .k-qm-you > .k-qm-pf { display: none; }
+}

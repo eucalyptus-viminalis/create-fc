@@ -443,9 +443,135 @@
     return { html, wire, open: () => M.open !== null };
   })();
 
+  // ---------------------------------------------------------------- quote cast
+  // A quote cast is a new cast of yours with another one embedded in it. It
+  // opens in a window over the page (not under the cast, where it would look
+  // like a reply): your words on top, the cast you're quoting below them.
+  // The words box is the post page's composer (composer.js), so mentions,
+  // images and link cards work the same. The quote takes one of the cast's
+  // two embeds. Pages that offer it load composer.js and composer.css.
+  //   kit.quoteCast(cast, { me, focus, sent })
+  //     me     who's signed in, for the picture beside your words
+  //     focus  where focus goes when it closes: an element, or a function
+  //            returning one (for pages that redraw the button)
+  //     sent   runs after the quote lands, with the /api/cast answer
+  //   kit.quoteCast.isOpen()  true while the window shows
+  // Esc, "close ×" or a click on the dimmed page around it closes it; with
+  // words or images in it, it asks first. While it's open, the page's own
+  // keys and clicks don't reach the page.
+  let quoteOpen = null;
+  function quoteCast(c, o = {}) {
+    quoteOpen?.();
+    const back = o.focus ?? document.activeElement;
+    const a = c.author ?? {};
+    const when = new Date(c.time).toLocaleString([], { hour: "numeric", minute: "2-digit", day: "numeric", month: "short", year: "numeric" });
+    const el = document.createElement("div");
+    el.className = "scrim k-qm-scrim";
+    el.innerHTML = `<section class="tile modal k-qm" role="dialog" aria-modal="true" aria-labelledby="k-qm-t">
+      <h2><span id="k-qm-t">quote cast</span><span><button type="button" class="k-qm-x" data-qclose>close ×</button></span></h2>
+      <div class="k-qm-body">
+        <div class="k-qm-you">${pic(o.me?.pfp, "k-qm-pf")}<div class="k-qm-cz"></div></div>
+        <div class="k-qm-cast">
+          ${pic(a.pfp, "k-qm-pf")}
+          <div class="k-qm-in">
+            <div class="k-qm-who"><b>${esc(a.display ?? `@${a.username ?? c.fid}`)}</b>${a.username ? `<span>@${esc(a.username)}</span>` : ""}<span class="t" title="${esc(when)}">${ago(c.time)}</span></div>
+            ${c.text ? `<div class="k-qm-tx">${rich(c.text)}</div>` : ""}
+            ${embeds(c.embeds)}
+          </div>
+        </div>
+        <div class="k-qm-tools"></div>
+        <div class="k-qm-row" data-qrow><span>a new cast, with this one in it</span>${button("quote", { look: "primary", key: "⌘↵", attrs: "data-qsend" })}</div>
+        <div class="k-qm-row k-qm-ask" data-qask hidden><span>Drop this quote? Your words and images go.</span>${button("discard", { attrs: "data-qdrop" })}${button("keep writing", { look: "primary", attrs: "data-qkeep" })}</div>
+      </div>
+    </section>`;
+    document.body.append(el);
+    document.body.classList.add("k-held");
+    const box = el.firstElementChild, send = box.querySelector("[data-qsend]"), row = box.querySelector("[data-qrow]"), askRow = box.querySelector("[data-qask]");
+    let busy = false, asking = false, cz = null;
+    const paint = () => {
+      if (!cz) return;
+      const why = cz.state().block;
+      send.setAttribute("aria-disabled", String(Boolean(why) || busy));
+      send.title = why;
+    };
+    cz = composer.create(box.querySelector(".k-qm-cz"), {
+      placeholder: "Add a comment",
+      label: "Your words about the cast",
+      tools: box.querySelector(".k-qm-tools"),
+      drop: box,
+      reserved: 1,
+      allowEmpty: true,
+      onChange: paint,
+    });
+    paint();
+    const close = () => {
+      if (!el.isConnected) return;
+      el.remove();
+      document.body.classList.remove("k-held");
+      quoteOpen = null;
+      (typeof back === "function" ? back() : back)?.focus?.();
+    };
+    // Dropping it unsent gives its images' space back on the node.
+    const drop = () => { cz.discard(); close(); };
+    const ask = (on) => {
+      asking = on;
+      row.hidden = on; askRow.hidden = !on;
+      cz.setReadOnly(on);
+      if (on) { tone(165, 0, 0.12, 0.04); askRow.querySelector("[data-qkeep]").focus(); } else cz.focus();
+    };
+    const leave = () => {
+      if (busy) return;
+      if (asking) return ask(false);
+      if (cz.text.trim() || cz.atts.length) return ask(true);
+      drop();
+    };
+    const go = async () => {
+      const why = cz.state().block;
+      if (busy || asking) return;
+      if (why) { tone(165, 0, 0.12, 0.04); return toast(why); }
+      busy = true; paint();
+      send.textContent = "quoting…";
+      try {
+        const r = await api("/api/cast", { text: cz.text, embeds: cz.embeds(), quote: { fid: c.fid, hash: c.hash } });
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.06, 0.1, 0.035));
+        toast(r.landed ? "Quoted. It's on Farcaster." : "Sent. It should land soon.");
+        close(); // its images belong to the cast now: they stay
+        o.sent?.(r);
+      } catch (e) {
+        busy = false; paint();
+        toast(e.message, 3500);
+        send.innerHTML = `<span class="k-lbl">quote</span> <kbd>⌘↵</kbd>`;
+      }
+    };
+    el.addEventListener("keydown", (e) => {
+      e.stopPropagation(); // the page's own keys stay off while this is open
+      const mod = e.metaKey || e.ctrlKey;
+      if (e.key === "Escape") { e.preventDefault(); leave(); }
+      else if (mod && e.key === "Enter") { e.preventDefault(); go(); }
+      else if (mod && e.key.toLowerCase() === "i") { e.preventDefault(); if (!asking) cz.pickImage(); }
+      else if (e.key === "Tab") { // Tab stays inside the window
+        const f = [...box.querySelectorAll("textarea, button, a[href]")].filter((x) => x.offsetParent);
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f.at(-1).focus(); }
+        else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+    el.addEventListener("click", (e) => {
+      e.stopPropagation(); // links inside still open
+      const t = e.target;
+      if (t.closest("[data-qclose]") || t === el) leave();
+      else if (t.closest("[data-qsend]")) go();
+      else if (t.closest("[data-qdrop]")) drop();
+      else if (t.closest("[data-qkeep]")) ask(false);
+    });
+    quoteOpen = close;
+    tone(880, 0, 0.02, 0.02);
+    cz.focus();
+  }
+  quoteCast.isOpen = () => quoteOpen !== null;
+
   // The casts a cast quotes, each a box that opens it.
   const quotes = (list) =>
     list?.length ? `<div class="k-quotes">${list.map((q) => `<a class="k-quote" href="/${encodeURIComponent(`!${q.fid}`)}/${esc(q.hash)}">quoting a cast <span>${esc(q.hash.slice(0, 10))} →</span></a>`).join("")}</div>` : "";
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes };
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes, quoteCast };
 })();

@@ -27,7 +27,7 @@
 .me-pop { position: relative; display: inline-flex; }
 .me-pop .k-menu { left: 0; right: auto; min-width: 170px; }
 .me-list .ct-c .inline { margin-top: 10px; }
-.me-quoting { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--g1); color: var(--g2); font-size: 18px; overflow-wrap: anywhere; }
+
 
 /* your profile: picture on the left, then name, username, fid and bio, each
    with an edit button (not the fid). Editing opens the row in place. */

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap" />
   <link rel="stylesheet" href="/home.css" />
   <link rel="stylesheet" href="/kit.css" />
+  <link rel="stylesheet" href="/composer.css" />
   <link rel="stylesheet" href="/post.css" />
 </head>
 <body class="ready">
@@ -26,20 +27,7 @@
     <section class="tile" id="compose">
       <h2><span id="title">new cast</span><span id="saved"></span></h2>
       <div class="body">
-        <div class="editor">
-          <textarea id="text" placeholder="What's clear to you today?" spellcheck="true" aria-label="Cast text"></textarea>
-          <div class="mirror" id="mirror" aria-hidden="true"></div>
-          <div class="menu" id="menu" role="listbox" aria-label="Mention someone"></div>
-        </div>
-        <div class="atts" id="atts"></div>
-        <div id="linkcard"></div>
-        <input type="file" id="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden />
-        <div class="row">
-          <button class="k-btn" id="add-image" type="button">+ image <kbd>⌘I</kbd></button>
-          <button class="k-btn" id="add-at" type="button">@ mention</button>
-          <span class="dim small" id="slots">0 of 2 embeds</span>
-          <span class="counter" title="Farcaster counts bytes, not letters"><span class="cells" id="cells"></span><span class="left" id="left">320</span></span>
-        </div>
+        <div id="editor"></div>
         <div class="row">
           <button class="k-btn" id="save" type="button"><span class="k-lbl">save draft</span> <kbd>⌘S</kbd></button>
           <button class="k-btn quiet" id="clear" type="button">clear <kbd>⌘⇧⌫</kbd></button>
@@ -97,6 +85,7 @@
 <div class="toast" id="toast" role="status"></div>
 <script src="/mine.js"></script>
 <script src="/kit.js"></script>
+<script src="/composer.js"></script>
 <script src="/post.js"></script>
 </body>
 </html>

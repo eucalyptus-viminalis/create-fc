@@ -15,7 +15,7 @@ const S = {
   next: { casts: null, replies: null }, // where the next page starts; null: no more
   loading: false,
   counts: new Map(), // hash -> { likes, recasts, replies, liked, recasted }
-  compose: null, // { hash, kind: "reply" | "quote" }: the box open under a cast
+  compose: null, // { hash, kind: "reply" }: the reply box open under a cast (a quote opens kit.quoteCast)
   draft: "", // what you've typed so far, kept across redraws
   pop: null, // the cast whose recast menu is open
   busy: false,
@@ -287,7 +287,7 @@ function card(c) {
         ${kit.button(`${icon(n?.liked ? "heart-on" : "heart")}<span>${num(n, "likes")}</span>`, { disabled: !n, attrs: `data-act="like" data-hash="${c.hash}" title="${n?.liked ? "Unlike" : "Like"}" aria-label="${n?.liked ? "Unlike" : "Like"}"` })}
         ${kit.button(`${icon("share")}<span class="me-word">share</span>`, { attrs: `data-act="share" data-hash="${c.hash}" title="Copy a link to this cast" aria-label="Share: copy a link"` })}
       </div>
-      ${S.compose?.hash === c.hash ? composer(c) : ""}
+      ${S.compose?.hash === c.hash ? replyBox() : ""}
     </div>
   </article>`;
 }
@@ -301,14 +301,16 @@ function recastMenu(c, n) {
     <button type="button" class="k-item" role="menuitem" data-act="quote" data-hash="${c.hash}">quote cast</button></div>`;
 }
 
-// Reply or quote in place, under the cast. A quote cast is a new cast of
-// yours with this one embedded in it.
-function composer(c) {
-  const quote = S.compose.kind === "quote";
-  const snip = c.text.replace(/\s+/g, " ").trim();
-  return `<div class="inline" data-reply-box><textarea placeholder="${quote ? "Say something about it" : "Reply to your cast"}" aria-label="${quote ? "Quote cast" : "Reply"}">${esc(S.draft)}</textarea>
-    ${quote ? `<div class="me-quoting">quoting “${esc(snip.length > 80 ? `${snip.slice(0, 79)}…` : snip || "your cast")}”</div>` : ""}
-    <div class="row"><span class="dim small">${quote ? "new cast" : "replying to yourself"}</span><span class="left">320</span>${kit.button(quote ? "quote" : "cast", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div></div>`;
+// A reply opens in place, under the cast.
+function replyBox() {
+  return `<div class="inline" data-reply-box><textarea placeholder="Reply to your cast" aria-label="Reply">${esc(S.draft)}</textarea>
+    <div class="row"><span class="dim small">replying to yourself</span><span class="left">320</span>${kit.button("cast", { look: "primary", key: "⌘↵", attrs: "data-send" })}</div></div>`;
+}
+
+// Close the reply box, dropping what was typed.
+function closeCompose() {
+  S.compose = null; S.draft = "";
+  render();
 }
 
 function render() {
@@ -337,7 +339,7 @@ function wireReplyBox() {
   ta.addEventListener("input", () => { S.draft = ta.value; paint(); });
   ta.addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); send(); }
-    if (e.key === "Escape") { e.stopPropagation(); S.compose = null; S.draft = ""; render(); }
+    if (e.key === "Escape") { e.stopPropagation(); closeCompose(); }
   });
   box.querySelector("[data-send]").addEventListener("click", send);
 }
@@ -431,12 +433,23 @@ async function share(c) {
   }
 }
 
-function compose(c, kind) {
-  const open = S.compose?.hash === c.hash && S.compose.kind === kind;
-  S.compose = open ? null : { hash: c.hash, kind };
+function compose(c) {
+  const open = S.compose?.hash === c.hash;
+  S.compose = open ? null : { hash: c.hash, kind: "reply" };
   S.draft = ""; S.pop = null;
   tone(880, 0, 0.02, 0.02);
   render();
+}
+
+// Quote it in kit's window; once it lands, the casts tab loads again with it.
+function quote(c) {
+  S.compose = null; S.draft = ""; S.pop = null;
+  render();
+  kit.quoteCast(c, {
+    me: S.me,
+    focus: () => $(`[data-act="recast-menu"][data-hash="${c.hash}"]`),
+    sent: () => { reset("casts"); if (S.tab === "casts") load("casts"); },
+  });
 }
 
 function toggleMenu(c) {
@@ -454,37 +467,30 @@ function reset(tab) {
 async function send() {
   const box = $("[data-reply-box]"), c = S.compose && find(S.compose.hash);
   if (!box || !c) return;
-  const quote = S.compose.kind === "quote";
   const text = box.querySelector("textarea").value;
-  // A quote can be just the quoted cast; a reply needs words.
-  if ((!quote && !text.trim()) || 320 - enc.encode(text).length < 0) return;
+  if (!text.trim() || 320 - enc.encode(text).length < 0) return;
   const b = box.querySelector("[data-send]");
-  b.setAttribute("aria-disabled", "true"); b.textContent = quote ? "quoting…" : "casting…";
+  b.setAttribute("aria-disabled", "true"); b.textContent = "casting…";
   try {
-    const r = await api("/api/cast", quote ? { text, quote: { fid: c.fid, hash: c.hash } } : { text, replyTo: { fid: c.fid, hash: c.hash } });
+    const r = await api("/api/cast", { text, replyTo: { fid: c.fid, hash: c.hash } });
     [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.06, 0.1, 0.035));
-    toast(r.landed ? (quote ? "Quoted. It's on Farcaster." : "Replied. It's on Farcaster.") : "Sent. It should land soon.");
+    toast(r.landed ? "Replied. It's on Farcaster." : "Sent. It should land soon.");
     S.compose = null; S.draft = "";
-    if (quote) {
-      reset("casts");
-      if (S.tab === "casts") return load("casts");
-    } else {
-      const n = S.counts.get(c.hash);
-      if (n) n.replies++;
-      reset("replies");
-    }
+    const n = S.counts.get(c.hash);
+    if (n) n.replies++;
+    reset("replies");
     render();
   } catch (e) {
     toast(e.message, 3500);
-    b.removeAttribute("aria-disabled"); b.innerHTML = `${quote ? "quote" : "cast"} <kbd>⌘↵</kbd>`;
+    b.removeAttribute("aria-disabled"); b.innerHTML = `cast <kbd>⌘↵</kbd>`;
   }
 }
 
 const ACTS = {
-  reply: (c) => compose(c, "reply"),
+  reply: compose,
   "recast-menu": toggleMenu,
   recast: (c) => { S.pop = null; react(c, "recast"); },
-  quote: (c) => compose(c, "quote"),
+  quote,
   like: (c) => react(c, "like"),
   share,
 };
@@ -526,7 +532,7 @@ addEventListener("keydown", (e) => {
   else if (k === "r") show("replies");
   else if (k === "escape") {
     if (S.pop) { S.pop = null; render(); }
-    else if (S.compose) { S.compose = null; S.draft = ""; render(); }
+    else if (S.compose) closeCompose();
     else location.href = "/";
   }
 });
