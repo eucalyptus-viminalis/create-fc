@@ -17,7 +17,7 @@ A cast can't carry an image. It carries a link, and every app loads the image fr
 | Per person | 500 MB | Keeps a shared node fair. About 1,000–2,500 shrunk photos. |
 | The whole node | 10 GB | Leaves plenty of the server's main disk free. |
 
-The post page shows how much of your 500 MB you've used, and how full the node is. If you remove an image before you cast, its space comes back. Uploading the same image twice only counts once.
+The post page shows how much of your 500 MB you've used, and how full the node is. If you remove an image before you cast, its space comes back, unless a saved draft still uses it. Deleting a draft gives back the space of images nothing else uses. Uploading the same image twice only counts once.
 
 Images live on the server's main disk, not the volume Snapchain uses, so they never compete with the node's database.
 

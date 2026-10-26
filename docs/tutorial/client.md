@@ -46,6 +46,8 @@ A bar along the bottom switches between views, by click or number key: **1** hom
 
 **Inbox.** Casts from people you follow, likes on your casts and replies to you, from the last 7 days. Clear what you've read and save what you want to keep; both stay in your browser. Every cast says which app it came through ("via @app"), with a link to hide that app.
 
+**Compose.** Write a cast, mention people with @ and attach up to two images. The counter counts bytes, the way Farcaster does. **Save draft** (⌘S) keeps what you've written under the composer, drawn the way the cast will look, so you can open it later. Drafts stay in this browser, one list per account. **Clear** (⌘⇧⌫) empties the composer; if what you wrote isn't saved, the bar at the bottom asks whether to save it first.
+
 ![Popular apps in @3070.eth's feed: 62% of the latest 400 casts came through @warpcast, then @fireflyapp at 7%, 41 apps in all, each with "only" and "hide" buttons.](/tutorial/fameboy-apps.png)
 
 **Apps.** Which apps your feed comes through, as a chart. Show only one app's casts, or hide the Farcaster app (still called @warpcast) in one click. The inbox and home follow your choice.
