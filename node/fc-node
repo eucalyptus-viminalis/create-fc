@@ -1,6 +1,9 @@
 #!/bin/bash
 # fc-node: check on a read node set up by node/setup.sh.
-#   fc-node status                 setup progress, then how far behind the network it is
+#   fc-node status                 setup progress, then how far behind the network it is.
+#                                  On a server with no node of its own (NODE in
+#                                  /etc/fc-node.conf), the remote node's state and
+#                                  whether port 3381 reaches it
 #   fc-node logs                   follow the setup log (Ctrl-C to stop; the node keeps going)
 #   fc-node app-account [show|remove]
 #                                  let people sign in to fameboy here by approving on
@@ -17,10 +20,40 @@
 #   fc-node invite list | revoke <code>
 set -uo pipefail
 LOG=/var/log/fc-node-setup.log
+NODE=$(sed -n 's/^NODE=//p' /etc/fc-node.conf 2>/dev/null | head -n1)
+
+# The services next to the node: the companion, and hosted fameboy if set up.
+services() {
+  if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
+  else echo "companion: not running (re-run command 1 to install it)"; fi
+  if [ -f /var/lib/fc-fameboy/url ]; then
+    if docker ps --format '{{.Names}}' | grep -qx fc-fameboy; then echo "fameboy: hosted at $(cat /var/lib/fc-fameboy/url)"
+    else echo "fameboy: set up but not running (fc-node client to restart it; docker logs fc-fameboy)"; fi
+  fi
+}
 
 case "${1:-status}" in
   logs) exec tail -n 30 -F "$LOG" ;;
   status)
+    if [ -n "$NODE" ]; then
+      # No node here: port 3381 is Caddy passing requests on to $NODE.
+      echo "node: $NODE (not on this server; port 3381 passes requests on to it)"
+      info=$(curl -s -m 10 localhost:3381/v1/info || true)
+      if [ -n "$info" ] && echo "$info" | jq -e .shardInfos >/dev/null 2>&1; then
+        echo "$info" | jq -r '.shardInfos | sort_by(.shardId)[] | "  shard \(.shardId): \(.blockDelay)s behind"'
+        worst=$(echo "$info" | jq '[.shardInfos[].blockDelay] | max')
+        if [ "$worst" -lt 10 ]; then echo "in sync."
+        else echo "the remote node is ${worst}s behind. That's its operator's to fix; the newest casts show up late meanwhile."; fi
+      elif curl -s -m 10 "$NODE/v1/info" | jq -e .shardInfos >/dev/null 2>&1; then
+        echo "$NODE answers, but port 3381 here doesn't reach it. Logs: docker logs fc-images. Re-run command 1 to rebuild Caddy's config."
+        services; exit 1
+      else
+        echo "$NODE isn't answering. Everything here waits on it. Another node: re-run command 1 with NODE=<its address>."
+        services; exit 1
+      fi
+      services
+      exit 0
+    fi
     t0=$(date +%s.%N)
     info=$(curl -s -m 5 localhost:3381/v1/info || true)
     if [ -n "$info" ] && echo "$info" | jq -e .shardInfos >/dev/null 2>&1; then
@@ -62,12 +95,7 @@ case "${1:-status}" in
                "catching up: \([$behind[].d] | max | dur) behind, ~\([$behind[] | .d / .gain] | max | dur) to go."
              end)'
       fi
-      if curl -s -m 3 localhost:3390/v1/companion >/dev/null; then echo "companion: running on port 3390"
-      else echo "companion: not running (re-run command 1 to install it)"; fi
-      if [ -f /var/lib/fc-fameboy/url ]; then
-        if docker ps --format '{{.Names}}' | grep -qx fc-fameboy; then echo "fameboy: hosted at $(cat /var/lib/fc-fameboy/url)"
-        else echo "fameboy: set up but not running (fc-node client to restart it; docker logs fc-fameboy)"; fi
-      fi
+      services
     elif systemctl is-active --quiet fc-node-setup; then
       echo "setup running. Latest:"
       grep -E "shard [0-9]|setup|loaded" "$LOG" | tail -n 2 | sed 's/^/  /'

@@ -71,11 +71,15 @@ export async function nodeOverview(): Promise<NodeOverview> {
 
 // ------------------------------------------------------------- companion
 
-// $FC_COMPANION, else the node's host on port 3390.
+// $FC_COMPANION, else the node's host on port 3390 when the node is on 3381,
+// as a node set up by command 1 is. Any other node (a public one, such as
+// https://haatz.quilibrium.com) has no companion: "" here, and companionUrl
+// says so at once instead of waiting for a port that never answers.
 export const COMPANION = (
   process.env.FC_COMPANION ??
   (() => {
     const u = new URL(NODE);
+    if (u.port !== "3381") return "";
     u.port = "3390";
     return u.origin;
   })()
@@ -83,10 +87,21 @@ export const COMPANION = (
 
 class NoCompanion extends NodeError {}
 
+// The companion's address for a call, or a NoCompanion error when this node has none.
+export function companionUrl(path: string) {
+  if (!COMPANION) {
+    throw new NoCompanion(
+      `the node at ${NODE} has no companion, which phone sign-in through the node, image uploads and who's online need. Set FC_COMPANION if it has one elsewhere.`,
+    );
+  }
+  return COMPANION + path;
+}
+
 async function companion<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const url = companionUrl(path);
   let res: Response;
   try {
-    res = await fetch(COMPANION + path, { ...init, signal: AbortSignal.timeout(5_000) });
+    res = await fetch(url, { ...init, signal: AbortSignal.timeout(5_000) });
   } catch {
     throw new NoCompanion(`no companion at ${COMPANION}`);
   }

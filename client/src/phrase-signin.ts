@@ -30,7 +30,7 @@ import {
 } from "@farcaster/core";
 import { bytesToHex, createPublicClient, hexToBytes, http, verifyTypedData, type Hex } from "viem";
 import { optimism } from "viem/chains";
-import { COMPANION } from "./home.ts";
+import { COMPANION, companionUrl } from "./home.ts";
 import { currentCustody, fidForAddress, storageUnits, validate } from "./keys.ts";
 import { NodeError, get, submitUntil } from "./node.ts";
 import { GASLESS_DOMAIN, KEY_ADD_TYPES, KEY_REQUEST_TYPES, KEY_SCOPES, KEY_TTL } from "./phrase-browser.ts";
@@ -117,9 +117,10 @@ export async function phraseAccount(rawAddress: string, client: string) {
 // The companion keeps this node's sign-in rules: whether seed phrase sign-in
 // is on, invite codes, and 20 tries an hour per visitor (node/companion.mjs).
 async function companionAllows(invite: string, client: string) {
+  const url = companionUrl("/v1/signin/phrase");
   let res: Response;
   try {
-    res = await fetch(`${COMPANION}/v1/signin/phrase`, {
+    res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json", "x-clearcast-client": client },
       body: JSON.stringify({ invite }),

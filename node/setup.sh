@@ -7,29 +7,54 @@
 # not supported (see docs/adr/002-rented-server-only.md). Safe to run again: it picks up
 # where it stopped. The slow part (2-3 h of snapshot, then catching up) runs
 # as a systemd job, so you can disconnect. Check on it with: fc-node status
+#
+# Without a node of your own (a NO_NODE=1 server from hetzner.sh), name the
+# node to use instead, and it sets up only the companion, image hosting and
+# (with fc-node client) hosted fameboy (docs/adr/007-hypersnap-public-node.md):
+#
+#   curl -fsSL .../node/setup.sh | NODE=https://haatz.quilibrium.com bash
+#
+# Caddy then answers port 3381 by passing each request on to that node, so
+# everything on this server, and anyone pointed at http://<this server>:3381,
+# keeps working as if the node were here. NODE is remembered in
+# /etc/fc-node.conf, so later runs don't need it.
 set -euo pipefail
 
 RAW="${FC_RAW:-https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main}"
 SNAPCHAIN_RAW="https://raw.githubusercontent.com/farcasterxyz/snapchain/@latest/scripts/snapchain.sh"
+CONF=/etc/fc-node.conf
 
 [ "$(id -u)" -eq 0 ] || { echo "run as root: curl ... | sudo bash"; exit 1; }
 
-# The node lives in ~/snapchain (snapchain.sh insists). On a Hetzner server
-# that's a link to the volume mounted at /srv/snapchain.
-DIR=/root/snapchain
-if mountpoint -q /srv/snapchain; then
-  [ -e "$DIR" ] || ln -s /srv/snapchain "$DIR"
-fi
-mkdir -p "$DIR"
+# A remote node, from NODE or from an earlier run.
+NODE="${NODE:-}"
+[ -z "$NODE" ] && [ -f "$CONF" ] && NODE=$(sed -n 's/^NODE=//p' "$CONF" | head -n1)
+NODE="${NODE%/}"
+if [ -n "$NODE" ]; then
+  # It goes into Caddy's config, so only a plain address: scheme, host, optional port.
+  [[ "$NODE" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || { echo "NODE should look like https://haatz.quilibrium.com, not \"$NODE\""; exit 1; }
+  if command -v docker >/dev/null && docker ps -a --format '{{.Names}}' | grep -qx snapchain-snapchain-1; then
+    echo "this server runs its own Snapchain node, which already answers on port 3381. NODE is for servers without one (hetzner.sh with NO_NODE=1)."; exit 1
+  fi
+  curl -fsS -m 15 "$NODE/v1/info" | grep -q shardInfos || { echo "can't read $NODE/v1/info. Is NODE right?"; exit 1; }
+else
+  # The node lives in ~/snapchain (snapchain.sh insists). On a Hetzner server
+  # that's a link to the volume mounted at /srv/snapchain.
+  DIR=/root/snapchain
+  if mountpoint -q /srv/snapchain; then
+    [ -e "$DIR" ] || ln -s /srv/snapchain "$DIR"
+  fi
+  mkdir -p "$DIR"
 
-# ---------------------------------------------------------------- checks
-ram_gb=$(awk '/MemTotal/ {printf "%d", $2/1024/1024}' /proc/meminfo)
-free_gb=$(df -BG --output=avail "$DIR/" | tail -1 | tr -dc 0-9)
-have_db=$( [ -d "$DIR/.rocks/shard-2" ] && echo yes || echo no )
-echo "fc-node setup: ${ram_gb} GB RAM, ${free_gb} GB free in $DIR"
-[ "$ram_gb" -ge 15 ] || echo "warning: Snapchain wants 16 GB of RAM; this box has ${ram_gb} GB"
-if [ "$have_db" = no ] && [ "$free_gb" -lt 650 ]; then
-  echo "error: the database needs ~560 GB and grows; this disk has ${free_gb} GB free"; exit 1
+  # -------------------------------------------------------------- checks
+  ram_gb=$(awk '/MemTotal/ {printf "%d", $2/1024/1024}' /proc/meminfo)
+  free_gb=$(df -BG --output=avail "$DIR/" | tail -1 | tr -dc 0-9)
+  have_db=$( [ -d "$DIR/.rocks/shard-2" ] && echo yes || echo no )
+  echo "fc-node setup: ${ram_gb} GB RAM, ${free_gb} GB free in $DIR"
+  [ "$ram_gb" -ge 15 ] || echo "warning: Snapchain wants 16 GB of RAM; this box has ${ram_gb} GB"
+  if [ "$have_db" = no ] && [ "$free_gb" -lt 650 ]; then
+    echo "error: the database needs ~560 GB and grows; this disk has ${free_gb} GB free"; exit 1
+  fi
 fi
 
 # ------------------------------------------------------ the helper scripts
@@ -49,6 +74,28 @@ fetch node/companion-package.json /usr/local/lib/fc-companion/package.json
 fetch node/companion-pnpm-lock.yaml /usr/local/lib/fc-companion/pnpm-lock.yaml
 fetch node/companion-install.sh /usr/local/sbin/fc-companion-install
 fetch node/fameboy-install.sh /usr/local/sbin/fc-fameboy-install
+
+# ------------------------------------------------- no node of our own
+# Only Docker, the companion and Caddy (which passes :3381 on to NODE): a
+# minute or two, so it runs here rather than as a background job.
+if [ -n "$NODE" ]; then
+  echo "fc-node setup: no node here; reads and writes go to $NODE"
+  printf 'NODE=%s\n' "$NODE" > "$CONF"
+  command -v docker >/dev/null || curl -fsSL https://get.docker.com | sh
+  command -v jq >/dev/null || { apt-get update -q && apt-get install -y -q jq; }
+  fc-companion-install
+  # Hosting fameboy (fc-node client)? Update it too.
+  if [ -f /var/lib/fc-fameboy/url ]; then fc-fameboy-install || echo "hosted fameboy didn't restart: fc-node client to retry."; fi
+  echo
+  fc-node status | sed 's/^/  /' || true
+  cat <<EOF
+
+Set up. Next, on this server:
+  fc-node app-account   phone sign-in for people using this server (run it in your own SSH session)
+  fc-node client        host fameboy here
+EOF
+  exit 0
+fi
 
 # --------------------------------------------- the job that does the work
 cat > /usr/local/sbin/fc-node-setup <<'JOB'

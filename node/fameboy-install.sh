@@ -94,7 +94,7 @@ if [ "$(cat "$STATE/.lock-sha" 2>/dev/null)" != "$want" ]; then
 fi
 
 # ---------------------------------------------------------------- the service
-# Host network so it reaches Snapchain (3381) and the companion (3390) on
+# Host network so it reaches the node API (3381: Snapchain, or Caddy passing it on) and the companion (3390) on
 # 127.0.0.1; it listens on 127.0.0.1:4748, so only Caddy can reach it.
 docker rm -f fc-fameboy >/dev/null 2>&1 || true
 docker run -d --name fc-fameboy --restart unless-stopped --network host \

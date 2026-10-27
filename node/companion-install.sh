@@ -16,10 +16,15 @@
 #                                                 (needs ports 80 and 443 open). It also
 #                                                 serves any site in caddy-sites/, which is
 #                                                 how `fc-node client` hosts fameboy
+#
+# On a server with no node of its own (NODE in /etc/fc-node.conf, set by
+# setup.sh), Caddy also answers port 3381 by passing each request on to that
+# node, and there's no Snapchain container to time, so no uptime timer.
 set -euo pipefail
 
 LIB=/usr/local/lib/fc-companion
 STATE=/var/lib/fc-companion
+NODE=$(sed -n 's/^NODE=//p' /etc/fc-node.conf 2>/dev/null | head -n1)
 for f in companion.mjs app-account.mjs fameboy-name.mjs package.json pnpm-lock.yaml; do
   [ -f "$LIB/$f" ] || { echo "fc-companion: $f is missing; re-run command 1"; exit 1; }
 done
@@ -30,7 +35,9 @@ mkdir -p "$STATE"
 mkdir -p "$STATE/images" "$STATE/ledger" "$STATE/caddy" "$STATE/caddy-sites"
 # Caddy's import needs at least one file to match.
 [ -f "$STATE/caddy-sites/00-none.caddy" ] || echo "# Sites added by fc-node client (fameboy-install.sh) go next to this file." > "$STATE/caddy-sites/00-none.caddy"
-chown 1000:1000 "$STATE/images" "$STATE/ledger"
+# Recursive, so images and a ledger restored from a copy (rsync from another
+# machine keeps that machine's owner) are the companion's again.
+chown -R 1000:1000 "$STATE/images" "$STATE/ledger"
 touch "$STATE/invites"
 chown 1000:1000 "$STATE/invites"; chmod 600 "$STATE/invites"
 [ -f "$STATE/app-account.json" ] && { chown 1000:1000 "$STATE/app-account.json"; chmod 600 "$STATE/app-account.json"; }
@@ -55,6 +62,12 @@ mv /var/lib/fc-companion/snapchain.json.tmp /var/lib/fc-companion/snapchain.json
 EOF
 chmod +x /usr/local/sbin/fc-companion-uptime
 
+if [ -n "$NODE" ]; then
+  # The node is someone else's: its start time isn't ours to know. An old
+  # record (copied from a server that had a node) would be wrong, so drop it.
+  systemctl disable --now fc-companion-uptime.timer >/dev/null 2>&1 || true
+  rm -f "$STATE/snapchain.json"
+else
 cat > /etc/systemd/system/fc-companion-uptime.service <<'EOF'
 [Unit]
 Description=Record when Snapchain started, for fc-companion
@@ -77,6 +90,7 @@ EOF
 systemctl daemon-reload
 systemctl enable --now fc-companion-uptime.timer >/dev/null
 /usr/local/sbin/fc-companion-uptime
+fi
 
 # This server's public address, as a name that resolves to it: sslip.io
 # answers 91-99-76-223.sslip.io with 91.99.76.223, so Caddy can get a
@@ -113,12 +127,34 @@ $host {
 	}
 }
 CADDY
+# No node here: port 3381 passes reads and writes on to the remote one, over
+# HTTPS with its own host name (so its CDN and certificate see the right one).
+# Plain HTTP on 3381, as a node's own API is.
+if [ -n "$NODE" ]; then
+cat >> "$STATE/Caddyfile" <<CADDY
+
+http://:3381 {
+	reverse_proxy $NODE {
+		header_up Host {upstream_hostport}
+	}
+}
+CADDY
+fi
 docker rm -f fc-images >/dev/null 2>&1 || true
 docker run -d --name fc-images --restart unless-stopped --network host --memory 128m \
   -v "$STATE/Caddyfile:/etc/caddy/Caddyfile:ro" -v "$STATE/caddy-sites:/etc/caddy/sites:ro" \
   -v "$STATE/images:/srv/img:ro" -v "$STATE/caddy:/data" \
   caddy:2-alpine >/dev/null
 echo "fc-images: serving images at $IMAGE_BASE/img/ (needs ports 80 and 443 open)"
+if [ -n "$NODE" ]; then
+  ok=no
+  for _ in $(seq 1 20); do
+    curl -s -m 5 localhost:3381/v1/info | grep -q shardInfos && { ok=yes; break; }
+    sleep 1
+  done
+  [ "$ok" = yes ] && echo "fc-images: port 3381 passes requests on to $NODE" \
+    || echo "fc-images: port 3381 isn't reaching $NODE yet. Logs: docker logs fc-images"
+fi
 
 for _ in $(seq 1 20); do
   curl -s -m 2 localhost:3390/v1/companion >/dev/null && { echo "fc-companion running on port 3390."; exit 0; }
