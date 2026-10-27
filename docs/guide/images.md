@@ -19,7 +19,7 @@ A cast can't carry an image. It carries a link, and every app loads the image fr
 
 The post page shows how much of your 500 MB you've used, and how full the node is. If you remove an image before you cast, its space comes back, unless a saved draft still uses it. Deleting a draft gives back the space of images nothing else uses. Uploading the same image twice only counts once.
 
-Images live on the server's main disk, not the volume Snapchain uses, so they never compete with the node's database.
+Images live on the server's main disk, not the volume Snapchain uses, so they never compete with the node's database. On a server with no node ([Host fameboy without a node](./host-fameboy#without-a-node-of-your-own)), they work the same way: images are the companion's job, not the node's.
 
 ### Changing the limits
 
@@ -47,7 +47,7 @@ Anyone with an image's link can see it. That's true of every image on Farcaster,
 
 Your casts link to the node, so the images are only there while it runs. If you use a friend's node, that's their server.
 
-- **Deleting the server breaks them.** The quickstart suggests deleting the server to stop billing. If you do, every image in your past casts stops loading, and a new server gets a new address.
+- **Deleting the server breaks them.** The quickstart suggests deleting the server to stop billing. If you do, every image in your past casts stops loading, and a new server gets a new address. To keep them, copy `/var/lib/fc-companion/images` and `ledger` off first, delete with `--keep-ip`, and restore them on a new server at the same address. Their links then work again ([Moving to a new server](./host-fameboy#moving-to-a-new-server-and-keeping-the-address)).
 - **A server that's down shows broken images** until it's back.
 - **Removing a cast doesn't remove its images.** They stay on your node, and in your image space, until you delete them from the server.
 

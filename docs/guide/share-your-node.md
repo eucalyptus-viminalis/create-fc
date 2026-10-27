@@ -97,7 +97,7 @@ Their new key is made on their computer. Only its public half goes to your serve
 
 Sharing your node means friends rely on it:
 
-- **Their reads.** fameboy reads everything from your node. If it's down or behind, so is their feed.
+- **Their reads.** fameboy reads everything from your node. If it's down or behind, so is their feed. On a server with no node of its own ([Host fameboy without a node](./host-fameboy#without-a-node-of-your-own)), reads pass on to a public node, whose operator sees them too.
 - **When they're online.** The companion sees each device's internet address and when it checks in. It keeps that in memory only, and forgets a device 90 seconds after it leaves.
 - **Not their account.** You can't post as them, and neither could anyone who broke into your server. Their key never leaves their computer.
 - **Their images.** Images they attach to casts live on your node, up to 500 MB each. If you delete the server, those images stop loading in their casts too. See [Images in your casts](./images).

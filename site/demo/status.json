@@ -1,6 +1,6 @@
 {
-  "stage": "build",
+  "stage": "done",
   "updated": "2026-10-28",
-  "note": "The big server is gone. Building the small server that brings the demo back, reading from Hypersnap.",
-  "demo_url": null
+  "note": "The demo is back at the same address, on a small server that reads from Hypersnap.",
+  "demo_url": "https://demo.createfc.org"
 }
