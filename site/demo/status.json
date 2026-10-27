@@ -1,0 +1,6 @@
+{
+  "stage": "retire",
+  "updated": "2026-10-28",
+  "note": "The big server is being retired. The demo comes back on a small server that reads from Hypersnap.",
+  "demo_url": null
+}
