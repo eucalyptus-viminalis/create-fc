@@ -116,8 +116,8 @@
   <article class="sheet">
     <div class="issuer"><span>create-fc · Public notice</span><span>demo.createfc.org</span></div>
 
-    <h1>Demo paused. <span>Lines being moved.</span></h1>
-    <p class="lede">The fameboy demo ran on a Snapchain node we rented, with a 1000 GB disk. It's moving to a much smaller server that reads from <a href="https://hypersnap.org/">Hypersnap</a>'s public node instead, and it's off until the move is done. It comes back at this same address. Your Farcaster account is fine: it lives on the network, not on our server.</p>
+    <h1 id="headline">Demo paused. <span>Lines being moved.</span></h1>
+    <p class="lede" id="lede">The fameboy demo ran on a Snapchain node we rented, with a 1000 GB disk. It's moving to a much smaller server that reads from <a href="https://hypersnap.org/">Hypersnap</a>'s public node instead, and it's off until the move is done. It comes back at this same address. Your Farcaster account is fine: it lives on the network, not on our server.</p>
 
     <h2>Progress</h2>
     <ol class="stages" id="stages">
@@ -128,16 +128,18 @@
     </ol>
     <p class="updated" id="note"></p>
 
+    <div class="while-paused">
     <h2>Use fameboy now</h2>
     <p>fameboy runs on your own computer too. If yours is pointed at our node, it's offline until the demo is back. To use it now, point it at Hypersnap's public node (needs Node.js 22.18 or newer, and git):</p>
     <div class="cmd" id="cmd">curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- https://haatz.quilibrium.com</div>
     <p>Then run <code>fameboy ui</code>. Sign in with your seed phrase on that page (it stays on your computer), or with an app account of your own (<code>fameboy app-account</code>). Use a test account. Until our server is back, some pages pause a few seconds looking for it.</p>
+    </div>
 
     <h2>What's different</h2>
     <ul class="plain">
       <li>Reads go to Hypersnap's public node, which someone else runs. They can see which accounts are looked up.</li>
-      <li>Phone sign-in through @fameboyclear, image uploads and invite codes are off until the demo is back.</li>
-      <li>Images uploaded through the demo are saved. They come back at the same links when the demo does.</li>
+      <li class="while-paused">Phone sign-in through @fameboyclear, image uploads and invite codes are off until the demo is back.</li>
+      <li class="while-paused">Images uploaded through the demo are saved. They come back at the same links when the demo does.</li>
     </ul>
 
     <div class="sign">
@@ -177,6 +179,10 @@
       $("banner-title").textContent = "Moved to Hypersnap";
       $("banner-stage").innerHTML = status.demo_url ? `The demo is back: <a href="${encodeURI(status.demo_url)}">open it</a>` : "The demo is back.";
       $("stamp").textContent = "Complete";
+      $("headline").innerHTML = "Demo back. <span>Lines moved.</span>";
+      $("lede").innerHTML = `The fameboy demo now runs on a small server that reads from <a href="https://hypersnap.org/">Hypersnap</a>'s public node, instead of a Snapchain node of our own. Same address, same sign-in, and old images are back.${status.demo_url ? ` <a href="${encodeURI(status.demo_url)}">Open the demo</a>.` : ""}`;
+      document.title = "fameboy demo back · create-fc";
+      document.querySelectorAll(".while-paused").forEach((el) => (el.hidden = true));
     } else {
       $("banner-stage").innerHTML = `Stage <b>${i + 1} of ${STAGES.length}</b>: ${STAGES[i].label}`;
     }
