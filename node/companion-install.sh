@@ -35,7 +35,9 @@ mkdir -p "$STATE"
 mkdir -p "$STATE/images" "$STATE/ledger" "$STATE/caddy" "$STATE/caddy-sites"
 # Caddy's import needs at least one file to match.
 [ -f "$STATE/caddy-sites/00-none.caddy" ] || echo "# Sites added by fc-node client (fameboy-install.sh) go next to this file." > "$STATE/caddy-sites/00-none.caddy"
-chown 1000:1000 "$STATE/images" "$STATE/ledger"
+# Recursive, so images and a ledger restored from a copy (rsync from another
+# machine keeps that machine's owner) are the companion's again.
+chown -R 1000:1000 "$STATE/images" "$STATE/ledger"
 touch "$STATE/invites"
 chown 1000:1000 "$STATE/invites"; chmod 600 "$STATE/invites"
 [ -f "$STATE/app-account.json" ] && { chown 1000:1000 "$STATE/app-account.json"; chmod 600 "$STATE/app-account.json"; }
