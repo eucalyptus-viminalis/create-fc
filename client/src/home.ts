@@ -318,13 +318,15 @@ const blockAt = (s: Span, ms: number) => Math.round(s.firstBlock + ((ms - s.firs
 // One hour's rate, from a ~4 minute sample in the middle of it. Past hours
 // never change, so they're kept in ~/.fameboy/network-hours.json.
 const SAMPLE_BLOCKS = 240;
+const SAMPLE_START_MS = 25 * 60_000; // from the hour's start
+const SAMPLE_END_MS = 30 * 60_000; // 240 blocks at about one a second, with room to spare
 type HourCache = Record<string, number>; // "<shard>:<hour start, unix ms>" -> messages a minute
 async function hourRate(shard: number, span: Span | undefined, hourStart: number, cache: HourCache): Promise<number | undefined> {
   const k = `${shard}:${hourStart}`;
   if (k in cache) return cache[k];
   if (!span) return undefined; // no history from the node: only what's cached
-  const at = hourStart + 25 * 60_000;
-  if (at < span.firstMs || at + 5 * 60_000 > span.lastMs) return undefined; // outside what the node keeps
+  const at = hourStart + SAMPLE_START_MS;
+  if (at < span.firstMs || hourStart + SAMPLE_END_MS > span.lastMs) return undefined; // outside what the node keeps
   const w = await countBlocks(shard, blockAt(span, at), SAMPLE_BLOCKS);
   return (cache[k] = (w.messages / w.seconds) * 60);
 }
@@ -335,15 +337,17 @@ export type Conditions = {
   total: number;
   error?: string;
   retryAt?: string; // when a failed measurement is tried again
-  hours: { hour: number; today?: number; usual?: number }[]; // messages a minute, local hours 0-23
+  samples: { at: string; perMinute: number }[]; // one per hour, oldest first; `at` is the middle of the sample
   historyDays: number; // how far back the node's events go
   updatedAt?: string;
 };
 
-// The 24 hours of today (local time), each with today's rate (hours already
-// over) and the usual rate: the same hour on each earlier day the node still
-// has, up to 3. Measuring takes a minute the first time, so it runs in the
-// background and the page asks for progress.
+// One sample per hour for the last 4 days, as far back as the node still has.
+// Hours are whole UTC hours and each sample carries its time, so the browser
+// can sort them into its own local hours (today, and the usual from earlier
+// days): a hosted server's clock and timezone aren't the viewer's. Measuring
+// takes a minute the first time, so it runs in the background and the page
+// asks for progress.
 let job: { started: number; result: Conditions } | undefined;
 const RETRY_MS = 60_000;
 
@@ -352,7 +356,7 @@ export function conditions(node: NodeOverview): Conditions {
   const age = job ? Date.now() - job.started : 0;
   const stale = job && job.result.state !== "measuring" && age > (job.result.state === "failed" ? RETRY_MS : 10 * 60_000);
   if (!job || stale) {
-    const result: Conditions = { state: "measuring", done: 0, total: 0, hours: [], historyDays: 0 };
+    const result: Conditions = { state: "measuring", done: 0, total: 0, samples: [], historyDays: 0 };
     const started = Date.now();
     job = { started, result };
     measure(node, result).catch((e) => {
@@ -374,47 +378,32 @@ async function measure(node: NodeOverview, out: Conditions) {
   const oldest = known.length ? Math.max(...known.map((x) => x.firstMs)) : Date.now() - 3.5 * 86_400_000;
   out.historyDays = Math.round(((Date.now() - oldest) / 86_400_000) * 10) / 10;
 
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
-  const nowHour = new Date().getHours();
-  const hourStart = (daysAgo: number, h: number) => {
-    const d = new Date(midnight);
-    d.setDate(d.getDate() - daysAgo);
-    d.setHours(h);
-    return d.getTime();
+  // Every whole UTC hour of the last 4 days (enough for today and 3 earlier
+  // days in any timezone) whose sample is over and still on the node.
+  const HOUR = 3_600_000;
+  const now = Date.now();
+  const hourStarts: number[] = [];
+  for (let t = Math.floor(now / HOUR) * HOUR - 4 * 24 * HOUR; t + SAMPLE_END_MS <= now; t += HOUR) if (t + SAMPLE_START_MS > oldest) hourStarts.push(t);
+  out.total = hourStarts.length;
+
+  const rates = new Map<number, number>(); // hour start -> messages a minute, all shards
+  const publish = () => {
+    out.samples = [...rates]
+      .sort(([a], [b]) => a - b)
+      .map(([t, perMinute]) => ({ at: new Date(t + (SAMPLE_START_MS + SAMPLE_END_MS) / 2).toISOString(), perMinute: Math.round(perMinute * 10) / 10 }));
   };
-
-  // Every (day, hour) worth measuring: today's finished hours, and all 24 hours of up to 3 earlier days.
-  const jobs: { daysAgo: number; hour: number }[] = [];
-  for (let h = 0; h < nowHour; h++) jobs.push({ daysAgo: 0, hour: h });
-  for (let d = 1; d <= 3; d++) for (let h = 0; h < 24; h++) if (hourStart(d, h) + 30 * 60_000 > oldest) jobs.push({ daysAgo: d, hour: h });
-  out.total = jobs.length;
-
-  const rates = new Map<string, number>(); // "<daysAgo>:<hour>" -> messages a minute, all shards
-  await pool(jobs, 6, async (j) => {
-    const parts = await Promise.all(shards.map((id) => hourRate(id, spans.get(id), hourStart(j.daysAgo, j.hour), cache).catch(() => undefined)));
-    if (parts.every((p) => p !== undefined)) rates.set(`${j.daysAgo}:${j.hour}`, parts.reduce((a, b) => a + b!, 0));
+  await pool(hourStarts, 6, async (t) => {
+    const parts = await Promise.all(shards.map((id) => hourRate(id, spans.get(id), t, cache).catch(() => undefined)));
+    if (parts.every((p) => p !== undefined)) rates.set(t, parts.reduce((a, b) => a + b!, 0));
     out.done++;
-    out.hours = summarize(rates);
+    publish();
   });
   // Keep a week of hours; older ones can never be asked for again.
   const weekAgo = Date.now() - 7 * 86_400_000;
   await writeJson("network-hours.json", Object.fromEntries(Object.entries(cache).filter(([k]) => Number(k.split(":")[1]) > weekAgo)));
-  out.hours = summarize(rates);
+  publish();
   out.state = "ready";
   out.updatedAt = new Date().toISOString();
-}
-
-function summarize(rates: Map<string, number>) {
-  return Array.from({ length: 24 }, (_, hour) => {
-    const past = [1, 2, 3].map((d) => rates.get(`${d}:${hour}`)).filter((r): r is number => r !== undefined);
-    const today = rates.get(`0:${hour}`);
-    return {
-      hour,
-      today: today === undefined ? undefined : Math.round(today),
-      usual: past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : undefined,
-    };
-  });
 }
 
 // ------------------------------------------------------- since last time
