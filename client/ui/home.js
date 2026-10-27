@@ -132,9 +132,26 @@ function weather(now, usual) {
   return r < 0.7 ? "calm" : r < 1.15 ? "mild" : r < 1.6 ? "brisk" : "stormy";
 }
 
+// The server's hourly samples sorted into this browser's local hours 0-23:
+// today's rate, and the usual (the same hour on each of up to 3 earlier days).
+function localHours(samples = []) {
+  const dayStarts = [0, 1, 2, 3].map((daysAgo) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - daysAgo); return d.getTime(); });
+  const rates = new Map(); // "<days ago>:<hour>" -> messages a minute
+  for (const s of samples) {
+    const at = new Date(s.at), daysAgo = dayStarts.findIndex((start) => at.getTime() >= start);
+    if (daysAgo >= 0) rates.set(`${daysAgo}:${at.getHours()}`, s.perMinute);
+  }
+  return Array.from({ length: 24 }, (_, hour) => {
+    const past = [1, 2, 3].map((d) => rates.get(`${d}:${hour}`)).filter((r) => r !== undefined);
+    const today = rates.get(`0:${hour}`);
+    return { today: today === undefined ? undefined : Math.round(today), usual: past.length ? Math.round(past.reduce((a, b) => a + b, 0) / past.length) : undefined };
+  });
+}
+
 function paintConditions() {
   const c = S.cond, now = S.live?.perMinute, h = new Date().getHours();
-  const usualNow = c?.hours?.[h]?.usual;
+  const hours = localHours(c?.samples);
+  const usualNow = hours[h].usual;
   // A failed history run can't say what's usual, so it isn't "measuring" any more.
   const word = c?.state === "failed" ? "unknown" : weather(now, usualNow);
   const rate = now == null ? "" : `<b>${fmt(now)} messages a minute</b>`;
@@ -155,9 +172,9 @@ function paintConditions() {
     const mins = Math.max(1, Math.ceil((Date.parse(c.retryAt) - Date.now()) / 60_000));
     chart = `<div class="measuring"><span>${Number.isFinite(mins) ? `trying again in ${mins} min` : "trying again soon"}</span></div>`;
   } else {
-    const vals = c.hours.map((x, i) => (i < h ? x.today : i === h ? now : x.usual) ?? 0);
-    const max = Math.max(1, ...vals, ...c.hours.map((x) => x.usual ?? 0));
-    const bars = c.hours.map((x, i) => {
+    const vals = hours.map((x, i) => (i < h ? x.today : i === h ? now : x.usual) ?? 0);
+    const max = Math.max(1, ...vals, ...hours.map((x) => x.usual ?? 0));
+    const bars = hours.map((x, i) => {
       const v = i < h ? x.today : i === h ? now : x.usual;
       const cls = v == null ? "none" : i > h ? "later" : i === h ? "now" : "";
       const tip = i < h ? `${i}:00 · ${x.today ?? "?"} a minute (usually ${x.usual ?? "?"})` : i === h ? `now · ${now ?? "?"} a minute` : `${i}:00 · usually ${x.usual ?? "?"}`;
