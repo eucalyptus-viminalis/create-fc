@@ -4,6 +4,8 @@ A Snapchain read node costs about **$105 a month** on the setup `provision/hetzn
 
 There are no protocol fees. A read node needs no API key, stake or registration, and it earns nothing. You pay Hetzner for a server and a disk, and that's all.
 
+You don't need a node of your own to use fameboy. Pointed at a public node such as Hypersnap's, it costs nothing; a small server that hosts fameboy for others without a node costs about **$7.80 a month**. See [Without a node](#without-a-node).
+
 All prices below came from the Hetzner API (`hcloud server-type describe` and `GET /v1/pricing`) on 2026-10-18, for the `fsn1` (Falkenstein) location. They are in USD. **Gross** includes 10% VAT, which is the rate on the account used for this write-up. Hetzner charges VAT by your billing country, so your gross figures may differ. Net prices are the same for everyone.
 
 ## The bill, line by line
@@ -61,7 +63,26 @@ When you're done, delete everything so billing stops. The script lists the serve
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
 ```
 
+Add `--keep-ip` (`… | bash -s -- --keep-ip`) to keep the server's IPv4 address for $0.66 a month gross ($0.60 net), so a later server can take it over with `PRIMARY_IPV4=<its id>` on command 0. Anything that names the address, such as a DNS record or image links in casts, then keeps working.
+
 The volume holds the node's database, so a new node re-syncs from scratch (6–8 hours). To do it by hand instead: `hcloud server delete fc-node`, then `hcloud volume delete fc-node-data`, `hcloud firewall delete fc-node-fw` and `hcloud ssh-key delete fc-node-key`. The volume can only be deleted once the server is gone.
+
+## Without a node
+
+The node is what costs money: the volume alone is 80% of the bill. Two ways to skip it:
+
+- **Point fameboy at a public node.** `install.sh https://haatz.quilibrium.com` uses Hypersnap's public node, which follows the same network as Farcaster's own. Free, and nothing to run. Its operator can see which accounts you look up, and there's no companion, so no image uploads or who's online.
+- **A small server with no node.** `NO_NODE=1` on command 0 makes a cx23 with no volume, and `NODE=https://haatz.quilibrium.com` on command 1 sets it up to read from that public node. It runs the companion, image hosting and hosted fameboy. This is how demo.createfc.org runs ([ADR 007](https://github.com/eucalyptus-viminalis/create-fc/blob/main/docs/adr/007-hypersnap-public-node.md)).
+
+Prices from `hcloud server-type describe cx23` on 2026-10-28, the same in `fsn1` and `nbg1`:
+
+| Item | What it's for | Net / month | Gross / month |
+| --- | --- | --- | --- |
+| cx23 server | 2 shared vCPU, 4 GB RAM, 40 GB disk | $6.49 | $7.14 |
+| Public IPv4 | So people and Caddy's certificates can reach it | $0.60 | $0.66 |
+| **Total** | | **$7.09** | **$7.80** |
+
+The 40 GB disk holds the uploaded images; the companion's default 10 GB cap for the whole server fits. When cx23 is sold out, the script tries cax11 (2 Arm vCPU, 4 GB RAM), at $7.69 a month gross plus the IPv4.
 
 ## Why 1000 GB is enough
 
@@ -140,6 +161,7 @@ For a read node the two behave the same, since neither the CPU nor the RAM is th
 ## What doesn't cost anything
 
 - **Running the node.** Snapchain doesn't charge read nodes, and the snapshot download is free.
+- **Reading from a public node.** Hypersnap's needs no API key and, per its docs, has no built-in rate limit.
 - **Writing messages.** Casts, follows and likes are free to submit to your own node.
 - **Your client's app key.** It's registered with a gasless `KEY_ADD` message, with no Optimism transaction.
 

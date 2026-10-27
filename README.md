@@ -127,13 +127,23 @@ It opens in your browser on a sign-in page. See [Signing in](#signing-in).
 
 ## Try it without a node
 
-Open [demo.createfc.org](https://demo.createfc.org): @fameboyclear, the copy we host on our own node. Sign in by approving in the Farcaster app; nothing to install.
+Open [demo.createfc.org](https://demo.createfc.org): @fameboyclear, the copy we host. Sign in by approving in the Farcaster app, or with your seed phrase; nothing to install.
 
-Or install fameboy on your computer, pointed at that same node, then run `fameboy ui`:
+The demo runs on a small server with no node of its own. It reads from and posts through [Hypersnap](https://hypersnap.org/)'s public node, which follows the same network as Farcaster's own ([ADR 007](docs/adr/007-hypersnap-public-node.md)).
+
+Or install fameboy on your computer, pointed at our server, then run `fameboy ui`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- http://91.99.76.223:3381
 ```
+
+You can also point it straight at a public node, with no server of ours in between:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- https://haatz.quilibrium.com
+```
+
+A public node has no companion, so sign in with your seed phrase or your own app account (`fameboy app-account`). Image uploads and who's online need a companion, so they're off. Whoever runs a public node can see which accounts you look up.
 
 ## Let your AI agent do it
 
@@ -195,6 +205,22 @@ It prints the address, `https://<app account's name>.<ip with dashes>.sslip.io` 
 
 Each person's app key is made in their browser and never leaves it; every write is signed there, and the server keeps nothing about the people who use it ([ADR 003](docs/adr/003-hosted-clearcast.md)). Each copy is named after its app account ([ADR 004](docs/adr/004-naming-fameboy.md)). The [hosting guide](https://createfc.org/docs/guide/host-fameboy) covers addresses, who can sign in, and what people trust you with.
 
+### Without a node of your own
+
+Hosting fameboy doesn't need the node. A small server can run fameboy, the companion and image hosting, and read from a public node instead, for about $7.80 a month instead of $105. That's how [demo.createfc.org](https://demo.createfc.org) runs. Create the server:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | NO_NODE=1 bash
+```
+
+Then set it up against a public node, a minute after it boots:
+
+```bash
+ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | NODE=https://haatz.quilibrium.com bash'
+```
+
+Port 3381 on that server passes every request on to the public node, so fameboy installs pointed at `http://<ip>:3381` work as they would with a node there. Then set up `fc-node app-account` and `fc-node client` as above. The [hosting guide](https://createfc.org/docs/guide/host-fameboy#without-a-node-of-your-own) has the details.
+
 ## Seed phrases
 
 A seed phrase controls the whole account, so treat it like `rm -rf`:
@@ -213,6 +239,8 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 ```
 
 Your app key in `~/.fameboy` survives. Next time, run commands 0 and 1 again (6–8 hours to sync), then re-run command 2 with the new IP.
+
+Add `--keep-ip` (`… | bash -s -- --keep-ip`) to keep the server's address for a later server, for about $0.66 a month: give it to the new one with `PRIMARY_IPV4=<its id>` on command 0. DNS records, image links in casts, and installs pointed at that address then keep working.
 
 ## Troubleshooting
 

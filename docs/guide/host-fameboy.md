@@ -6,7 +6,7 @@ This page covers turning it on, the address it gets, who can sign in, and what t
 
 ## What you need
 
-- A node from [commands 0 and 1](https://createfc.org/quickstart/), in sync, with its companion running. `ssh root@<ip> fc-node status` should say `companion: running on port 3390`.
+- A node from [commands 0 and 1](https://createfc.org/quickstart/), in sync, with its companion running, or a small server with no node ([below](#without-a-node-of-your-own)). `ssh root@<ip> fc-node status` should say `companion: running on port 3390`.
 - An **app account** on the node, set up with `ssh -t root@<ip> fc-node app-account`. Its name is what people approve on their phone, and it becomes your copy's name. See [Share your node](./share-your-node#_1-choose-an-app-account) for choosing one.
 - Ports 80 and 443 open. Command 0's firewall already opens them, for [images](./images).
 
@@ -44,7 +44,42 @@ Point an A record for the domain at your server's IP with your DNS provider, wai
 ssh root@<ip> fc-node client fameboy.example.com
 ```
 
-It checks the domain points at your server before it switches. `fc-node client sslip` goes back to the sslip.io address.
+It checks the domain points at your server before it switches. The A record must be **DNS only** (on Cloudflare, the grey cloud), or the server can't get its certificate. fameboy then answers at that domain only: the sslip.io address stops working. `fc-node client sslip` goes back to the sslip.io address.
+
+## Without a node of your own
+
+Hosting fameboy doesn't need a node on the same server. A small server can run fameboy, the companion and image hosting, and read from a public node, for about $7.80 a month instead of $105 ([Costs](../Costs#without-a-node)). demo.createfc.org runs this way, reading from Hypersnap's public node, which follows the same network as Farcaster's own.
+
+Create the server. `NO_NODE=1` makes a cx23 with no volume, and opens only the ports this needs:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner.sh | NO_NODE=1 bash
+```
+
+A minute after it boots, set it up against the public node. It takes a couple of minutes, with no snapshot or sync:
+
+```bash
+ssh root@<ip> 'curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/node/setup.sh | NODE=https://haatz.quilibrium.com bash'
+```
+
+The server remembers the node in `/etc/fc-node.conf`, so running command 1 again later needs no `NODE`. Then set up the app account and `fc-node client` as on a full node.
+
+- **Port 3381 passes everything on.** Caddy answers `http://<ip>:3381` by passing each request to the public node. fameboy, the companion and `fc-node` keep using it as if the node were there, and so can fameboy installs on other computers.
+- **`fc-node status` shows the public node:** its shards, whether it's behind, and whether port 3381 reaches it.
+- **To change nodes,** run command 1 again with another `NODE`. Farcaster's own `https://crackle.farcaster.xyz:3381` has the same data.
+- **That node's operator sees every read:** which accounts and casts the people using your copy look at. Your server is the only one that sees who they are.
+
+### Moving to a new server and keeping the address
+
+To move a copy between servers without changing its address, which is what demo.createfc.org did:
+
+1. Copy the companion's state off, without the app account's custody key: `rsync -a --exclude app-account.json root@<ip>:/var/lib/fc-companion/ ~/fc-companion-backup/`
+2. Delete the old server and keep its IP: `hetzner-delete.sh --keep-ip`.
+3. Create the new one on that IP with `PRIMARY_IPV4=<its id>` on command 0, and run command 1.
+4. Copy the state back with `rsync -a ~/fc-companion-backup/ root@<ip>:/var/lib/fc-companion/`, then run command 1 again so the companion owns the files.
+5. Set up the app account again with `ssh -t root@<ip> fc-node app-account`, in your own terminal, then `fc-node client`.
+
+Uploaded images, invite codes and DNS records keep working, because the address is the same.
 
 ## Who can sign in
 
@@ -81,7 +116,7 @@ fameboy is built so a hosted copy holds as little as possible ([ADR 003](https:/
 | **Their seed phrase** | Only if they choose seed phrase sign-in, or change their username on the **me** page. It stays in their browser: the page uses it to sign, then forgets it. Your server sees only their account's address and the signatures. |
 | **Their cleared and saved casts, last visit** | Stay in their browser too. Your server keeps nothing about the people who use it. |
 | **Who's online** | The companion sees each device's address and when it checks in, in memory only, forgotten 90 seconds after it leaves. |
-| **Their reads** | Come from your node. If it's down or behind, so is their feed. |
+| **Their reads** | Come from your node, or the public node your server passes them on to. If it's down or behind, so is their feed, and a public node's operator sees what they read. |
 | **The page itself** | This is the real trust: they run the code your server sends. Someone who controls your server could change that code. That's true of every web app, the Farcaster app's website included. It matters most for seed phrase sign-in: changed code could steal the phrase, and with it the account. The page warns them before they type it. |
 
 If your server is broken into, the intruder gets your app account (its custody key lives on the server) but no one's key. They could change the page for people who visit after that, so keep the server patched and the root login to your SSH key.

@@ -10,6 +10,16 @@ You can run this as soon as the node is catching up. [`install.sh`](https://gith
 `npm create fc` runs an unrelated package someone else published in 2022. Install with the command above.
 :::
 
+## No node of your own?
+
+fameboy works with any node. To try it with no server at all, point it at Hypersnap's public node, which follows the same network as Farcaster's own:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/client/install.sh | bash -s -- https://haatz.quilibrium.com
+```
+
+A public node has no companion, the small service next to a node that handles phone sign-in through the node, image uploads and who's online. So sign in with your seed phrase or your own app account (`fameboy app-account`), paste image links instead of uploading, and expect the "on this node" tile to be empty. Whoever runs the node can see which accounts you look up. Farcaster's own `https://crackle.farcaster.xyz:3381` works the same way. Switch nodes any time by running the command again with another address.
+
 ## The browser client
 
 ```bash

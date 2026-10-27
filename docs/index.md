@@ -16,12 +16,12 @@ What each command does and why, with real outputs and timings from a run on 18â€
 ## Guides
 
 - [Share your node with friends](./guide/share-your-node): one node can serve a few people. They sign in by approving on their phone and see who else is on.
-- [Host fameboy for others](./guide/host-fameboy): put fameboy at a web address so people can use Farcaster through your node without installing anything.
+- [Host fameboy for others](./guide/host-fameboy): put fameboy at a web address so people can use Farcaster through your node without installing anything, or on a small server with no node.
 - [Images in your casts](./guide/images): where uploaded images live, and how much room each person gets.
 
 ## Explainers and reference
 
 - [Your app key](./guide/app-key): what fameboy saves when you sign in, and how to remove it.
-- [Costs](./Costs): what a node costs on Hetzner, by the hour and by the month.
+- [Costs](./Costs): what a node costs on Hetzner, by the hour and by the month, and what it costs without one.
 
 For accounts, app keys and how the protocol works, these docs link to [Farcaster's own docs](https://docs.farcaster.xyz/learn/what-is-farcaster/accounts), which stay current.

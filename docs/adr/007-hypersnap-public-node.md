@@ -2,7 +2,7 @@
 
 ## Status
 
-**accepted** (2026-10-28). Not built yet. The steps are in `developer/hypersnap-migration-plan.md`. Until the small server is up, demo.createfc.org shows a maintenance page (`site/demo/`).
+**implemented** (2026-10-28). The big server and its volume are deleted. demo.createfc.org runs on a cx23 at the same IP, `91.99.76.223`, reading from and writing to `https://haatz.quilibrium.com`. Phone sign-in through @fameboyclear, seed phrase sign-in and the old cast images work. What we learned is under [Outcome](#outcome). Built in `provision/hetzner.sh` (`NO_NODE`, `PRIMARY_IPV4`), `provision/hetzner-delete.sh` (`--keep-ip`), `node/setup.sh` (`NODE`), `node/companion-install.sh` (the `:3381` passthrough), `node/fc-node` and `client/src/home.ts` (`companionUrl`). The maintenance page (`site/demo/`) stays at createfc.org/demo/ and says the demo is back.
 
 Partly supersedes ADR 001 (Hetzner for command 0) for the demo: the demo no longer runs its own Snapchain node. ADR 003 (hosted fameboy) and ADR 006 (hosted seed phrase sign-in) carry on unchanged on the new server.
 
@@ -24,7 +24,7 @@ Against `https://haatz.quilibrium.com`:
 
 - `GET /v1/info`: version 0.15.0, 3 shards, about 914 million messages and 3.36 million FIDs, 2 to 4 seconds behind on each shard. Served through Cloudflare with `access-control-allow-origin: *`.
 - Every read endpoint fameboy and the companion use that we tried answered 200 in the same shape our own node gives: `castsByFid`, `signersByFid`, `userNameProofByName`, `storageLimitsByFid`, `linksByFid`, `onChainEventsByFid`, `onChainIdRegistryEventByAddress` and `events`. `onChainIdRegistryEventByAddress` took about 13 seconds, like on our node (ADR 006's rate limit exists for this reason).
-- `POST /v1/validateMessage` and `POST /v1/submitMessage` exist and validate input: an empty submit came back `400 fid cannot be 0`. We haven't yet submitted a real message, so we don't know if casts sent there show up in other Farcaster clients.
+- `POST /v1/validateMessage` and `POST /v1/submitMessage` exist and validate input: an empty submit came back `400 fid cannot be 0`. We hadn't yet submitted a real message, so we didn't know if casts sent there show up in other Farcaster clients. (They do: see [Outcome](#outcome).)
 - It also serves a Neynar-style `/v2/farcaster/*` API (for example `/v2/farcaster/user?fid=3`). fameboy doesn't need it.
 - Shards 1 and 2 report `mempoolSize: 4294967295`, the largest 32-bit number. That's probably a placeholder, not a real queue, but it's unexplained.
 
@@ -45,7 +45,7 @@ On Hetzner (`hcloud`, nbg1):
 
 **Option 3. The demo runs on a cx23 with no Snapchain node. Its companion and hosted fameboy read from and write to `https://haatz.quilibrium.com`. The big server and its volume are deleted now; the IPv4 is kept and moves to the small server.**
 
-- **Keep `91.99.76.223`.** Turn its auto delete off before deleting the server (`hetzner-delete.sh --keep-ip`), and create the small server with it. Everything that names that address keeps working once the small server is up: demo.createfc.org's A record, `fameboyclear.91-99-76-223.sslip.io`, the image links in existing casts, and the README's "use our node" command.
+- **Keep `91.99.76.223`.** Turn its auto delete off before deleting the server (`hetzner-delete.sh --keep-ip`), and create the small server with it. Everything that names that address keeps working once the small server is up: demo.createfc.org's A record, the image links in existing casts, and the README's "use our node" command. (We also expected `fameboyclear.91-99-76-223.sslip.io` to; it doesn't. See [Outcome](#outcome).)
 - **Delete the big server now, before the small one is built.** The bill drops to $0.66 a month at once. The demo is down for the gap, and demo.createfc.org redirects to the maintenance page meanwhile.
 - **Copy the companion's state off first:** images, the image ledger, invite codes and limits, to the owner's computer, then onto the small server. Not the custody key: the owner re-runs `fc-node app-account` on the small server instead, in their own SSH session.
 - **A node-less setup mode.** `node/setup.sh` learns to install only the companion, Caddy and the hosted fameboy, pointed at a remote node (`NODE=https://haatz.quilibrium.com`). `provision/hetzner.sh` learns to make a small server with no volume, on a kept primary IP. `fc-node status` reports the remote node's sync state.
@@ -56,18 +56,30 @@ On Hetzner (`hcloud`, nbg1):
 
 - **About $7.80 a month instead of $105**, and $0.66 a month until the small server exists.
 - **The demo is down until the small server is built and set up.** demo.createfc.org, its QR codes and the README link land on the maintenance page meanwhile.
-- **We depend on one public node we don't run.** If haatz.quilibrium.com goes down, changes its API, or adds limits, the demo breaks. Changing the proxy's upstream fixes it for everyone pointed at our IP; a list of fallback nodes is a follow-up.
-- **Writes are unverified.** We haven't confirmed that a message submitted to Hypersnap reaches the same Farcaster that other clients read. The plan checks this with a test account before the small server goes live. If it doesn't propagate, this ADR gets revisited.
+- **We depend on one public node we don't run.** If haatz.quilibrium.com goes down, changes its API, or adds limits, the demo breaks. Changing the proxy's upstream fixes it for everyone pointed at our IP: re-run command 1 with another `NODE`. Farcaster's own `https://crackle.farcaster.xyz:3381` has the same data (see [Outcome](#outcome)), so it's the fallback.
+- **Writes reach Farcaster.** A test cast submitted through Hypersnap showed up in the farcaster.xyz app (see [Outcome](#outcome)).
 - **Reads go through a third party.** Hypersnap's operator sees every account the demo looks up, where before only we did. The hosted page and the docs need to say so.
 - **@fameboyclear's custody key moves by being set up again.** It's deleted with the big server, so the owner must hold the account's seed phrase before then.
 - **Uploaded images survive only if copied off before deletion.** They keep the same URLs once restored, because the IP and the sslip name don't change.
 - **Presence and "node uptime" change meaning.** The companion can't see Hypersnap's container, so `/v1/companion` reports no start time. fameboy already handles a null.
 - **The small server's 40 GB disk holds the images.** The companion's 10 GB node-wide image cap fits; check it before raising the cap.
-- **`scripts/dns-createfc.sh` no longer manages the demo record**, and `scripts/demo-maintenance-dns.sh --undo` plus a DNS-only `demo` A record put it back when the small server is ready. Docs that describe the demo's own node (README, `docs/guide/host-fameboy.md`, `docs/guide/images.md`, `docs/guide/share-your-node.md`, `docs/tutorial/server.md`) need updating.
+- **`scripts/dns-createfc.sh` no longer manages the demo record.** `scripts/demo-maintenance-dns.sh --undo` and a DNS-only `demo` A record, added by hand in Cloudflare, put it back.
+- **The docs describe both setups**: a full node (commands 0 and 1), and a small server with no node, or no server at all with fameboy pointed at a public node. README, AGENTS.md, `docs/Costs.md`, the client tutorial and the hosting, sharing and images guides say so.
+
+## Outcome
+
+Measured on 2026-10-28, after the move.
+
+- **The move worked as planned.** `hetzner-delete.sh --keep-ip` kept `91.99.76.223` unassigned at $0.66 a month. `NO_NODE=1 PRIMARY_IPV4=156361417 hetzner.sh` put it on a cx23 in nbg1. `setup.sh` with `NODE=https://haatz.quilibrium.com` set it up in a couple of minutes, and Caddy's `:3381` passthrough worked first time: `fc-node status` said in sync, and `http://91.99.76.223:3381/v1/castsByFid` answered from outside in 0.8 s. The archive copied back with `rsync`, and old cast images load at their old links.
+- **Writes reach Farcaster.** A test cast submitted through Hypersnap showed up in the farcaster.xyz app.
+- **Hypersnap's node follows the same chain as Farcaster's own.** Compared with `https://crackle.farcaster.xyz:3381`, Farcaster's public Snapchain node, a minute apart: both 0.15.0, shards 0 and 1 at the same heights (49119268 and 49797400), shard 2 three blocks apart, and the same latest cast for fid 3. So a message sent to either lands in the same place, and as far as we can see Hypersnap's node follows the same validators as Farcaster's. Its operators run more copies of the network, which spreads out reading; they don't make the blocks. If those validators stopped, Hypersnap's node would stop with them. That's the same exposure every Farcaster client has, and less than relying on one node: there are now two public nodes with the same data.
+- **`fameboyclear.91-99-76-223.sslip.io` doesn't answer any more.** `fc-node client <domain>` serves fameboy at that one domain only, so with `demo.createfc.org` set, the sslip.io name has no site. demo.createfc.org is the address people were given, so we've left it.
+- **The client no longer waits on missing companions.** Pointed straight at Hypersnap, fameboy used to spend 5 seconds per call on `haatz.quilibrium.com:3390`, which never answers. It now only guesses a companion for nodes on port 3381, and says at once when there's none.
 
 ## Provenance
 
 | Date | Commit | Change |
 | --- | --- | --- |
-| 2026-10-28 | (uncommitted) | Created, status accepted, with option 4 |
-| 2026-10-28 | (uncommitted) | Decision changed to option 3 after review: keep a small server for the companion and hosted fameboy, and keep the IP |
+| 2026-10-28 | 0f6b6f2 | Created, status accepted, with option 4, then changed to option 3 after review: keep a small server for the companion and hosted fameboy, and keep the IP (PR #40) |
+| 2026-10-28 | 14440c4, 9a18cce | Built: servers with no node, a kept primary IP, the `:3381` passthrough, the client's companion check (PR #42) |
+| 2026-10-28 | (this commit) | Implemented: the demo is back on the small server. Outcome added |

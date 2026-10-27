@@ -1,6 +1,6 @@
 # Instructions for AI agents setting up create-fc
 
-You're helping a person run their own Farcaster: a Snapchain read node on a Hetzner Cloud server, and the fameboy client on their own computer. Follow these steps in order. Each command is safe to re-run.
+You're helping a person run their own Farcaster: a Snapchain read node on a Hetzner Cloud server, and the fameboy client on their own computer. Some people want less than that; see "First: which setup?". Follow the steps in order. Each command is safe to re-run.
 
 ## Rules
 
@@ -10,6 +10,14 @@ These come before anything below.
 2. **Ask before spending money.** Before command 0, tell them it creates a server and volume billed by the hour, about $0.16/hour (about $105/month), until deleted. Wait for a clear yes.
 3. **Ask before deleting anything.**
 4. **Don't change their Hetzner account, SSH keys or shell configuration** beyond what these steps say.
+
+## First: which setup?
+
+Ask the person which they want, and follow only that path:
+
+1. **Their own node** (the default): commands 0, 1 and 2 below. About $105/month while it runs, 6–8 hours to sync.
+2. **Just try fameboy, no server:** skip to command 2, and use `https://haatz.quilibrium.com` (Hypersnap's public node, the same network as Farcaster's) instead of `http://<ip>:3381`. Free. Tell them a public node has no companion, so they sign in with their seed phrase or `fameboy app-account`, and image uploads and who's online are off. Whoever runs the node can see which accounts they look up.
+3. **Host fameboy for others without a node:** a small server that reads from Hypersnap. About $7.80/month (cx23 and its IPv4); ask before creating it, as with command 0. Run command 0 with `NO_NODE=1` (`curl … | NO_NODE=1 bash`), then command 1 with `NODE=https://haatz.quilibrium.com` (`curl … | NODE=https://haatz.quilibrium.com bash`). It takes a couple of minutes, not hours. Then command 2 with `http://<ip>:3381`, which passes requests on to Hypersnap, and "Optional: host fameboy for others" below. More: https://createfc.org/docs/guide/host-fameboy#without-a-node-of-your-own
 
 ## Before command 0: check the computer
 
@@ -102,6 +110,8 @@ curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main
 ```
 
 Their app key in `~/.fameboy` survives. A new node takes 6–8 hours to sync again.
+
+If they'll want the same IP for a later server (a domain or friends' installs point at it), add `--keep-ip` (`bash -s -- --keep-ip --yes`). The address then bills about $0.66/month until they delete it with `hcloud primary-ip delete <id>`, or give it to a new server with `PRIMARY_IPV4=<id>` on command 0. Say so before running it.
 
 ## More
 
