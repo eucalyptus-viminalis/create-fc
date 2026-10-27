@@ -325,7 +325,9 @@ function paintNode(home) {
 function paintPresence(p) {
   if (!p.companion) {
     $("#online-n").textContent = "";
-    $("#presence").innerHTML = `<p>fc-companion isn't running on this node yet, so fameboy can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`;
+    $("#presence").innerHTML = p.url
+      ? `<p>fc-companion isn't running on this node yet, so fameboy can't see who's here.</p><p class="note">Run command 1 again on the server to add it, and open port 3390.</p>`
+      : `<p>This node has no companion, so fameboy can't see who's here.</p><p class="note">Public nodes don't run one. Reading, casting and signing in with your seed phrase all work without it.</p>`;
     return;
   }
   S.presence = p.status;

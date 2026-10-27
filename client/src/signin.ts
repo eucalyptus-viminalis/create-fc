@@ -28,7 +28,7 @@ import QRCode from "qrcode";
 import { bytesToHex, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { NodeError, NODE, get } from "./node.ts";
-import { COMPANION } from "./home.ts";
+import { COMPANION, companionUrl } from "./home.ts";
 import { KEY_DIR, type AppKey, checkPhrase, currentCustody, findCustody, normalizePhrase, registerAppKey, saveKey, type Custody } from "./keys.ts";
 
 const FARCASTER_API = "https://api.farcaster.xyz";
@@ -134,7 +134,7 @@ export type NodeSignIn = { phone: boolean; appFid: number | null; invite?: boole
 // Can this node's companion start phone sign-ins? null: no companion.
 export async function nodeSignInOptions(): Promise<NodeSignIn> {
   try {
-    const res = await fetch(`${COMPANION}/v1/signin`, { signal: AbortSignal.timeout(5_000) });
+    const res = await fetch(companionUrl("/v1/signin"), { signal: AbortSignal.timeout(5_000) });
     return res.ok ? ((await res.json()) as NodeSignIn) : null;
   } catch {
     return null;
@@ -156,9 +156,10 @@ export async function startNodeSignIn(invite: string) {
   for (const [t, r] of requests) if (r.expires < Date.now()) requests.delete(t);
   const privateKey = new Uint8Array(randomBytes(32));
   const publicKey = bytesToHex((await new NobleEd25519Signer(privateKey).getSignerKey())._unsafeUnwrap());
+  const url = companionUrl("/v1/signin");
   let res: Response;
   try {
-    res = await fetch(`${COMPANION}/v1/signin`, {
+    res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ key: publicKey, invite }),
@@ -193,9 +194,10 @@ export const approvePage = (origin: string, token: string) => `${origin}/approve
 export async function startBrowserSignIn(key: string, invite: string, client: string, origin: string) {
   for (const [t, r] of browserRequests) if (r.expires < Date.now()) browserRequests.delete(t);
   if (!/^0x[0-9a-f]{64}$/i.test(key)) throw new NodeError("that isn't an Ed25519 public key");
+  const url = companionUrl("/v1/signin");
   let res: Response;
   try {
-    res = await fetch(`${COMPANION}/v1/signin`, {
+    res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json", "x-clearcast-client": client },
       body: JSON.stringify({ key: key.toLowerCase(), invite }),

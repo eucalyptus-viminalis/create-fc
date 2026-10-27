@@ -6,14 +6,15 @@
 import { createHash } from "node:crypto";
 import type { Author } from "./keys.ts";
 import { NodeError } from "./node.ts";
-import { COMPANION, heartbeatNow, signWith, type Device } from "./home.ts";
+import { COMPANION, companionUrl, heartbeatNow, signWith, type Device } from "./home.ts";
 
 export type ImageUsage = { hosting: boolean; used: number; files: number; cap: number; nodeUsed: number; nodeCap: number; fileCap: number };
 
 async function companionCall<T>(path: string, init: RequestInit): Promise<T> {
+  const url = companionUrl(path);
   let res: Response;
   try {
-    res = await fetch(COMPANION + path, { ...init, signal: AbortSignal.timeout(60_000) });
+    res = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
   } catch {
     throw new NodeError(`can't reach your node's companion at ${COMPANION}`);
   }
