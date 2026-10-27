@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Points createfc.org at GitHub Pages and demo.createfc.org at the demo server, as Cloudflare
-# "DNS only" records (no proxy, so GitHub and fc-node can get their own HTTPS certificates).
+# Points createfc.org at GitHub Pages, as Cloudflare "DNS only" records (no proxy, so GitHub
+# can get its own HTTPS certificate). demo.createfc.org is not managed here any more: the demo
+# server is retired (ADR 007), and scripts/demo-maintenance-dns.sh sends it to the maintenance page.
 # Safe to re-run: records that already exist are left alone.
 #
 # Needs a Cloudflare API token limited to createfc.org with Zone: Read and DNS: Edit.
@@ -9,7 +10,6 @@
 set -euo pipefail
 
 ZONE="createfc.org"
-DEMO_IP="${DEMO_IP:-91.99.76.223}"
 API="https://api.cloudflare.com/client/v4"
 : "${CF_API_TOKEN:?Set CF_API_TOKEN to a Cloudflare token with Zone: Read and DNS: Edit on $ZONE}"
 command -v jq >/dev/null || { echo "Needs jq (brew install jq)" >&2; exit 1; }
@@ -42,7 +42,6 @@ RECORDS=(
   "A $ZONE 185.199.110.153"
   "A $ZONE 185.199.111.153"
   "CNAME www.$ZONE eucalyptus-viminalis.github.io"
-  "A demo.$ZONE $DEMO_IP"
 )
 
 for r in "${RECORDS[@]}"; do
@@ -57,4 +56,4 @@ for r in "${RECORDS[@]}"; do
   echo "added    $type $name -> $content"
 done
 
-echo "Done. Check: dig +short $ZONE  and  dig +short demo.$ZONE"
+echo "Done. Check: dig +short $ZONE"
