@@ -58,6 +58,28 @@ export type Message = {
 export type Page = { messages: Message[]; nextPageToken?: string };
 
 export class NodeError extends Error {}
+// The node, or a proxy in front of it, didn't answer: a timeout, a refused
+// connection, or a gateway error such as Cloudflare's 502 page from a public
+// node. Worth trying again; a rejection from the node itself isn't.
+export class NodeUnavailable extends NodeError {}
+
+// Gateway errors: 502-504, and Cloudflare's 520-524 when its origin fails.
+const GATEWAY = new Set([502, 503, 504, 520, 521, 522, 523, 524]);
+
+// What a failed response says, in one line. The node answers errors in JSON;
+// a proxy in front of it may answer with a whole HTML page, of which only the
+// title is worth showing.
+function failureDetail(res: Response, body: string): string {
+  try {
+    const j = JSON.parse(body) as { error?: string; errorDetail?: string; error_detail?: string; details?: string };
+    const d = [j.error, j.errorDetail ?? j.error_detail ?? j.details].filter(Boolean).join(": ");
+    if (d) return d;
+  } catch {}
+  const title = /<title[^>]*>([^<]*)<\/title>/i.exec(body)?.[1]?.trim();
+  if (title) return `${res.status} (${title})`;
+  if (/^\s*</.test(body) || !body.trim()) return `${res.status} ${res.statusText}`.trim();
+  return body.slice(0, 300);
+}
 
 // The GUI shows the node calls behind every panel. Code running inside
 // recordCalls() gets each URL it fetches collected, in order.
@@ -94,7 +116,10 @@ export async function get<T>(
     throw new NodeError(`can't reach your node at ${NODE} (${(e as Error).message}). Is FC_NODE right, and is port 3381 open?`);
   }
   const body = await res.text();
-  if (!res.ok) throw new NodeError(`${url.pathname} returned ${res.status}: ${body.slice(0, 300)}`);
+  if (!res.ok) {
+    const Err = GATEWAY.has(res.status) ? NodeUnavailable : NodeError;
+    throw new Err(`${url.pathname} returned ${failureDetail(res, body)}`);
+  }
   return JSON.parse(body) as T;
 }
 
@@ -113,17 +138,13 @@ export async function post<T>(path: "/v1/submitMessage" | "/v1/validateMessage",
       signal: AbortSignal.timeout(15_000),
     });
   } catch (e) {
-    throw new NodeError(`can't reach your node at ${NODE} (${(e as Error).message})`);
+    throw new NodeUnavailable(`can't reach your node at ${NODE} (${(e as Error).message})`);
   }
   rec.ms = Date.now() - rec.at;
   const body = await res.text();
   if (!res.ok) {
-    let detail = body;
-    try {
-      const j = JSON.parse(body) as { error?: string; errorDetail?: string; error_detail?: string };
-      detail = [j.error, j.errorDetail ?? j.error_detail].filter(Boolean).join(": ");
-    } catch {}
-    throw new NodeError(`node rejected the message: ${detail}`);
+    if (GATEWAY.has(res.status)) throw new NodeUnavailable(`the node didn't answer: ${failureDetail(res, body)}. Try again in a minute.`);
+    throw new NodeError(`node rejected the message: ${failureDetail(res, body)}`);
   }
   return JSON.parse(body) as T;
 }
@@ -161,8 +182,21 @@ export async function pool<T, R>(items: T[], limit: number, fn: (item: T) => Pro
 // once: the demo node lost all its peers for 27 s, and a KEY_ADD sent 3 s in
 // vanished.) Sending the same signed message again is harmless, so resend it
 // every 15 s until it lands.
+// The first send also retries when the node doesn't answer (a public node's
+// proxy can return a 502 for a few seconds). Such a send may still have got
+// through, so a retry that's then rejected (as a duplicate, say) checks
+// whether the message landed before giving up.
 export async function submitUntil(bytes: Uint8Array, landed: () => Promise<boolean>, timeoutMs = 60_000): Promise<boolean> {
-  await post("/v1/submitMessage", bytes);
+  for (const [attempt, wait] of [2_000, 5_000, 0].entries()) {
+    try {
+      await post("/v1/submitMessage", bytes);
+      break;
+    } catch (e) {
+      if (attempt > 0 && !(e instanceof NodeUnavailable) && (await landed().catch(() => false))) return true;
+      if (!(e instanceof NodeUnavailable) || !wait) throw e;
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
   const until = Date.now() + timeoutMs;
   let resendAt = Date.now() + 15_000;
   while (Date.now() < until) {

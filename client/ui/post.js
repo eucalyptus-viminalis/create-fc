@@ -287,6 +287,9 @@ async function cast() {
   if ($("#cast").getAttribute("aria-disabled") === "true") { sfx.over(); toast($("#cast").title); return; }
   const ov = $("#overlay");
   ov.classList.add("open");
+  // The title says what's happening; once it's over, it names the cast and
+  // the right side says how it went.
+  $("#ov-l").textContent = "casting";
   $("#ov-r").textContent = "";
   let at = 0;
   $("#ov").innerHTML = drawSteps(at);
@@ -297,6 +300,7 @@ async function cast() {
     r = await api("/api/cast", { text: ta.value, embeds: cz.embeds() });
   } catch (e) {
     clearInterval(tick); sfx.over();
+    $("#ov-l").textContent = "cast";
     $("#ov-r").textContent = "didn't send";
     $("#ov").innerHTML = `<div class="err"><p>${esc(e.message)}</p></div><div class="row">${kit.button("back", { size: "lg", key: "esc", attrs: 'id="ov-back"' })}</div>`;
     $("#ov-back").addEventListener("click", () => ov.classList.remove("open"));
@@ -306,6 +310,7 @@ async function cast() {
   // fameboy's own cast page. Only once it's landed: until this node has the
   // cast, that page couldn't find it.
   const link = r.landed ? kit.castUrl({ username: S.me.username, fid: S.me.fid, hash: r.hash }) : null;
+  $("#ov-l").textContent = "cast";
   $("#ov-r").textContent = r.landed ? "landed" : "sent";
   if (r.landed) sfx.win();
   $("#ov").innerHTML = `<p class="count" style="margin:6px 0 10px">${r.landed ? "cast!" : "sent"}</p>
