@@ -1,0 +1,55 @@
+/* The profile page: anyone's profile, in the home screen's tiles. Builds on
+   home.css (tiles, grid, counts), cast.css (cast cards) and me.css (the
+   buttons under each cast). */
+
+.ib-top .ct-links { font-size: 16px; }
+
+/* who: picture, name, bio, follow */
+.pr-who { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 16px; }
+.pr-who .pf { width: 128px; height: 128px; border: var(--b) solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; }
+.pr-name { font: 32px/1 var(--px); -webkit-font-smoothing: none; margin: 2px 0 6px; overflow-wrap: anywhere; }
+.pr-who p { margin: 10px 0 14px; overflow-wrap: anywhere; }
+.pr-who a { text-underline-offset: 3px; }
+.pr-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.pr-tag { font: 13px var(--px); -webkit-font-smoothing: none; border: 2px solid var(--g2); color: var(--g2); padding: 2px 5px 1px; white-space: nowrap; }
+
+/* numbers: follow counts and casts a day */
+.pr-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pr-nums > div { border-bottom: 2px dashed var(--g1); padding-bottom: 8px; }
+.pr-nums .count { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-nums .dim { font-size: 16px; display: block; margin-top: 4px; }
+.pr-days { margin-top: 18px; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; align-items: end; height: 80px; }
+.pr-days span { background: var(--g3); min-height: 3px; }
+.pr-days span.zero { background: var(--g1); opacity: .45; height: 4%; }
+.pr-days-l { display: grid; grid-template-columns: repeat(3, 1fr); color: var(--g2); font-size: 16px; margin-top: 4px; }
+.pr-days-l span:nth-child(2) { text-align: center; } .pr-days-l span:last-child { text-align: right; }
+
+/* in common, and which apps they cast from */
+.pr-side { display: flex; flex-direction: column; gap: 16px; }
+.pr-stack { display: flex; margin: 4px 0 10px; }
+.pr-stack a { margin-left: -8px; } .pr-stack a:first-child { margin-left: 0; }
+.pr-stack .pf { width: 34px; height: 34px; border: 2px solid var(--g3); background: var(--g1); object-fit: cover; filter: grayscale(1) contrast(1.1); display: block; }
+.pr-stack a:hover .pf, .pr-stack a:focus-visible .pf { position: relative; z-index: 1; transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--g3); }
+.pr-apps { list-style: none; margin: 0; padding: 0; }
+.pr-apps li { display: grid; grid-template-columns: minmax(0, 1fr) 90px 44px; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 2px dashed var(--g1); }
+.pr-apps li:last-child { border-bottom: 0; }
+.pr-apps li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-apps i { display: block; height: 10px; background: var(--g3); }
+.pr-apps .n { text-align: right; color: var(--g2); font-size: 16px; }
+.pr-apps-note { color: var(--g2); font-size: 16px; margin-top: 10px; }
+
+/* casts: me.css's cards and buttons, inside a tile */
+.pr-casts .k-seg { margin-bottom: 10px; }
+.pr-casts .me-list { border-top: 0; }
+.pr-casts .me-list > .ct-c:last-child { border-bottom: 0; }
+.pr-casts .me-more { margin: 12px 0 0; }
+
+.pr-missing { max-width: 560px; }
+
+@media (max-width: 900px) {
+  .grid > .span7, .grid > .span5 { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .pr-who { grid-template-columns: 1fr; }
+  .pr-who .pf { width: 88px; height: 88px; }
+}

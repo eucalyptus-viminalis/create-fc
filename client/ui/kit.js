@@ -364,17 +364,20 @@
   // same path as farcaster.xyz. It carries the full hash, so the server finds
   // it in one lookup (client/src/thread.ts).
   const castUrl = (c) => `/${encodeURIComponent(c.author?.username ?? c.username ?? `!${c.fid}`)}/${c.hash}`;
-  const profileUrl = (u) => `https://farcaster.xyz/${encodeURIComponent(u)}`;
+  // kit.profileUrl(username or fid): their profile page in fameboy (profile.js).
+  // kit.farcasterUrl(username): the same profile on farcaster.xyz.
+  const profileUrl = (u) => `/profile/${encodeURIComponent(u)}`;
+  const farcasterUrl = (u) => `https://farcaster.xyz/${encodeURIComponent(u)}`;
   function ago(iso) {
     const s = (Date.now() - Date.parse(iso)) / 1000;
     return s < 60 ? "now" : s < 3600 ? `${Math.floor(s / 60)}m` : s < 86400 ? `${Math.floor(s / 3600)}h` : `${Math.floor(s / 86400)}d`;
   }
   const pic = (url, cls = "pf") => (url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="${cls} nopic"></span>`);
-  // Cast text with links: @names go to their Farcaster profile, URLs open in a new tab.
+  // Cast text with links: @names go to their profile page, URLs open in a new tab.
   function rich(text) {
     return esc(text)
       .replace(/https?:\/\/[^\s<]+/g, (u) => ext(u.replace(/&amp;/g, "&"), u.length > 60 ? u.slice(0, 57) + "…" : u))
-      .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}${ext(profileUrl(u), `@${u}`)}`);
+      .replace(/(^|\s)@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*)/gi, (m, pre, u) => `${pre}<a href="${profileUrl(u)}">@${u}</a>`);
   }
   const isImage = (u) => /\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /imagedelivery\.net|i\.imgur\.com|\.sslip\.io\/img\//.test(u);
   function embeds(list) {
@@ -573,5 +576,5 @@
   const quotes = (list) =>
     list?.length ? `<div class="k-quotes">${list.map((q) => `<a class="k-quote" href="/${encodeURIComponent(`!${q.fid}`)}/${esc(q.hash)}">quoting a cast <span>${esc(q.hash.slice(0, 10))} →</span></a>`).join("")}</div>` : "";
 
-  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, ago, pic, rich, embeds, castMenu, icon, quotes, quoteCast };
+  window.kit = { button, seg, $, wait, esc, ext, arrow, TOKEN, SignedOut, api, me, store, unlock, soundOn, setSound, tone, toast, modes, MODES, requests, appFilter, FARCASTER_APP, hammer, castUrl, profileUrl, farcasterUrl, ago, pic, rich, embeds, castMenu, icon, quotes, quoteCast };
 })();

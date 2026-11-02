@@ -59,7 +59,7 @@ function groupHtml({ app, keys: ks, mine }, here, mineKey) {
     <div class="khead">
       ${pic(app?.pfp)}
       <div class="kname">
-        <div>${app?.name ? kit.ext(`https://farcaster.xyz/${encodeURIComponent(app.name)}`, name) : name}${app ? ` <span class="dim small">fid ${app.fid}</span>` : ""}${app?.fid === kit.FARCASTER_APP ? ` <span class="dim small">the Farcaster app</span>` : ""}${mine ? ` <span class="here">includes ${here}'s key</span>` : ""}</div>
+        <div>${app?.name ? `<a href="${kit.profileUrl(app.name)}">${name}</a>` : name}${app ? ` <span class="dim small">fid ${app.fid}</span>` : ""}${app?.fid === kit.FARCASTER_APP ? ` <span class="dim small">the Farcaster app</span>` : ""}${mine ? ` <span class="here">includes ${here}'s key</span>` : ""}</div>
         <div class="dim small">${meta}${scopes.length ? `<br>can: ${esc(scopes.map(scopeText).join(", "))}` : ""}</div>
       </div>
       <span class="power${onchain ? " all" : ""}">${onchain ? `${onchain > 1 ? `${onchain} ` : ""}can sign anything` : `${scoped} scoped key${scoped === 1 ? "" : "s"}`}</span>

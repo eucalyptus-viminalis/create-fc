@@ -5,7 +5,7 @@
 // (copy its link). Counts, and whether you've liked or recast each, load
 // after the list.
 
-const { $, esc, api, tone, toast, ago, pic, rich, embeds, castUrl, profileUrl, icon } = kit;
+const { $, esc, api, tone, toast, ago, pic, rich, embeds, castUrl, icon } = kit;
 const enc = new TextEncoder();
 
 const S = {
@@ -267,7 +267,7 @@ async function rename() {
 function header() {
   const u = S.me.username;
   $("#sub").textContent = `${u ? `@${u}` : `fid ${S.me.fid}`} · your casts, newest first`;
-  $("#links").innerHTML = u ? kit.ext(profileUrl(u), "on Farcaster") : "";
+  $("#links").innerHTML = u ? kit.ext(kit.farcasterUrl(u), "on Farcaster") : "";
 }
 
 // ------------------------------------------------------------------ render
@@ -423,7 +423,7 @@ async function react(c, kind) {
 // on your own computer (127.0.0.1) the cast's farcaster.xyz address.
 async function share(c) {
   const u = c.author?.username;
-  const url = S.me.hosted || !u ? `${location.origin}${castUrl(c)}` : `${profileUrl(u)}/${c.hash.slice(0, 10)}`;
+  const url = S.me.hosted || !u ? `${location.origin}${castUrl(c)}` : `${kit.farcasterUrl(u)}/${c.hash.slice(0, 10)}`;
   try {
     await navigator.clipboard.writeText(url);
     tone(660, 0, 0.03);
