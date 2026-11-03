@@ -50,7 +50,7 @@ function signIn() {
 function render() {
   const d = S.d, c = d.cast, u = c.author?.username;
   $("#sub").textContent = `${name(c)} · ${plural(c.replies, "reply", "replies")}`;
-  $("#links").innerHTML = `${kit.button("copy link", { look: "quiet", key: "c", attrs: "data-copy" })}${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "on Farcaster") : ""}`;
+  $("#links").innerHTML = `${kit.button("copy link", { look: "quiet", key: "c", attrs: "data-copy" })}${u ? kit.ext(`${kit.farcasterUrl(u)}/${c.hash.slice(0, 10)}`, "on Farcaster") : ""}`;
 
   const above = d.ancestors.length
     ? `<div class="ct-up">
@@ -68,7 +68,7 @@ function render() {
     : `${kit.button("sign in to like or reply", { look: "primary", attrs: "data-signin" })}<span class="dim small">Anyone can read this. Signing in lets you join in.</span>`;
 
   const focus = `<article class="tile read ct-focus" id="focus">
-    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? name(c))}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`}${c.app ? ` · via @${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div>${kit.castMenu.html(c, S.me)}</div>
+    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? name(c))}</b><span>${u ? `<a href="${profileUrl(u)}">@${esc(u)}</a>` : `<a href="${profileUrl(c.fid)}">fid ${c.fid}</a>`}${c.app ? ` · via @${esc(c.app.name)}` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div>${kit.castMenu.html(c, S.me)}</div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     ${kit.quotes(c.quotes)}

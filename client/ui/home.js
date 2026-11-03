@@ -258,7 +258,7 @@ function paintFollowers() {
     </div>
     ${shown.length ? `<div class="fgrid">${shown.map((f) => `
       <div class="fol">
-        ${kit.ext(`https://farcaster.xyz/${encodeURIComponent(f.username ?? "")}`, f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`, { cls: "pick", arrow: false, attrs: `data-fid="${f.fid}" aria-label="@${esc(f.username ?? f.fid)} on farcaster.xyz"` })}
+        <a class="pick" href="${kit.profileUrl(f.username ?? f.fid)}" data-fid="${f.fid}" aria-label="@${esc(f.username ?? f.fid)}'s profile">${f.pfp ? `<img src="${esc(f.pfp)}" alt="" referrerpolicy="no-referrer" loading="lazy">` : `<span class="nopic"></span>`}</a>
         <span class="u">${f.fresh ? `<span class="fresh" title="new since your last visit"></span>` : ""}@${esc(f.username ?? f.fid)}</span>
         ${kit.button(f.following ? "following" : "follow back", { look: f.following ? undefined : "primary", pressed: f.following, cls: "act", attrs: `data-follow="${f.fid}"` })}
         ${kit.button(f.cleared ? "bring back" : "clear", { look: "quiet", cls: "act", attrs: `data-fclear="${f.fid}"` })}
@@ -295,7 +295,7 @@ document.addEventListener("click", (e) => { if (e.target.id === "followers") clo
 function hoverCard(pick) {
   const f = F.list.find((x) => x.fid === +pick.dataset.fid), hc = $("#fol-hc");
   if (!f) return;
-  hc.innerHTML = `<b>@${esc(f.username ?? `!${f.fid}`)}</b><span class="dim small">fid ${f.fid}${f.display ? ` · ${esc(f.display)}` : ""}</span>${f.bio ? `<p>${esc(f.bio)}</p>` : ""}<p class="dim small">click: their profile on farcaster.xyz ↗</p>`;
+  hc.innerHTML = `<b>@${esc(f.username ?? `!${f.fid}`)}</b><span class="dim small">fid ${f.fid}${f.display ? ` · ${esc(f.display)}` : ""}</span>${f.bio ? `<p>${esc(f.bio)}</p>` : ""}<p class="dim small">click: their profile</p>`;
   hc.classList.add("on");
   const r = pick.getBoundingClientRect(), w = hc.offsetWidth, h = hc.offsetHeight;
   const left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));

@@ -17,7 +17,7 @@ export async function resolveFid(who: string): Promise<number> {
     const proof = await get<{ fid: number }>("/v1/userNameProofByName", { name: s });
     return proof.fid;
   } catch (e) {
-    if (e instanceof NodeError && /\b(400|404)\b/.test(e.message)) throw new NodeError(`no Farcaster user named "${s}"`);
+    if (e instanceof NodeError && /\b(400|404)\b|NotFound/.test(e.message)) throw new NodeError(`no Farcaster user named "${s}"`);
     throw e;
   }
 }

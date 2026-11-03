@@ -32,6 +32,7 @@ import { unfurl } from "./unfurl.ts";
 import { castsView, followersView, likesView, repliesView, waiting } from "./inbox.ts";
 import { CastNotFound, forgetThreads, lookupCast, thread } from "./thread.ts";
 import { castCard } from "./og-card.ts";
+import { followView, profileView } from "./profile-view.ts";
 import { buildInfo } from "./version.ts";
 import type { Hex } from "viem";
 import { colorOf } from "../../node/fameboy-name.mjs";
@@ -101,6 +102,29 @@ async function castOg(path: string): Promise<Og | undefined> {
       description: text.length > 200 ? `${text.slice(0, 199)}…` : text || "A cast on Farcaster.",
       image: `og/cast/${c!.fid}/${c!.hash}.png`,
       alt: `${handle}'s cast${text ? `: ${text.length > 120 ? `${text.slice(0, 119)}…` : text}` : ""}`,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+// The card for a profile page: their name and bio, on this copy's usual image.
+async function profileOg(path: string): Promise<Og | undefined> {
+  if (LOCAL_ONLY) return undefined;
+  try {
+    const find = (async () => {
+      const p = await profileOf(await resolveFid(profileName(path)));
+      return [p, await instance()] as const;
+    })();
+    const [p, { name: copy }] = await Promise.race([find, new Promise<never>((_, no) => setTimeout(() => no(new Error("slow")), 2_500).unref())]);
+    const handle = p.username ? `@${p.username}` : `fid ${p.fid}`;
+    const name = p.display || handle;
+    return {
+      type: "profile",
+      title: `${name}${name === handle ? "" : ` (${handle})`} on ${copy}`,
+      description: p.bio?.replace(/\s+/g, " ").trim() || `${handle} on Farcaster.`,
+      image: OG_IMAGE,
+      alt: OG_ALT,
     };
   } catch {
     return undefined;
@@ -265,6 +289,34 @@ async function mentionSuggestions(me: number, raw: string) {
 
 const EMBED_URL = /^https:\/\/[^\s]{1,256}$/;
 const CAST_PAGE = /^\/[^/]+\/0x[0-9a-f]{8,40}\/?$/i;
+// A profile: /profile/<username>, or /profile/<fid>.
+const PROFILE_PAGE = /^\/profile\/[^/]+\/?$/;
+const profileName = (path: string) => decodeURIComponent(path.split("/")[2] ?? "");
+
+// Profiles are slow to count up, so each answer is kept 2 minutes per viewer.
+// Keys are "<part>:<fid>:<viewer>"; a follow or unfollow drops that fid's.
+const profileViews = new Map<string, Promise<unknown>>();
+function profileFor(part: "view" | "follows", fid: number, viewer: number | undefined, fresh: boolean) {
+  const id = `${part}:${fid}:${viewer ?? ""}`;
+  let hit = profileViews.get(id);
+  if (hit && !fresh) return hit;
+  hit = (part === "view" ? profileView : followView)(fid, viewer, profileOf);
+  profileViews.set(id, hit);
+  if (profileViews.size > 5_000) profileViews.clear();
+  hit.then(
+    () => setTimeout(() => profileViews.get(id) === hit && profileViews.delete(id), 120_000).unref(),
+    () => profileViews.delete(id),
+  );
+  return hit;
+}
+
+// A page of someone's casts or replies, newest first. next: where the
+// following page starts, if any.
+async function castsPage(fid: number, replies: boolean, next?: string) {
+  const page = await get<Page>("/v1/castsByFid", { fid, pageSize: 100, reverse: true, pageToken: next || undefined });
+  const picked = page.messages.filter((m) => m.data.castAddBody && Boolean(m.data.castAddBody.parentCastId) === replies);
+  return { casts: await shape(picked), next: page.nextPageToken || null };
+}
 
 // ------------------------------------------------------------------ routes
 
@@ -578,12 +630,23 @@ const routes: Record<string, Handler> = {
   "POST /api/images/delete": async (_q, b) => deleteImage(await author(), String(b.name ?? "")),
   // Your own casts, newest first, for the me page: a page of 100 at a time,
   // as casts or replies. next: where the following page starts, if any.
-  "GET /api/me/casts": async (q) => {
-    const fid = await myFid();
-    const replies = q.get("replies") === "1";
-    const page = await get<Page>("/v1/castsByFid", { fid, pageSize: 100, reverse: true, pageToken: q.get("next") || undefined });
-    const mine = page.messages.filter((m) => m.data.castAddBody && Boolean(m.data.castAddBody.parentCastId) === replies);
-    return { casts: await shape(mine), next: page.nextPageToken || null };
+  "GET /api/me/casts": async (q) => castsPage(await myFid(), q.get("replies") === "1", q.get("next") ?? undefined),
+  // ---- anyone's profile, for the profile page (profile-view.ts). Open to
+  // anyone, like casts; signed in, it also says how they relate to you.
+  "GET /api/profile": async (q) => {
+    const fid = await resolveFid(String(q.get("who") ?? "").trim());
+    return profileFor("view", fid, await myFid().catch(() => undefined), Boolean(q.get("fresh")));
+  },
+  // Their follow counts and people in common: slow for big accounts, so on its own.
+  "GET /api/profile/follows": async (q) => {
+    const fid = Number(q.get("fid"));
+    if (!Number.isInteger(fid) || fid < 1) throw new NodeError("follows need a fid");
+    return profileFor("follows", fid, await myFid().catch(() => undefined), Boolean(q.get("fresh")));
+  },
+  "GET /api/profile/casts": async (q) => {
+    const fid = Number(q.get("fid"));
+    if (!Number.isInteger(fid) || fid < 1) throw new NodeError("casts need a fid");
+    return castsPage(fid, q.get("replies") === "1", q.get("next") ?? undefined);
   },
   // Delete one of your own casts. The node would refuse anyone else's, but
   // checking first gives a clear answer.
@@ -606,7 +669,9 @@ const routes: Record<string, Handler> = {
     await myFid();
     const fid = await resolveFid(String(b.user ?? "").trim().replace(/^@/, ""));
     const p = await profileOf(fid);
-    return { ...(await follow(fid, b.on !== false, await author())), user: { fid, username: p.username } };
+    const r = await follow(fid, b.on !== false, await author());
+    for (const id of profileViews.keys()) if (id.split(":")[1] === String(fid)) profileViews.delete(id);
+    return { ...r, user: { fid, username: p.username } };
   },
 };
 
@@ -762,6 +827,7 @@ async function listenOn(port: number, opts: UiOptions): Promise<string> {
       if (path === "/approve" || path === "/approve.html") return serveFile(res, UI_DIR, "approve.html", token, path);
       // A cast: /<username>/<hash>, as on farcaster.xyz. The second part
       // starting 0x tells it apart from fameboy's own pages and files.
+      if (PROFILE_PAGE.test(path)) return serveFile(res, UI_DIR, "profile.html", token, path, await profileOg(path));
       if (CAST_PAGE.test(path)) return serveFile(res, UI_DIR, "cast.html", token, path, await castOg(path));
       const og = path.match(OG_CAST);
       if (og) {

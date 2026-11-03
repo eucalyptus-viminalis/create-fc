@@ -138,11 +138,11 @@ function readPane(c) {
   const u = c.author?.username;
   return `
     ${kit.button("← list", { cls: "mobile-back", attrs: 'data-back style="display:none;margin-bottom:12px"' })}
-    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? kit.ext(profileUrl(u), `@${esc(u)}`) : `fid ${c.fid}`} · ${ago(c.time)} ago${c.app ? ` · via @${esc(c.app.name)} <button class="link" data-hide-app="${c.app.fid}" data-name="${esc(c.app.name)}" title="Hide casts posted with @${esc(c.app.name)}">hide</button>` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
+    <div class="head">${pic(c.author?.pfp, "")}<div><b>${esc(c.author?.display ?? u ?? c.fid)}</b><span>${u ? `<a href="${profileUrl(u)}">@${esc(u)}</a>` : `<a href="${profileUrl(c.fid)}">fid ${c.fid}</a>`} · ${ago(c.time)} ago${c.app ? ` · via @${esc(c.app.name)} <button class="link" data-hide-app="${c.app.fid}" data-name="${esc(c.app.name)}" title="Hide casts posted with @${esc(c.app.name)}">hide</button>` : ""}${c.channel ? ` · /${esc(c.channel)}` : ""}</span></div></div>
     <div class="text">${rich(c.text)}</div>
     ${embeds(c.embeds)}
     <div class="meta">${counts ? `<span>↩ ${counts.replies}</span><span>⟲ ${counts.recasts}</span><span>♥ ${counts.likes + (C.liked.has(c.hash) ? 1 : 0)}</span>` : `<span>counting<span class="blink">_</span></span>`}
-      <a href="${castUrl(c)}" style="margin-left:auto" title="The cast and its replies (o)">conversation →</a>${u ? kit.ext(`${profileUrl(u)}/${c.hash.slice(0, 10)}`, "on Farcaster") : ""}</div>
+      <a href="${castUrl(c)}" style="margin-left:auto" title="The cast and its replies (o)">conversation →</a>${u ? kit.ext(`${kit.farcasterUrl(u)}/${c.hash.slice(0, 10)}`, "on Farcaster") : ""}</div>
     <div class="acts">
       ${kit.button(C.liked.has(c.hash) ? "♥ liked" : "♥ like", { key: "l", pressed: C.liked.has(c.hash), attrs: 'data-act="like"' })}
       ${kit.button("⟲ recast", { attrs: 'data-act="recast"' })}
@@ -239,7 +239,7 @@ function renderLikes() {
     <span class="hint">click a card to select it · <kbd>e</kbd> clear</span>`;
   const me = S.me?.username;
   $("#view").innerHTML = `<div class="notes">${shown.length ? shown.map((g) => {
-    const names = g.likes.map((l) => kit.ext(profileUrl(l.username ?? ""), `<b>@${esc(l.username ?? l.fid)}</b>`));
+    const names = g.likes.map((l) => `<a href="${profileUrl(l.username ?? l.fid)}"><b>@${esc(l.username ?? l.fid)}</b></a>`);
     const who = names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
     return `<article class="note${L.checked.has(g.cast.hash) ? " checked" : ""}" data-hash="${g.cast.hash}">
       <span class="ck"></span>
@@ -283,7 +283,7 @@ function renderReplies() {
           <div class="reply${R.checked.has(r.hash) ? " checked" : ""}" data-hash="${r.hash}">
             <span class="ck" data-rck></span>${pic(r.author?.pfp)}
             <div>
-              <div class="rh">${freshMark(r.fresh && R.tab === "new")}${kit.ext(profileUrl(r.author?.username ?? ""), `<b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b>`)}<a class="t dim small" style="margin-left:auto" href="${castUrl(r)}" title="Open the conversation">${ago(r.time)}</a></div>
+              <div class="rh">${freshMark(r.fresh && R.tab === "new")}${`<a href="${profileUrl(r.author?.username ?? r.fid)}"><b style="font-weight:400">@${esc(r.author?.username ?? r.fid)}</b></a>`}<a class="t dim small" style="margin-left:auto" href="${castUrl(r)}" title="Open the conversation">${ago(r.time)}</a></div>
               <div class="rt">${rich(r.text)}</div>
               ${embeds(r.embeds)}
               <div class="line">${kit.button("↩ reply", { look: "primary", pressed: R.reply === r.hash, attrs: "data-rreply" })}${kit.button("♥ like", { attrs: "data-rlike" })}${kit.button(r.cleared ? "bring back" : "clear", { look: "quiet", attrs: "data-rclear" })}</div>

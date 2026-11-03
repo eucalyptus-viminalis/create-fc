@@ -76,7 +76,7 @@ function paint() {
             const label = a.k === "?" ? "unknown app" : `@${esc(a.name)}`;
             return `<li class="${hidden ? "off" : ""}${i === S.sel ? " sel" : ""}" data-i="${i}">
               ${a.k === "?" ? `<span class="pf nopic">?</span>` : pic(a.pfp)}
-              <span class="name">${a.k === "?" ? label : kit.ext(`https://farcaster.xyz/${encodeURIComponent(a.name ?? "")}`, label, { title: `@${a.name} on farcaster.xyz` })}${a.k === kit.FARCASTER_APP ? `<span class="dim small"> the Farcaster app</span>` : ""}</span>
+              <span class="name">${a.k === "?" ? label : `<a href="${kit.profileUrl(a.name ?? a.k)}" title="@${esc(a.name ?? a.k)}'s profile">${label}</a>`}${a.k === kit.FARCASTER_APP ? `<span class="dim small"> the Farcaster app</span>` : ""}</span>
               <span class="track" title="${fmt(a.n)} of ${fmt(all.length)} casts"><i style="width:${Math.max(1, pct(a.n))}%"></i></span>
               <span class="pct">${pctLabel(a.n)}</span>
               <span class="n dim">${fmt(a.n)}</span>
