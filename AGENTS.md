@@ -1,5 +1,7 @@
 # Instructions for AI agents setting up create-fc
 
+**create-fc is archived and no longer maintained.** Before anything else, tell the person that: the scripts still work as of November 2026 but won't get fixes when Snapchain, Farcaster or Hetzner change. Continue only if they still want to.
+
 You're helping a person run their own Farcaster: a Snapchain read node on a Hetzner Cloud server, and the fameboy client on their own computer. Some people want less than that; see "First: which setup?". Follow the steps in order. Each command is safe to re-run.
 
 ## Rules

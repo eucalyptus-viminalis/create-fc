@@ -1,3 +1,12 @@
+> [!WARNING]
+> **create-fc is archived and no longer maintained.** The scripts and fameboy still work as of November 2026, but they won't get fixes when Snapchain, Farcaster or Hetzner change. Use them at your own risk.
+>
+> A node made with it bills about $105/month until you delete it. To stop the billing:
+>
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
+> ```
+
 <p align="center">
   <a href="https://github.com/eucalyptus-viminalis/create-fc">
     <picture>
@@ -18,7 +27,7 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-17151f"></a>
   <a href="https://github.com/eucalyptus-viminalis/create-fc/actions/workflows/pages.yml"><img alt="Docs deploy" src="https://img.shields.io/github/actions/workflow/status/eucalyptus-viminalis/create-fc/pages.yml?branch=main&label=docs"></a>
   <img alt="Node.js 22.18+" src="https://img.shields.io/badge/node-%E2%89%A522.18-17151f">
-  <img alt="Status: early" src="https://img.shields.io/badge/status-early%2C%20looking%20for%20testers-7c5cff">
+  <img alt="Status: archived" src="https://img.shields.io/badge/status-archived-8a8a8a">
 </p>
 
 <p align="center">

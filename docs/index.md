@@ -1,5 +1,15 @@
 # create-fc docs
 
+::: warning Archived
+create-fc is archived and no longer maintained. The scripts and fameboy still work as of November 2026, but they won't get fixes when Snapchain, Farcaster or Hetzner change. Use them at your own risk.
+
+A node made with it bills about $105/month until you delete it. To stop the billing:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/eucalyptus-viminalis/create-fc/main/provision/hetzner-delete.sh | bash
+```
+:::
+
 Run your own Farcaster node and the fameboy client, explained.
 
 The three commands on [createfc.org](https://createfc.org/quickstart/) work without reading any of this: rent a server, sync a node, install the client. These pages are for when you want to know what's running, what you're signing, or what to do when something looks wrong.
