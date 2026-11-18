@@ -1,7 +1,7 @@
 // The Network Decentralization Authority's register: a Cloudflare Worker with a D1 database.
 //
-//   POST /apply          NDA Form 1 from the microsite. Records the filing and returns a new member
-//                        number. Filings never change each other, even with the same FID or e-mail.
+//   POST /apply          closed (410): create-fc is archived. apply() below is the filing code it used,
+//                        kept so filings can reopen by routing POST back to it.
 //   GET  /m/:n           a member's page: what a cast embed links to. Its preview image is the card.
 //   GET  /m/:n/card.png  the member card, 1200x630.
 //   GET|POST /confirm    the link in a bulletin confirmation e-mail (src/bulletins.js).
@@ -108,11 +108,8 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/apply') {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(request, env) });
-      if (request.method === 'POST') {
-        // Errors keep the CORS headers, so the form can tell the visitor instead of the browser hiding it.
-        try { return await apply(request, env); }
-        catch (e) { console.error(e); return json({ error: "The register couldn't record that. Try again." }, 500, cors(request, env)); }
-      }
+      // create-fc is archived: no new filings. Member pages, cards and e-mail links still work.
+      if (request.method === 'POST') return json({ error: 'Filings are closed: create-fc is archived.' }, 410, cors(request, env));
       return json({ error: 'POST the form here.' }, 405);
     }
     if (url.pathname === '/confirm' || url.pathname === '/unsubscribe') {

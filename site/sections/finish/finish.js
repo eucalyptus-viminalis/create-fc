@@ -165,7 +165,14 @@ anon.checked = !name.value.trim(); fillCard();
 // Already a member in this browser: show the issued card.
 try { const m = JSON.parse(localStorage.getItem('nda-member')); if (m?.no) issue(m, false); } catch {}
 
+// create-fc is archived: the register takes no new filings. Members who filed in this browser still see their card.
+if (!form.classList.contains('filed')) {
+  for (const el of form.querySelectorAll('input')) el.disabled = true;
+  submit.textContent = 'Closed'; submit.disabled = true;
+  say('Filings are closed: create-fc is archived. Member pages stay up.');
+}
+
 // On localhost, say which register the form files with, since only the live one sends e-mail.
-if (LOCAL) say(REGISTER === LIVE_REGISTER
+if (LOCAL && form.classList.contains('filed')) say(REGISTER === LIVE_REGISTER
   ? 'Testing: this files with the LIVE register (real member numbers, real e-mail).'
   : 'Testing: this files with the local register (no e-mail). Add ?live-register to the address to use the live one.', true);
